@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Herb – a desktop in your browser.">
+<title>Herb</title>
+<meta name="theme-color" content="#0f1b15">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Herb"><meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+<div id="desktop">
+  <div class="moon"></div><div class="hill b"></div><div class="hill"></div><div id="flies"></div>
+  <div id="icons"></div>
+  <div id="wins"><div id="snap"></div></div>
+  <div id="start"></div>
+  <div id="ctx"></div>
+  <div id="taskbar">
+    <button class="tbbtn" id="start-btn" title="Start"></button>
+    <div id="tbapps"></div>
+    <div id="tbtray">
+      <button class="tray" id="trayinfo" title="Proxy status"><span class="sdot" id="sdot"></span><span class="lbl" id="stxt">proxy</span></button>
+      <div id="clock"><span class="t"></span><span class="d"></span></div>
+      <button id="showdesk" title="Show desktop"></button>
+    </div>
+  </div>
+</div>
+<style>#hboot{position:fixed;top:6px;right:10px;z-index:5;font:11px/1 system-ui,sans-serif;color:#cde7dc;opacity:.55;pointer-events:none;letter-spacing:.02em}
+#hfail{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#0b1c15;color:#e8f3ee;font:15px/1.5 system-ui,sans-serif;text-align:center;padding:24px;z-index:99998}
+#hfail button{padding:10px 18px;border-radius:10px;border:0;background:#34d399;color:#04130c;font-weight:700;cursor:pointer}</style>
+<div id="hboot">starting…</div>
+<div id="hfail"><div><b>Can't reach the Herb server</b><br><span id="hfailmsg"></span></div><button id="hchange">Change server</button></div>
+<script>
+(function () {
+  var DEFAULT_SERVER_URL = 'https://herb-games.web.app', KEY = 'herb.serverUrl', C = 'herb.boot.';
+  function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
+  function clean(u) { u = String(u || '').trim().replace(/\/+$/, ''); return /^https?:\/\/[^\s/]+/i.test(u) ? u : ''; }
+  // BUNDLE_URL: where herb.js/herb.css come from. Empty = the Herb server itself. Override: localStorage 'herb.bundleUrl'.
+  var BUNDLE_URL = 'https://cdn.jsdelivr.net/gh/copperbatish/Herb@main', BKEY = 'herb.bundleUrl';
+  var server = clean(ls(KEY)) || DEFAULT_SERVER_URL, bundle = clean(ls(BKEY)) || BUNDLE_URL || server, badge = document.getElementById('hboot');
+  window.HERB_CONFIG = { serverUrl: server }; window.HERB_SINGLE_FILE = true;
+  function get(p) { return fetch(bundle + p + '?v=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); }); }
+  function start(css, js, mode) {
+    var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+    var sc = document.createElement('script'); sc.textContent = js; document.body.appendChild(sc);
+    var v = (js.match(/HERB_BUNDLE:(\w+)/) || [])[1] || '?';
+    badge.textContent = 'v' + v + (mode === 'live' ? ' \u00b7 up to date' : ' \u00b7 offline, saved copy');
+    if (mode === 'live') setTimeout(function () { badge.style.transition = 'opacity 2s'; badge.style.opacity = '.18'; }, 4000);
+  }
+  function fail(why) { document.getElementById('hfailmsg').textContent = bundle + ' (' + why + ')'; document.getElementById('hfail').style.display = 'flex'; badge.textContent = 'offline'; }
+  document.getElementById('hchange').onclick = function () {
+    var v = prompt('Herb server address:\n' + DEFAULT_SERVER_URL, ls(KEY) || ''); if (v === null) return;
+    if (v.trim() && !clean(v)) { alert('Use a full address like https://example.com'); return; }
+    try { if (v.trim()) localStorage.setItem(KEY, clean(v)); else localStorage.removeItem(KEY); } catch (e) {} location.reload();
+  };
+  Promise.all([get('/dist/herb.css'), get('/dist/herb.js')]).then(function (r) {
+    ls(C + 'css', r[0]); ls(C + 'js', r[1]);       // last working bundle, kept as the offline fallback (skipped quietly if storage is full)
+    start(r[0], r[1], 'live');
+  }).catch(function (e) {
+    var c = ls(C + 'css'), j = ls(C + 'js');
+    if (c && j) start(c, j, 'offline'); else fail(e && e.message || 'offline');
+  });
+})();
+</script>
+</body>
+</html>
