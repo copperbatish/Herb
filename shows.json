@@ -1,0 +1,126 @@
+{
+ "MEDIA_BASE_URL": "",
+ "shows": [
+  {
+   "id": "unstable-smp",
+   "title": "Unstable SMP",
+   "season": 1,
+   "imdbId": "tt39289432",
+   "imdbRating": null,
+   "synopsis": "Season 1 of Unstable SMP: eleven episodes told through the points of view of Spoke, Parrot and Wemmbu.",
+   "banner": "https://img.youtube.com/vi/wG9dbWNsems/maxresdefault.jpg",
+   "episodes": [
+    {
+     "ep": 1,
+     "title": "How to Destroy the Unstable SMP",
+     "creator": "Spoke",
+     "duration": "59:39",
+     "youtubeId": "wG9dbWNsems",
+     "imdbRating": null,
+     "thumbnail": "https://img.youtube.com/vi/wG9dbWNsems/maxresdefault.jpg",
+     "videoUrl": ""
+    },
+    {
+     "ep": 2,
+     "title": "This Button Destroys the World",
+     "creator": "Parrot",
+     "duration": "46:31",
+     "youtubeId": "soYelcGVPac",
+     "imdbRating": null,
+     "thumbnail": "https://img.youtube.com/vi/soYelcGVPac/maxresdefault.jpg",
+     "videoUrl": ""
+    },
+    {
+     "ep": 3,
+     "title": "Breaking Into Minecraft's Most Illegal Vault",
+     "creator": "Wemmbu",
+     "duration": "51:19",
+     "youtubeId": "s4Qm81fKfyk",
+     "imdbRating": null,
+     "thumbnail": "https://img.youtube.com/vi/s4Qm81fKfyk/maxresdefault.jpg",
+     "videoUrl": ""
+    },
+    {
+     "ep": 4,
+     "title": "How I Stole 10,356,000 Duped Items",
+     "creator": "Spoke",
+     "duration": "1:39:16",
+     "youtubeId": "E5jfdzB6RnY",
+     "imdbRating": null,
+     "thumbnail": "https://img.youtube.com/vi/E5jfdzB6RnY/maxresdefault.jpg",
+     "videoUrl": ""
+    },
+    {
+     "ep": 5,
+     "title": "I Uncovered Minecraft's Greatest Secret",
+     "creator": "Parrot",
+     "duration": "3:06:45",
+     "youtubeId": "J0Jj6A72OoE",
+     "imdbRating": null,
+     "thumbnail": "https://img.youtube.com/vi/J0Jj6A72OoE/maxresdefault.jpg",
+     "videoUrl": ""
+    },
+    {
+     "ep": 6,
+     "title": "It's Impossible to Catch this Player",
+     "creator": "Wemmbu",
+     "duration": "3:00:12",
+     "youtubeId": "o8ocybrrdfw",
+     "imdbRating": null,
+     "thumbnail": "https://img.youtube.com/vi/o8ocybrrdfw/maxresdefault.jpg",
+     "videoUrl": ""
+    },
+    {
+     "ep": 7,
+     "title": "I Broke into Minecraft's Most Secure Prison",
+     "creator": "Parrot",
+     "duration": "3:25:05",
+     "youtubeId": "6dtNsa-MGs8",
+     "imdbRating": null,
+     "thumbnail": "https://img.youtube.com/vi/6dtNsa-MGs8/maxresdefault.jpg",
+     "videoUrl": ""
+    },
+    {
+     "ep": 8,
+     "title": "I Created Minecraft's Greatest Civilization",
+     "creator": "Wemmbu",
+     "duration": "3:31:11",
+     "youtubeId": "wbTIN42an0o",
+     "imdbRating": null,
+     "thumbnail": "https://img.youtube.com/vi/wbTIN42an0o/maxresdefault.jpg",
+     "videoUrl": ""
+    },
+    {
+     "ep": 9,
+     "title": "I Got Hunted by Minecraft's Deadliest Players",
+     "creator": "Parrot",
+     "duration": "3:44:50",
+     "youtubeId": "VSI12NnAnAY",
+     "imdbRating": null,
+     "thumbnail": "https://img.youtube.com/vi/VSI12NnAnAY/maxresdefault.jpg",
+     "videoUrl": ""
+    },
+    {
+     "ep": 10,
+     "title": "Why I Destroyed the Unstable SMP",
+     "creator": "Wemmbu",
+     "duration": "3:12:01",
+     "youtubeId": "_qc8ZF2KyeQ",
+     "imdbRating": null,
+     "thumbnail": "https://img.youtube.com/vi/_qc8ZF2KyeQ/maxresdefault.jpg",
+     "videoUrl": ""
+    },
+    {
+     "ep": 11,
+     "title": "I Bankrupted Minecraft's Richest Civilization",
+     "creator": "Spoke",
+     "duration": "3:52:01",
+     "youtubeId": "KyLqZkfv3BU",
+     "imdbRating": null,
+     "thumbnail": "https://img.youtube.com/vi/KyLqZkfv3BU/maxresdefault.jpg",
+     "videoUrl": ""
+    }
+   ]
+  }
+ ]
+}
