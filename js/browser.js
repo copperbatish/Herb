@@ -61,7 +61,7 @@
     frame.addEventListener('load', function h() {
       frame.removeEventListener('load', h);
       try {
-        var t = frame.contentDocument && frame.contentDocument.body && frame.contentDocument.body.innerText;
+        var t = frame.contentDocument && frame.contentDocument.documentElement && frame.contentDocument.documentElement.textContent;   // the message sits in a <textarea>, which innerText skips
         if (t && /wasm not loaded yet/.test(t) && n < 4) setTimeout(function () { try { frame.contentWindow.location.reload(); } catch (e) {} retryWasm(frame, n + 1); }, 900);
       } catch (e) {}
     });
