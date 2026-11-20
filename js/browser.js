@@ -61,7 +61,7 @@
     frame.addEventListener('load', function h() {
       frame.removeEventListener('load', h);
       try {
-        var t = frame.contentDocument && frame.contentDocument.documentElement && frame.contentDocument.documentElement.textContent;   // the message sits in a <textarea>, which innerText skips
+        var d = frame.contentDocument, ta = d && d.querySelector('textarea'), t = (ta && ta.value) || '';   // UV puts the message in a <textarea> value, which neither innerText nor textContent show
         if (t && /wasm not loaded yet/.test(t) && n < 12) setTimeout(function () { try { frame.contentWindow.location.reload(); } catch (e) {} retryWasm(frame, n + 1); }, 1500);
       } catch (e) {}
     });
