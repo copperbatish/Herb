@@ -10,4 +10,4 @@ This repo holds the prebuilt files that the Herb launcher loads through [jsDeliv
 jsDelivr serves JS, CSS and JSON but not web pages, so the launcher itself stays a local file. Apps that need a service worker
 (the proxy browser, games, Mineplacer) still load from the Herb site.
 
-After pushing new files, refresh the CDN cache with `npm run purge:jsdelivr` (in the Herb source folder).
+This webpage also links to herb supported html files, it works anywhere that supports html files.
