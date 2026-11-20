@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin</title>
+<link rel="stylesheet" href="/css/herb.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:var(--surface);color:var(--text);font-family:var(--font);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+#gate{margin:auto;color:var(--muted);text-align:center;padding:20px}
+#app{display:none;flex:1;min-height:0;flex-direction:column}
+nav{display:flex;gap:6px;padding:12px max(16px,calc((100% - 860px)/2)) 0;border-bottom:1px solid var(--border);flex:none;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:10px 14px;font:inherit;font-size:14px;cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+main{flex:1;overflow:auto;padding:26px 20px 40px}.tab{display:none;max-width:860px;margin:0 auto}.tab.on{display:block}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px}
+.card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+.stat b{display:block;font-size:34px;line-height:1.1;color:var(--accent);margin-bottom:6px}.stat span{color:var(--muted);font-size:13px}
+h2{font-size:15px;margin:30px 0 12px}h2:first-child{margin-top:0}#ad-add h2{margin-top:30px}
+.row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border);font-size:13.5px}.row:last-child{border:0}
+.row .g{flex:1;min-width:0;overflow-wrap:anywhere}.meta{color:var(--muted);font-size:11.5px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+input,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--text);font:inherit;font-size:14px;outline:0}
+textarea{min-height:84px;resize:vertical}input:focus,textarea:focus{border-color:var(--accent)}
+.btn{padding:9px 14px;border:0;border-radius:10px;background:var(--accent);color:#04130d;font:inherit;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+.btn.sm{padding:7px 12px;font-size:12px}.btn.ghost{background:rgba(255,255,255,.08);color:var(--text)}.btn.red{background:rgba(248,113,113,.18);color:#fca5a5}
+.pill{font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.08);color:var(--muted)}.pill.open{background:rgba(251,191,36,.18);color:#fcd34d}.pill.doing{background:rgba(96,165,250,.2);color:#93c5fd}.pill.done{background:rgba(52,211,153,.2);color:#6ee7b7}
+.empty{color:var(--muted);font-size:13px}.err{color:#f87171;font-size:12.5px;margin-top:10px}.err:empty{display:none}.card>.row:first-child{padding-top:0}.card>.row:last-child{padding-bottom:0}.meta{line-height:1.5}
+.soon{text-align:center;padding:48px 20px;line-height:1.6}.soon b{display:block;font-size:17px;margin-bottom:6px}
+.addrow{display:flex;gap:8px}.done .g{opacity:.55;text-decoration:line-through}
+</style></head>
+<body>
+<div id="gate">Loading…</div>
+<div id="app">
+  <nav id="nav"><button data-t="over" class="on">Overview</button><button data-t="req">Requests</button><button data-t="adm">Admins</button><button data-t="store">Store queue</button><button data-t="site">Site</button></nav>
+  <main>
+    <section class="tab on" id="t-over">
+      <div class="stats">
+        <div class="card stat"><b id="n-all">0</b><span>Active now</span></div>
+        <div class="card stat"><b id="n-in">0</b><span>Signed in</span></div>
+        <div class="card stat"><b id="n-out">0</b><span>Signed out</span></div>
+        <div class="card stat"><b id="n-reg">0</b><span>Accounts created</span></div>
+      </div>
+      <h2>Signed in right now</h2><div class="card" id="who"></div>
+      <p class="meta" style="margin-top:16px">Counts open Herb tabs that checked in within the last 3 minutes. One person with two tabs shows twice.</p>
+    </section>
+    <section class="tab" id="t-req">
+      <h2>Log something that needs adding</h2>
+      <div class="card"><textarea id="rq-t" maxlength="500" placeholder="What needs to be added or fixed on the site?"></textarea>
+        <div class="addrow" style="margin-top:14px;justify-content:flex-end"><button class="btn" id="rq-add">Add to list</button></div><div class="err" id="rq-e"></div></div>
+      <h2>To do</h2><div class="card" id="rq-open"></div>
+      <h2>Done</h2><div class="card" id="rq-done"></div>
+    </section>
+    <section class="tab" id="t-adm">
+      <h2>Admins</h2><div class="card" id="ad-list"></div>
+      <div id="ad-add"><h2>Add an admin</h2><div class="card"><div class="addrow"><input id="ad-u" placeholder="Their username" autocapitalize="none" maxlength="20"><button class="btn" id="ad-go">Make admin</button></div>
+        <div class="err" id="ad-e"></div><p class="meta" style="margin:14px 0 0">They need to have created an account first. Only the owner can add or remove admins.</p></div></div>
+    </section>
+    <section class="tab" id="t-store">
+      <h2>Waiting for review</h2><div class="card" id="sq-pend"></div>
+      <div id="sq-rev" style="display:none"></div>
+      <h2>Approved apps</h2><div class="card" id="sq-ok"></div>
+      <p class="meta" style="margin-top:14px">Read each HTML app before approving. The scan only catches obvious problems; approved HTML apps also run in a sandbox with no internet access.</p>
+    </section>
+    <section class="tab" id="t-site"><div class="card soon"><b>Add new stuff to the site</b>Coming soon. For now, log what you want in Requests.</div></section>
+  </main>
+</div>
+<script src="/js/herb-settings.js"></script>
+<script src="/js/vendor/firebase-app-compat.js"></script><script src="/js/vendor/firebase-auth-compat.js"></script><script src="/js/vendor/firebase-database-compat.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/store-scan.js"></script>
+<script>
+(function () {
+  var $ = function (i) { return document.getElementById(i); }, TS = function () { return firebase.database.ServerValue.TIMESTAMP; };
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function ago(t) { var s = Math.max(0, (Date.now() - t) / 1000); return s < 60 ? 'just now' : s < 3600 ? Math.floor(s / 60) + 'm ago' : s < 86400 ? Math.floor(s / 3600) + 'h ago' : Math.floor(s / 86400) + 'd ago'; }
+  var started = false, offset = 0, presence = {}, db, st;
+  document.getElementById('nav').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; document.querySelectorAll('nav button').forEach(function (x) { x.classList.toggle('on', x === b); }); document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('on', x.id === 't-' + b.dataset.t); }); };
+
+  function paintPresence() {
+    var now = Date.now() + offset, live = Object.keys(presence).map(function (k) { return presence[k]; }).filter(function (p) { return p && now - p.t < 180000; });
+    var inn = live.filter(function (p) { return p.uid; });
+    $('n-all').textContent = live.length; $('n-in').textContent = inn.length; $('n-out').textContent = live.length - inn.length;
+    var seen = {}, names = []; inn.forEach(function (p) { if (!seen[p.uid]) { seen[p.uid] = 1; names.push(p.name || '(unknown)'); } });
+    $('who').innerHTML = names.length ? names.sort().map(function (n) { return '<div class="row"><i class="dot"></i><div class="g">' + esc(n) + '</div></div>'; }).join('') : '<div class="empty">Nobody signed in right now.</div>';
+  }
+  function paintReq(snap) {
+    var o = '', d = ''; var items = []; snap.forEach(function (c) { var v = c.val(); v.k = c.key; items.push(v); }); items.sort(function (a, b) { return b.at - a.at; });
+    items.forEach(function (v) {
+      var done = v.status === 'done';
+      var h = '<div class="row ' + (done ? 'done' : '') + '"><div class="g">' + esc(v.text) + '<div class="meta">' + esc(v.name) + ' · ' + ago(v.at) + '</div></div><span class="pill ' + v.status + '">' + v.status + '</span>' +
+        (done ? '<button class="btn sm ghost" data-a="open" data-k="' + v.k + '">Reopen</button>' : (v.status === 'open' ? '<button class="btn sm ghost" data-a="doing" data-k="' + v.k + '">Working</button>' : '') + '<button class="btn sm" data-a="done" data-k="' + v.k + '">Done</button>') +
+        '<button class="btn sm red" data-a="del" data-k="' + v.k + '" title="Delete">✕</button></div>';
+      if (done) d += h; else o += h;
+    });
+    $('rq-open').innerHTML = o || '<div class="empty">Nothing on the list.</div>'; $('rq-done').innerHTML = d || '<div class="empty">Nothing finished yet.</div>';
+  }
+  function paintAdmins(snap) {
+    var h = '<div class="row"><div class="g">' + '<b id="ownername">Owner</b></div><span class="pill done">owner</span></div>';
+    snap.forEach(function (c) { var v = c.val() || {}; h += '<div class="row"><div class="g">' + esc(v.name || c.key) + '</div><span class="pill">admin</span>' + (st.owner ? '<button class="btn sm red" data-uid="' + c.key + '">Remove</button>' : '') + '</div>'; });
+    $('ad-list').innerHTML = h;
+    db.ref('herb/owner').once('value').then(function (o) { return o.val() ? db.ref('herb/users/' + o.val() + '/name').once('value') : null; }).then(function (n) { if (n && n.val() && $('ownername')) $('ownername').textContent = n.val() + ' (owner)'; }).catch(function () {});
+  }
+
+  // ---- App Store queue ----
+  var queue = {}, SQ = function () { return db.ref('herb/store'); };
+  function paintQ(snap) {
+    queue = snap.val() || {}; var ids = Object.keys(queue).sort(function (a, b) { return (queue[a].at || 0) - (queue[b].at || 0); });
+    $('sq-pend').innerHTML = ids.length ? ids.map(function (id) { var v = queue[id];
+      return '<div class="row"><div class="g"><b>' + esc(v.title) + '</b> <span class="pill">' + (v.kind === 'link' ? 'link · ' + (v.mode === 'proxy' ? 'proxy' : 'direct') : 'html app') + '</span><div class="meta">by ' + esc(v.byName) + ' · ' + ago(v.at) + (v.desc ? ' · ' + esc(v.desc) : '') + '</div></div><button class="btn sm" data-rev="' + id + '">Review</button></div>'; }).join('') : '<div class="empty">Nothing waiting.</div>';
+  }
+  function paintOk(snap) {
+    var v = snap.val() || {}, ids = Object.keys(v).sort(function (a, b) { return (v[b].at || 0) - (v[a].at || 0); });
+    $('sq-ok').innerHTML = ids.length ? ids.map(function (id) { var a = v[id];
+      return '<div class="row"><div class="g"><b>' + esc(a.title) + '</b> <span class="pill done">' + (a.kind === 'link' ? 'link' : 'html app') + '</span><div class="meta">by ' + esc(a.byName) + (a.approvedBy ? ' · approved by ' + esc(a.approvedBy) : '') + '</div></div><button class="btn sm red" data-rm="' + id + '">Remove</button></div>'; }).join('') : '<div class="empty">No approved apps yet.</div>';
+  }
+  function review(id) {
+    var v = queue[id]; if (!v) return; var box = $('sq-rev'); box.style.display = ''; box.innerHTML = '<div class="card"><div class="empty">Loading…</div></div>';
+    (v.kind === 'html' ? db.ref('herb/store/pendingfiles/' + id).once('value').then(function (s) { return String(s.val() || ''); }) : Promise.resolve('')).then(function (text) {
+      var r = v.kind === 'html' ? HerbStoreScan.scanHtml(text, 'app.html') : HerbStoreScan.scanLink(v.url);
+      var h = '<h2>Reviewing: ' + esc(v.title) + '</h2><div class="card"><div class="meta">by ' + esc(v.byName) + ' · ' + esc(v.desc || 'no description') + '</div>';
+      h += r.blocked.length ? '<div class="err" style="display:block;margin-top:12px"><b>Failed the scan:</b> ' + r.blocked.map(esc).join(' · ') + '</div>' : '<div class="meta" style="margin-top:12px;color:#6ee7b7">Passed the automatic scan.</div>';
+      if (r.warnings.length) h += '<ul class="meta" style="margin:10px 0 0;padding-left:18px">' + r.warnings.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>';
+      if (v.kind === 'link') h += '<p style="margin:14px 0 6px;word-break:break-all"><b>' + esc(v.url) + '</b></p><button class="btn sm ghost" id="sq-open">Open in Herb browser to look at it</button>';
+      else h += '<textarea readonly style="margin-top:14px;min-height:240px;font:12px/1.5 ui-monospace,Menlo,monospace" id="sq-src"></textarea>';
+      h += '<div class="addrow" style="margin-top:16px;justify-content:flex-end"><button class="btn red" id="sq-no">Reject</button><button class="btn" id="sq-yes"' + (r.ok ? '' : ' disabled style="opacity:.4;cursor:not-allowed"') + '>Approve</button><button class="btn ghost" id="sq-close">Close</button></div><div class="err" id="sq-err"></div></div>';
+      box.innerHTML = h; if ($('sq-src')) $('sq-src').value = text;
+      if ($('sq-open')) $('sq-open').onclick = function () { try { parent.HerbDesktop.openUrl(v.url); } catch (e) { window.open(v.url, '_blank'); } };
+      $('sq-close').onclick = function () { box.style.display = 'none'; };
+      $('sq-no').onclick = function () { if (!confirm('Reject and delete this submission?')) return; var u = {}; u['pending/' + id] = null; u['pendingfiles/' + id] = null; SQ().update(u).then(function () { box.style.display = 'none'; }, function () { $('sq-err').textContent = 'Could not reject.'; }); };
+      $('sq-yes').onclick = function () {
+        if (!r.ok) return; var u = {}, m = Object.assign({}, v, { approvedBy: st.name, approvedAt: TS() });
+        u['apps/' + id] = m; if (v.kind === 'html') u['files/' + id] = text; u['pending/' + id] = null; u['pendingfiles/' + id] = null;
+        SQ().update(u).then(function () { box.style.display = 'none'; }, function () { $('sq-err').textContent = 'Could not approve. Are you still signed in as an admin?'; });
+      };
+      box.scrollIntoView({ block: 'nearest' });
+    }, function () { box.innerHTML = '<div class="card"><div class="err" style="display:block">Couldn\u2019t load that submission.</div></div>'; });
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-rev]'); if (a) return review(a.dataset.rev);
+    var b = e.target.closest('[data-rm]'); if (b && confirm('Remove this app from the store?')) { var u = {}; u['apps/' + b.dataset.rm] = null; u['files/' + b.dataset.rm] = null; SQ().update(u); }
+  });
+  function start() {
+    if (started) return; started = true; db = HerbAuth.db();
+    db.ref('.info/serverTimeOffset').on('value', function (s) { offset = s.val() || 0; });
+    db.ref('herb/presence').on('value', function (s) { presence = s.val() || {}; paintPresence(); }); setInterval(paintPresence, 15000);
+    db.ref('herb/users').on('value', function (s) { $('n-reg').textContent = s.numChildren(); });
+    db.ref('herb/wishlist').on('value', paintReq);
+    db.ref('herb/admins').on('value', paintAdmins);
+    $('ad-add').style.display = st.owner ? '' : 'none';
+    db.ref('herb/store/pending').on('value', paintQ, function () { $('sq-pend').innerHTML = '<div class="empty">Couldn\u2019t load the queue.</div>'; });
+    db.ref('herb/store/apps').on('value', paintOk);
+  }
+  $('rq-add').onclick = function () {
+    var t = $('rq-t').value.trim(); if (!t) return; $('rq-e').textContent = '';
+    db.ref('herb/wishlist').push({ text: t, by: st.user.uid, name: st.name, at: TS(), status: 'open' }).then(function () { $('rq-t').value = ''; }, function () { $('rq-e').textContent = 'Could not save. Are you still signed in?'; });
+  };
+  function reqAct(e) { var b = e.target.closest('button[data-a]'); if (!b) return; var r = db.ref('herb/wishlist/' + b.dataset.k); b.dataset.a === 'del' ? r.remove() : r.update({ status: b.dataset.a }); }
+  $('rq-open').onclick = reqAct; $('rq-done').onclick = reqAct;
+  $('ad-go').onclick = function () {
+    var n = HerbAuth.clean($('ad-u').value), e = $('ad-e'); e.textContent = ''; if (!n) return;
+    db.ref('herb/usernames/' + n).once('value').then(function (s) {
+      if (!s.exists()) throw new Error('No account called "' + n + '" yet.');
+      return db.ref('herb/admins/' + s.val()).set({ name: n });
+    }).then(function () { $('ad-u').value = ''; }, function (er) { e.textContent = er.message || 'Could not add.'; });
+  };
+  $('ad-list').onclick = function (e) { var b = e.target.closest('button[data-uid]'); if (b && confirm('Remove this admin?')) db.ref('herb/admins/' + b.dataset.uid).remove(); };
+
+  HerbAuth.onChange(function (s) {
+    st = s;
+    if (s.admin) { $('gate').style.display = 'none'; $('app').style.display = 'flex'; start(); }
+    else { $('app').style.display = 'none'; $('gate').style.display = ''; $('gate').textContent = 'Nothing here.'; }
+  });
+  if (!HerbAuth.available()) $('gate').textContent = 'Nothing here.';
+})();
+</script></body></html>

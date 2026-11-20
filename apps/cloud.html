@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/images/logo/herb.svg" type="image/svg+xml"><title>Cloud Games</title>
+<link rel="stylesheet" href="/css/herb.css"><link rel="stylesheet" href="/css/app.css">
+<style>
+body{margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;background:#000}
+#bar{flex:none;display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface-2);border-bottom:1px solid var(--border);font-size:13px;color:var(--muted)}
+#bar .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#bar button{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12.5px}
+#bar button:hover{border-color:var(--accent)}
+#note{flex:none;display:none;background:#2d2410;color:#fcd34d;border-bottom:1px solid #78570b;padding:8px 14px;font-size:12.5px;line-height:1.5}
+#stage{flex:1;position:relative;min-height:0}
+iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+#msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:20px}
+</style></head>
+<body>
+<div id="bar"><span class="t" id="title">Cloud Games</span><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
+<div id="note"></div>
+<div id="stage"><div id="msg">Starting the proxy…</div></div>
+<script src="/js/herb-settings.js"></script><script src="/js/icons.js"></script>
+<script src="/uv/uv.bundle.js"></script><script src="/uv/uv.config.js"></script><script src="/baremux/index.js"></script>
+<script src="/js/wisp-config.js"></script><script src="/js/proxy-init.js"></script>
+<script>
+// Cloud gaming sites that can be launched. Add more here.
+var SITES={geforcenow:{name:'GeForce NOW',url:'https://play.geforcenow.com/'}};
+var $=function(i){return document.getElementById(i)};
+var key=new URLSearchParams(location.search).get('site')||'geforcenow', site=SITES[key]||SITES.geforcenow, frame=null;
+$('title').textContent=site.name+' · cloud gaming';
+function launch(){
+  $('msg').textContent='Connecting…';
+  HerbProxy.init().then(function(){
+    frame=document.createElement('iframe');
+    frame.setAttribute('allow','fullscreen; gamepad; autoplay; clipboard-read; clipboard-write; pointer-lock'); frame.allowFullscreen=true;
+    frame.src=__uv$config.prefix+__uv$config.encodeUrl(site.url);
+    $('stage').innerHTML=''; $('stage').appendChild(frame);
+    // Video streams use WebRTC, which the proxy can't carry. Without a TURN relay it may stay black if UDP is blocked.
+    if(!(__uv$config.inject&&__uv$config.inject.length)){$('note').style.display='block';$('note').innerHTML='<b>Video relay not set up.</b> Cloud gaming streams over WebRTC (UDP), which a web proxy can’t carry. If the picture stays black or never connects, your network is probably blocking UDP – a TURN relay needs to be configured in <code>uv/uv.config.js</code>.'}
+  }).catch(function(e){$('msg').textContent='Couldn’t start the proxy: '+e.message});
+}
+$('reload').onclick=function(){if(frame)frame.src=frame.src};
+$('full').onclick=function(){if(frame&&frame.requestFullscreen)frame.requestFullscreen()};
+launch();
+</script></body></html>

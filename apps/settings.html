@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/images/logo/herb.svg" type="image/svg+xml"><title>Settings</title>
+<link rel="stylesheet" href="/css/herb.css"><link rel="stylesheet" href="/css/app.css">
+<style>
+body{overflow:hidden;display:flex;height:100vh}
+nav{width:200px;flex:none;background:var(--surface-2);border-right:1px solid var(--border);padding:12px 8px;display:flex;flex-direction:column;gap:2px;overflow:auto}
+nav button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;color:var(--muted);padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;text-align:left}
+nav button:hover{background:rgba(255,255,255,.05);color:var(--text)}nav button.on{background:rgba(var(--accent-rgb),.18);color:var(--text)}nav button.on svg{color:var(--accent)}
+main{flex:1;overflow:auto;padding:26px 30px 40px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 22px}
+section{display:none;max-width:620px}section.on{display:block}
+.card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:6px 16px;margin-bottom:16px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid var(--border)}.row:last-child{border:0}
+.row .t{font-weight:600}.row .d{color:var(--muted);font-size:12.5px;margin-top:2px}
+.row .ctl{flex:none;width:210px}.row input[type=color]{width:46px;height:34px;padding:2px;border-radius:8px;cursor:pointer}.uis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:14px 0}
+.ui-card{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:10px;cursor:pointer;color:var(--muted);text-align:center;font-size:13px;font-weight:600}
+.ui-card:hover{border-color:rgba(var(--accent-rgb),.5)}.ui-card.on{border-color:var(--accent);color:var(--text)}
+.ui-card small{display:block;font-weight:400;margin-top:3px;font-size:11.5px;color:var(--muted)}
+.mock{position:relative;height:96px;border-radius:9px;overflow:hidden;margin-bottom:9px;background:linear-gradient(160deg,#17402f,#06100b)}
+.mock .w{position:absolute;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:3px}
+.mock .b{position:absolute;background:rgba(255,255,255,.28)}
+.mock .a{position:absolute;border-radius:4px}
+.seg{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:9px;overflow:hidden}.seg button{flex:1;background:none;border:0;color:var(--muted);padding:7px 10px;cursor:pointer;font-size:12.5px}.seg button.on{background:rgba(var(--accent-rgb),.25);color:var(--text)}.row .ctl.auto{width:auto}
+.sw{position:relative;width:44px;height:26px;background:var(--border);border-radius:999px;cursor:pointer;border:0;padding:0;transition:background .2s}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw.on{background:var(--accent)}.sw.on::after{transform:translateX(18px)}
+.walls{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:14px 0}
+.wall{border:2px solid transparent;border-radius:12px;cursor:pointer;background:none;padding:0;overflow:hidden;text-align:center;color:var(--muted);font-size:12px}
+.wall .th{height:70px;position:relative}
+.wall .th::after{content:'';position:absolute;right:14px;top:10px;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.75)}
+.wall span{display:block;padding:6px 0}.wall.on{border-color:var(--accent);color:var(--text)}
+.sws{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.sws button{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}.sws button.on{border-color:var(--text);box-shadow:0 0 0 2px var(--surface-2) inset}
+.server{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}.server:last-child{border:0}
+.server input{accent-color:var(--accent)}.server .u{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--muted)}
+.pill.ok{color:#22c55e;border-color:#22c55e}.pill.bad{color:#ef4444;border-color:#ef4444}
+.add{display:flex;gap:8px;padding:12px 0}
+.about{display:flex;gap:16px;align-items:center;padding:14px 0}
+</style></head>
+<body>
+<nav id="nav"></nav>
+<main>
+ <section id="s-interface"><h1>Interface</h1><p class="sub">Choose how Herb looks and works. Changing it reloads Herb.</p>
+  <div class="card"><div class="uis" id="uis"></div>
+   <div class="row"><div><div class="t">iPad tutorial</div><div class="d" id="tutmsg">A quick walkthrough of the iPad-style home screen and how to get back to it.</div></div><button class="btn" id="tutbtn">Replay</button></div>
+   <div class="row"><div><div class="d">Taskbar, desktop-icon and window options only apply to the Desktop interface.</div></div></div></div></section>
+ <section id="s-appearance"><h1>Appearance</h1><p class="sub">Colors and look of Herb.</p>
+  <div class="card"><div class="walls" id="walls"></div>
+   <div class="row"><div><div class="t">Accent color</div><div class="d">Pick a preset or choose any color.</div></div><div class="ctl auto"><div class="sws" id="accents"></div></div></div>
+   <div class="row"><div><div class="t">Window style</div><div class="d">Corner shape of app windows.</div></div><div class="ctl"><div class="seg" id="radius"></div></div></div>
+   <div class="row"><div><div class="t">Glass blur</div><div class="d">Frosted glass on the taskbar, menus and windows.</div></div><button class="sw" data-k="blur"></button></div>
+   <div class="row"><div><div class="t">Animations</div></div><button class="sw" data-k="anim"></button></div>
+   <div class="row"><div><div class="t">Fireflies</div><div class="d">Floating particles on the wallpaper.</div></div><button class="sw" data-k="particles"></button></div>
+  </div></section>
+ <section id="s-desktop"><h1>Desktop</h1><p class="sub">Wallpaper and icons. You can also drag icons around on the desktop.</p>
+  <div class="card">
+   <div class="row"><div><div class="t">Wallpaper</div></div><div class="ctl"><div class="seg" id="wallmode"></div></div></div>
+   <div class="row" id="r-wallcolor"><div><div class="t">Solid color</div></div><input type="color" id="wallcolor"></div>
+   <div class="row" id="r-wallimg"><div><div class="t">Custom image</div><div class="d">Resized and stored on this device only.</div></div><div class="ctl auto"><input type="file" id="wallfile" accept="image/*" hidden><button class="btn" id="wallpick">Choose…</button></div></div>
+   <div class="row"><div><div class="t">Moon &amp; hills scene</div><div class="d">Only with a theme wallpaper.</div></div><button class="sw" data-k="scene"></button></div>
+   <div class="row"><div><div class="t">Show desktop icons</div></div><button class="sw" data-k="showIcons"></button></div>
+   <div class="row"><div><div class="t">Icon size</div></div><div class="ctl"><div class="seg" id="iconsize"></div></div></div>
+   <div class="row"><div><div class="t">Icon labels</div></div><button class="sw" data-k="iconLabels"></button></div>
+   <div class="row"><div><div class="t">Reset icon positions</div><div class="d">Puts icons back in a tidy column.</div></div><button class="btn ghost" id="reseticons">Reset</button></div>
+  </div></section>
+ <section id="s-taskbar"><h1>Taskbar</h1><p class="sub">The bar with your apps, proxy status and clock.</p>
+  <div class="card">
+   <div class="row"><div><div class="t">Position</div></div><div class="ctl"><div class="seg" id="tbpos"></div></div></div>
+   <div class="row"><div><div class="t">Size</div></div><div class="ctl"><div class="seg" id="tbsize"></div></div></div>
+   <div class="row"><div><div class="t">App alignment</div></div><div class="ctl"><div class="seg" id="tbalign"></div></div></div>
+   <div class="row"><div><div class="t">Auto-hide</div><div class="d">Hides until you move to the screen edge.</div></div><button class="sw" data-k="taskbarAutohide"></button></div>
+   <div class="row"><div><div class="t">Proxy status</div><div class="d">Show ping in the tray.</div></div><button class="sw" data-k="showTray"></button></div>
+   <div class="row"><div><div class="t">Show clock</div></div><button class="sw" data-k="showClock"></button></div>
+   <div class="row"><div><div class="t">Show date</div></div><button class="sw" data-k="showDate"></button></div>
+   <div class="row"><div><div class="t">24-hour clock</div></div><button class="sw" data-k="clock24"></button></div>
+  </div></section>
+ <section id="s-proxy"><h1>Proxy</h1><p class="sub">Herb checks every server when it starts and automatically uses the fastest one that works.</p>
+  <div class="card"><div id="servers"></div>
+   <div class="row"><div><div class="t" id="using">Checking…</div><div class="d" id="pmsg">Rechecks automatically every minute.</div></div><button class="btn" id="check">Check now</button></div></div>
+  <div class="card"><div class="row"><div><div class="t">Connection engine</div><div class="d" id="engmsg">libcurl is best for live sites (WebSockets, cloud games). Epoxy is the older fallback. Applies after you reload the browser app.</div></div><div class="ctl"><select id="engine-sel"><option value="libcurl">libcurl (recommended)</option><option value="epoxy">Epoxy (fallback)</option></select></div></div></div>
+  <div class="card"><div class="add" style="padding:12px 0"><input type="text" id="custom" placeholder="Add a server: wss://your-server/wisp/"><button class="btn primary" id="add">Add</button></div></div>
+ </section>
+ <section id="s-browser"><h1>Browser</h1><p class="sub">Defaults for the Web Browser app.</p>
+  <div class="card"><div class="row"><div><div class="t">Search engine</div><div class="d">Used when you type something that isn’t a URL.</div></div><div class="ctl"><select id="engine"></select></div></div></div></section>
+ <section id="s-privacy"><h1>Privacy</h1><p class="sub">Cloaking and panic button.</p>
+  <div class="card"><div class="row"><div><div class="t">about:blank cloak</div><div class="d">Opens Herb inside an about:blank tab and sends this tab elsewhere.</div></div><button class="btn" id="cloak">Launch</button></div>
+   <div class="row"><div><div class="t">Panic key</div><div class="d">Press it anywhere to jump to the panic URL.</div></div><div class="ctl"><input type="text" id="pk" maxlength="1" style="text-align:center"></div></div>
+   <div class="row" style="display:block"><div class="t">Panic URL</div><div style="margin-top:8px"><input type="text" id="pu"></div></div></div></section>
+ <section id="s-about"><h1>About</h1><p class="sub">&nbsp;</p>
+  <div class="card"><div class="about"><span id="alogo"></span><div><div class="t" style="font-size:18px">Herb</div><div class="d muted">A desktop in your browser · Ultraviolet + BareMux + Epoxy</div></div></div>
+   <div class="row"><div><div class="t">Reset all settings</div><div class="d">Restores themes, taskbar and desktop options.</div></div><button class="btn ghost" id="reset">Reset</button></div></div></section>
+</main>
+<script src="/js/herb-settings.js"></script><script src="/js/icons.js"></script><script src="/js/wisp-config.js"></script>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)}, S=HerbSettings, I=HerbIcons.glyph;
+var SECTIONS=[['interface','Interface','ui'],['appearance','Appearance','appearance'],['desktop','Desktop','apps'],['taskbar','Taskbar','settings'],['proxy','Proxy','proxy'],['browser','Browser','browser'],['privacy','Privacy','shield'],['about','About','info']];
+SECTIONS.forEach(function(s){var b=document.createElement('button');b.dataset.s=s[0];b.innerHTML=I(s[2],18)+s[1];b.onclick=function(){show(s[0])};$('nav').appendChild(b)});
+function show(id){document.querySelectorAll('section').forEach(function(e){e.classList.toggle('on',e.id==='s-'+id)});document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('on',b.dataset.s===id)})}
+function seg(id,key,opts){var box=$(id);function draw(){box.innerHTML='';opts.forEach(function(o){var b=document.createElement('button');b.textContent=o[1];b.className=S.get(key)===o[0]?'on':'';b.onclick=function(){S.set(key,o[0]);draw();if(key==='iconSize'||key==='taskbarSize')try{parent.HerbDesktop.layout()}catch(e){}};box.appendChild(b)})}draw()}
+// interface
+var UIS=[['desktop','Desktop','Windows, taskbar and start menu','<div class="w" style="left:14%;top:14%;width:46%;height:48%"></div><div class="w" style="left:44%;top:30%;width:42%;height:42%"></div><div class="b" style="left:0;right:0;bottom:0;height:10px"></div>'],
+ ['standard','Standard proxy','One full-window app with a top nav','<div class="b" style="left:0;right:0;top:0;height:14px"></div><div class="a" style="left:8%;top:3px;width:12px;height:8px;background:#34d399"></div><div class="w" style="left:6%;right:6%;top:22px;bottom:8px"></div>'],
+ ['ipad','iPadOS style','Home screen of icons and a dock','<div class="a" style="left:14%;top:12%;width:14%;height:20%;background:#60a5fa"></div><div class="a" style="left:36%;top:12%;width:14%;height:20%;background:#34d399"></div><div class="a" style="left:58%;top:12%;width:14%;height:20%;background:#fb923c"></div><div class="a" style="left:14%;top:42%;width:14%;height:20%;background:#a78bfa"></div><div class="a" style="left:36%;top:42%;width:14%;height:20%;background:#f472b6"></div><div class="b" style="left:22%;right:22%;bottom:6px;height:14px;border-radius:8px"></div>']];
+function uis(){var box=$('uis');box.innerHTML='';UIS.forEach(function(u){var b=document.createElement('button');b.className='ui-card'+((S.get('ui')||'desktop')===u[0]?' on':'');b.innerHTML='<div class="mock">'+u[3]+'</div>'+u[1]+'<small>'+u[2]+'</small>';b.onclick=function(){if((S.get('ui')||'desktop')===u[0])return;S.set('ui',u[0]);uis()};box.appendChild(b)})}
+uis();
+$('tutbtn').onclick=function(){var ok=false;try{ok=parent.HerbDesktop.replayTutorial()}catch(e){}$('tutmsg').textContent=ok?'Started – look at the home screen.':'Switch to the iPadOS style above to see the tutorial.'};
+// appearance
+var THEMEBG={emerald:'radial-gradient(ellipse at 78% 0%,#16402f,#0b1c15 42%,#050b08 80%)',dusk:'radial-gradient(ellipse at 78% 0%,#5b2a6e,#24123a 45%,#0b0614 85%)',ocean:'radial-gradient(ellipse at 78% 0%,#0f4d6b,#09283b 45%,#030c14 85%)',sunrise:'radial-gradient(ellipse at 78% 0%,#a14b1a,#4a1f14 45%,#140808 85%)',graphite:'linear-gradient(160deg,#1b1d20,#0c0d0f)',snow:'linear-gradient(170deg,#e6f1eb,#c4dccf 60%,#a5c8b5)'};
+function walls(){$('walls').innerHTML='';S.THEMES.forEach(function(t){var b=document.createElement('button');b.className='wall'+(S.get('theme')===t[0]?' on':'');b.innerHTML='<div class="th" style="background:'+THEMEBG[t[0]]+'"></div><span>'+t[1]+'</span>';b.onclick=function(){S.set('theme',t[0]);walls()};$('walls').appendChild(b)})}
+walls();
+function accents(){var box=$('accents');box.innerHTML='';S.ACCENTS.forEach(function(c){var b=document.createElement('button');b.style.background=c;b.className=S.get('accent')===c?'on':'';b.onclick=function(){S.set('accent',c);accents()};box.appendChild(b)});
+ var cp=document.createElement('input');cp.type='color';cp.value=S.get('accent');cp.title='Custom color';cp.style.cssText='width:28px;height:28px;padding:0;border:0;border-radius:50%;background:none;cursor:pointer';cp.oninput=function(){S.set('accent',cp.value)};box.appendChild(cp)}
+accents();
+seg('radius','winRadius',[['square','Square'],['soft','Soft'],['round','Round']]);
+document.querySelectorAll('.sw').forEach(function(b){var k=b.dataset.k;b.classList.toggle('on',!!S.get(k));b.onclick=function(){var v=!S.get(k);S.set(k,v);b.classList.toggle('on',v)}});
+// desktop
+seg('wallmode','wallMode',[['theme','Theme'],['color','Color'],['image','Image']]);
+function wallRows(){var m=S.get('wallMode');$('r-wallcolor').style.display=m==='color'?'flex':'none';$('r-wallimg').style.display=m==='image'?'flex':'none'}
+$('wallmode').addEventListener('click',function(){setTimeout(wallRows,0)});wallRows();
+$('wallcolor').value=S.get('wallColor');$('wallcolor').oninput=function(){S.set('wallColor',this.value)};
+$('wallpick').onclick=function(){$('wallfile').click()};
+$('wallfile').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){var sc=Math.min(1,1920/im.width),c=document.createElement('canvas');c.width=im.width*sc;c.height=im.height*sc;c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+  try{localStorage.setItem('herb.wallimg',c.toDataURL('image/jpeg',.8));S.set('wallMode','image');seg('wallmode','wallMode',[['theme','Theme'],['color','Color'],['image','Image']]);wallRows();$('wallpick').textContent='Change…'}catch(e){alert('That image is too large to store. Try a smaller one.')}};im.src=r.result};r.readAsDataURL(f)};
+seg('iconsize','iconSize',[['small','Small'],['medium','Medium'],['large','Large']]);
+$('reseticons').onclick=function(){try{localStorage.removeItem('herb.iconpos')}catch(e){}try{parent.HerbDesktop.layout()}catch(e){}};
+// taskbar
+seg('tbpos','taskbarPos',[['bottom','Bottom'],['top','Top']]);seg('tbsize','taskbarSize',[['small','Small'],['medium','Medium'],['large','Large']]);seg('tbalign','taskbarAlign',[['left','Left'],['center','Center']]);
+// browser / privacy / about
+Object.keys(S.ENGINES).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=S.ENGINES[k][0];$('engine').appendChild(o)});
+$('engine').value=S.get('search');$('engine').onchange=function(){S.set('search',this.value)};
+[['pk','panicKey'],['pu','panicUrl']].forEach(function(p){var e=$(p[0]);e.value=S.get(p[1])||'';e.onchange=function(){S.set(p[1],e.value.trim())}});
+$('cloak').onclick=function(){try{parent.HerbDesktop.cloak()}catch(e){}};
+$('alogo').innerHTML=HerbIcons.tile('settings',54,['#34d399','#0d9488']).replace(/<svg[\s\S]*<\/svg>/,I('leaf',30,1.7));
+$('reset').onclick=function(){if(confirm('Reset all Herb settings?')){S.reset();try{localStorage.removeItem('herb.iconpos');localStorage.removeItem('herb.wallimg')}catch(e){}location.reload()}};
+// proxy (read-only status – Herb picks the server itself)
+function servers(){var st=HerbWisp.status(),box=$('servers');box.innerHTML='';
+ HerbWisp.list().forEach(function(s){var r=st&&st.results&&st.results[s.url],using=st&&st.best===s.url,row=document.createElement('div');row.className='server';
+  var pill=!st?'checking…':(r&&r.ok?(r.ms+' ms'):'offline');
+  row.innerHTML='<span class="sdotx" style="width:9px;height:9px;border-radius:50%;background:'+(r&&r.ok?'#22c55e':(st?'#ef4444':'#6d8a79'))+'"></span><span class="u" title="'+s.url+'">'+s.url+'</span>'+(using?'<span class="pill ok">in use</span>':'')+'<span class="pill'+(r&&r.ok?'':(st?' bad':''))+'">'+pill+'</span>';
+  if(s.label==='Custom'){var x=document.createElement('button');x.className='btn ghost';x.textContent='✕';x.style.padding='4px 9px';x.onclick=function(){HerbWisp.removeCustom(s.url).then(servers)};row.appendChild(x)}
+  box.appendChild(row)});
+ var n=HerbWisp.workingCount();$('using').textContent=st?(st.best?n[0]+' of '+n[1]+' servers online':'No servers reachable right now'):'Checking servers…'}
+servers();window.addEventListener('herb:wisp-status',servers);window.addEventListener('storage',function(e){if(e.key==='herb.wisp.status')servers()});
+$('check').onclick=function(){var b=this;b.textContent='Checking…';HerbWisp.check().then(function(){b.textContent='Check now';servers()})};
+$('add').onclick=function(){try{HerbWisp.addCustom($('custom').value.trim()).then(servers);$('custom').value='';$('pmsg').textContent='Added – checking it now.'}catch(e){$('pmsg').textContent=e.message}};
+try{$('engine-sel').value=localStorage.getItem('herb.transport')||'libcurl'}catch(e){}
+$('engine-sel').onchange=function(){try{localStorage.setItem('herb.transport',this.value);$('engmsg').textContent='Saved – reload the Web Browser window to use '+this.value+'.'}catch(e){}};
+var sec=new URLSearchParams(location.search).get('section')||'interface';show(sec);
+window.addEventListener('message',function(e){if(e.origin===location.origin&&e.data&&e.data.herb==='nav'&&e.data.section)show(e.data.section)});
+})();
+</script></body></html>

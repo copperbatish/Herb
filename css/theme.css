@@ -1,0 +1,12 @@
+:root {
+  --herb-bg: #0a120e;
+  --herb-surface: #13201a;
+  --herb-surface-2: #1c2e25;
+  --herb-border: #2a4236;
+  --herb-text: #eaf5ee;
+  --herb-muted: #9fb8a9;
+  --herb-accent: #34d399;      /* emerald */
+  --herb-accent-strong: #10b981;
+  --herb-sage: #8fae9a;
+  --herb-button: #2f6f54;
+}

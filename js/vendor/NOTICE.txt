@@ -1,0 +1,2 @@
+eruda (https://github.com/liriliri/eruda) – MIT License, v3.4.3.
+Firebase JS SDK (compat build incl. auth, v10.12.2) – Apache-2.0, loaded from gstatic and self-hosted here.

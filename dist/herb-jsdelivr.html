@@ -33,7 +33,7 @@
 <div id="hfail"><div><b>Can't reach the Herb server</b><br><span id="hfailmsg"></span></div><button id="hchange">Change server</button></div>
 <script>
 (function () {
-  var DEFAULT_SERVER_URL = 'https://herb-games.web.app', KEY = 'herb.serverUrl', C = 'herb.boot.';
+  var DEFAULT_SERVER_URL = 'https://cdn.jsdelivr.net/gh/copperbatish/Herb@main', KEY = 'herb.serverUrl', C = 'herb.boot.';
   function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
   function clean(u) { u = String(u || '').trim().replace(/\/+$/, ''); return /^https?:\/\/[^\s/]+/i.test(u) ? u : ''; }
   // BUNDLE_URL: where herb.js/herb.css come from. Empty = the Herb server itself. Override: localStorage 'herb.bundleUrl'.

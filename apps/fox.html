@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/images/logo/herb.svg" type="image/svg+xml"><title>Browser</title>
+<link rel="stylesheet" href="/css/herb.css">
+<style>
+/* A Firefox-style (dark "Proton"-inspired) skin for Herb's proxy browser. No WebAssembly – works on iPad. */
+:root{--fx-strip:#1c1b22;--fx-bar:#2b2a33;--fx-tab:#42414d;--fx-hover:#52525e;--fx-url:#1c1b22;--fx-text:#fbfbfe;--fx-muted:#9e9ea7;--fx-blue:#00ddff;--fx-purple:#9059ff;--fx-orange:#ff9400}
+*{box-sizing:border-box}
+body{margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;background:var(--fx-strip);color:var(--fx-text);font:14px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input{font-family:inherit}
+/* tab strip */
+#tabs{display:flex;align-items:flex-end;gap:3px;padding:6px 8px 0;background:var(--fx-strip);overflow-x:auto;flex:none;height:42px}
+#tabs::-webkit-scrollbar{display:none}
+.tab{display:flex;align-items:center;gap:8px;width:210px;max-width:210px;flex:none;height:34px;padding:0 8px 0 11px;border-radius:7px 7px 0 0;color:var(--fx-muted);cursor:pointer;white-space:nowrap}
+.tab:hover{background:var(--fx-bar)}
+.tab.active{background:var(--fx-tab);color:var(--fx-text);box-shadow:inset 0 2px 0 var(--fx-purple)}
+.tab svg{flex:none;color:var(--fx-orange)}
+.tab span{flex:1;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.tab .x{background:none;border:0;color:inherit;cursor:pointer;width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;padding:0;opacity:.7}
+.tab .x:hover{background:rgba(255,255,255,.15);opacity:1}
+#newtab{background:none;border:0;color:var(--fx-text);cursor:pointer;width:30px;height:30px;margin:0 0 3px 2px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex:none}
+#newtab:hover{background:var(--fx-bar)}
+/* toolbar */
+#nav{display:flex;align-items:center;gap:4px;padding:6px 8px;background:var(--fx-bar);flex:none;position:relative}
+.nb{background:none;border:0;color:var(--fx-text);width:34px;height:34px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
+.nb:hover{background:rgba(255,255,255,.12)}
+#addr{flex:1;display:flex;align-items:center;gap:9px;height:36px;padding:0 12px;background:var(--fx-url);border:1px solid transparent;border-radius:6px;min-width:0}
+#addr:focus-within{border-color:var(--fx-blue);box-shadow:0 0 0 2px rgba(0,221,255,.35)}
+#addr svg{color:var(--fx-muted);flex:none}
+#url{flex:1;background:none;border:0;outline:none;color:var(--fx-text);font-size:14px;min-width:0;padding:0;height:auto}
+/* bookmarks bar */
+#bm{display:flex;align-items:center;gap:2px;padding:3px 8px;background:var(--fx-bar);border-top:1px solid rgba(0,0,0,.25);flex:none;overflow-x:auto}
+#bm::-webkit-scrollbar{display:none}
+#bm button{display:flex;align-items:center;gap:7px;background:none;border:0;color:var(--fx-text);padding:4px 9px;border-radius:5px;cursor:pointer;font-size:12.5px;white-space:nowrap}
+#bm button:hover{background:rgba(255,255,255,.12)}
+#bm i{width:14px;height:14px;border-radius:3px;display:inline-block}
+/* menu */
+#menu{position:absolute;right:8px;top:48px;z-index:20;min-width:230px;padding:6px;background:var(--fx-bar);border:1px solid rgba(255,255,255,.12);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.5);display:none}
+#menu.on{display:block}
+#menu button{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;color:var(--fx-text);text-align:left;padding:9px 12px;border-radius:5px;cursor:pointer;font-size:13.5px}
+#menu button:hover{background:var(--fx-hover)}
+#menu hr{border:0;border-top:1px solid rgba(255,255,255,.12);margin:5px 0}
+/* page area */
+#stage{flex:1;position:relative;min-height:0;background:var(--fx-strip)}
+#views iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}#views iframe.on{display:block}
+#ntp{position:absolute;inset:0;overflow:auto;background:var(--fx-strip)}
+.center{display:flex;flex-direction:column;align-items:center;padding:9vh 16px 40px}
+.logo{margin:0;display:flex;align-items:center;gap:16px;font-size:44px;font-weight:300;letter-spacing:.01em}
+.tag{display:none}
+#search{width:min(640px,94%);display:flex;align-items:center;gap:12px;height:48px;margin-top:30px;padding:0 18px;background:var(--fx-bar);border:1px solid transparent;border-radius:8px;color:var(--fx-muted);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+#search:focus-within{border-color:var(--fx-blue);box-shadow:0 0 0 2px rgba(0,221,255,.35)}
+#q{flex:1;background:none;border:0;outline:none;color:var(--fx-text);font-size:16px;height:auto;padding:0}
+#tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,108px));gap:22px 12px;justify-content:center;width:min(720px,94%);margin-top:38px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:9px;color:var(--fx-text);font-size:12.5px;cursor:pointer;background:none;border:0;padding:10px 4px;border-radius:8px}
+.tile:hover{background:var(--fx-bar)}
+#banner{display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:5;background:#3b1d22;border:1px solid #7f1d1d;color:#fecaca;padding:10px 14px;border-radius:8px;font-size:13px;max-width:92%;gap:10px;align-items:center}
+#banner.on{display:flex}#banner button{background:#7f1d1d;color:#fff;border:0;border-radius:5px;padding:6px 10px;cursor:pointer;font-size:12px;white-space:nowrap}
+</style></head>
+<body>
+<div id="tabs"><button id="newtab" title="Open a new tab"></button></div>
+<div id="nav">
+  <button class="nb" id="back" title="Go back"></button><button class="nb" id="fwd" title="Go forward"></button><button class="nb" id="reload" title="Reload"></button>
+  <div id="addr"><span id="lock"></span><input id="url" type="text" placeholder="Search or enter address" autocomplete="off" spellcheck="false"></div>
+  <button class="nb" id="home" title="Home"></button>
+  <button class="nb" id="devtools" title="Inspect – developer tools"></button>
+  <button class="nb" id="burger" title="Open application menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <div id="menu"></div>
+</div>
+<div id="bm"></div>
+<div id="stage">
+  <div id="banner"><span id="bmsg"></span><button id="bgo">Re-check servers</button></div>
+  <div id="views"></div>
+  <div id="ntp"><div class="center">
+    <h1 class="logo"><svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ff9400"/><stop offset=".55" stop-color="#ff3d6e"/><stop offset="1" stop-color="#9059ff"/></linearGradient></defs><circle cx="32" cy="32" r="30" fill="url(#g)"/><path d="M14 38c2-12 12-20 26-20-4 3-6 7-6 11 5-2 10 0 12 4-4-1-8 0-10 3 3 1 6 4 6 8-6-3-12-1-15 3 0-5-4-8-8-9 3-1 5-3 5-5-4 0-8 2-10 5z" fill="#fff" opacity=".92"/></svg><span>Browser</span></h1>
+    <div class="tag"></div>
+    <div id="search"><span id="sico"></span><input id="q" type="text" placeholder="Search with DuckDuckGo or enter address" autocomplete="off" spellcheck="false"></div>
+    <div id="tiles"></div></div></div>
+</div>
+<script src="/js/herb-settings.js"></script><script src="/js/icons.js"></script>
+<script src="/uv/uv.bundle.js"></script><script src="/uv/uv.config.js"></script><script src="/baremux/index.js"></script>
+<script src="/js/wisp-config.js"></script><script src="/js/proxy-init.js"></script>
+<script src="/js/browser.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  // bookmarks bar
+  [['DuckDuckGo', 'https://duckduckgo.com', '#de5833'], ['YouTube', 'https://www.youtube.com', '#ff0000'], ['Wikipedia', 'https://www.wikipedia.org', '#9ca3af'], ['Reddit', 'https://www.reddit.com', '#ff4500'], ['GitHub', 'https://github.com', '#8b949e']].forEach(function (b) {
+    var el = document.createElement('button'); el.innerHTML = '<i style="background:' + b[2] + '"></i>' + b[0]; el.onclick = function () { HerbBrowser.go(b[1]); }; $('bm').appendChild(el);
+  });
+  // menu
+  var items = [['New tab', function () { $('newtab').click(); }], ['Reload', function () { $('reload').click(); }], null,
+    ['Settings', function () { try { parent.HerbDesktop.open('settings'); } catch (e) {} }], ['Proxy servers…', function () { try { parent.HerbDesktop.open('settings', { section: 'proxy' }); } catch (e) {} }]];
+  items.forEach(function (it) { if (!it) { $('menu').appendChild(document.createElement('hr')); return; } var b = document.createElement('button'); b.textContent = it[0]; b.onclick = function () { $('menu').classList.remove('on'); it[1](); }; $('menu').appendChild(b); });
+  $('burger').onclick = function (e) { e.stopPropagation(); $('menu').classList.toggle('on'); };
+  document.addEventListener('pointerdown', function (e) { if (!e.target.closest('#menu') && !e.target.closest('#burger')) $('menu').classList.remove('on'); });
+})();
+</script>
+</body></html>

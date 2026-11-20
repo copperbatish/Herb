@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Herb AI</title>
+<link rel="stylesheet" href="/css/herb.css"><link rel="stylesheet" href="/css/app.css">
+<style>
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--surface);color:var(--text);font-family:var(--font);display:flex;overflow:hidden}
+button{font:inherit;color:inherit}
+#side{width:272px;flex:none;display:flex;flex-direction:column;background:var(--surface-2);border-right:1px solid var(--border);min-height:0}
+.brand{display:flex;align-items:center;gap:10px;padding:16px 16px 10px;font-weight:700;font-size:16px}
+.logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(145deg,#6ee7b7,#059669);display:flex;align-items:center;justify-content:center;color:#04130d;flex:none}
+#newchat{margin:6px 14px 10px;padding:11px 14px;border-radius:12px;border:0;background:var(--accent);color:#04130d;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+#newchat:hover{filter:brightness(1.08)}
+#q{margin:0 14px 10px;width:calc(100% - 28px);height:36px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:0 12px;font-size:13.5px;outline:0}#q:focus{border-color:var(--accent)}
+#list{flex:1;overflow-y:auto;padding:0 8px 10px;min-height:0}
+.grp{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:12px 10px 6px;font-weight:700}
+.ci{display:flex;align-items:center;gap:6px;padding:9px 10px;border-radius:10px;cursor:pointer;font-size:13.5px;position:relative}
+.ci:hover{background:rgba(255,255,255,.06)}.ci.on{background:rgba(var(--accent-rgb),.2)}
+.ci .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ci .acts{display:none;gap:2px}.ci:hover .acts,.ci.on .acts{display:flex}
+.ci .acts button{background:none;border:0;border-radius:6px;padding:3px 6px;cursor:pointer;color:var(--muted);font-size:13px}.ci .acts button:hover{background:rgba(255,255,255,.12);color:var(--text)}
+.none{padding:18px 14px;color:var(--muted);font-size:13px;text-align:center}
+.me{padding:12px 16px;border-top:1px solid var(--border);font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px}.me b{color:var(--text)}
+#main{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+#top{flex:none;display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--border)}
+#menu{display:none;background:rgba(255,255,255,.08);border:0;border-radius:9px;width:34px;height:34px;cursor:pointer;font-size:16px}
+#ttl{flex:1;min-width:0;font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#log{flex:1;overflow-y:auto;padding:22px 18px 10px;min-height:0}
+.wrap{max-width:800px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.msg{display:flex;flex-direction:column;gap:6px;max-width:100%}
+.msg .who{font-size:11.5px;color:var(--muted)}
+.msg.user{align-items:flex-end}
+.msg.user .bub{background:var(--accent);color:#04130d;border-radius:16px 16px 4px 16px;padding:10px 14px;max-width:88%;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.assistant .bub{background:var(--surface-2);border:1px solid var(--border);border-radius:16px 16px 16px 4px;padding:13px 17px;max-width:100%;overflow-wrap:anywhere;line-height:1.65;font-size:14.5px}
+.msg.error .bub{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.35);color:#fca5a5;border-radius:12px;padding:10px 14px;font-size:13.5px}
+.macts{display:flex;gap:6px;opacity:0;transition:opacity .15s}.msg:hover .macts,.msg:last-child .macts{opacity:1}
+.macts button{background:none;border:1px solid var(--border);border-radius:8px;padding:3px 10px;font-size:12px;color:var(--muted);cursor:pointer}.macts button:hover{color:var(--text);border-color:var(--accent)}
+.bub>*:first-child{margin-top:0}.bub>*:last-child{margin-bottom:0}
+.bub p{margin:.6em 0}.bub h1,.bub h2,.bub h3,.bub h4{margin:1em 0 .4em;line-height:1.25}.bub h1{font-size:1.25em}.bub h2{font-size:1.15em}.bub h3,.bub h4{font-size:1.05em}
+.bub ul,.bub ol{margin:.5em 0;padding-left:1.4em}.bub li{margin:.2em 0}.bub hr{border:0;border-top:1px solid var(--border);margin:1em 0}
+.bub blockquote{margin:.6em 0;padding:2px 12px;border-left:3px solid var(--accent);color:var(--muted)}
+.bub a{color:var(--accent)}.bub code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;background:rgba(255,255,255,.09);padding:1px 5px;border-radius:5px}
+.bub table{border-collapse:collapse;margin:.8em 0;display:block;overflow-x:auto;font-size:.95em}.bub th,.bub td{border:1px solid var(--border);padding:6px 11px;text-align:left}.bub th{background:rgba(255,255,255,.06)}
+.code{margin:.8em 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#0a120e}
+.code .bar{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 6px 12px;background:rgba(255,255,255,.06);font-size:11.5px;color:var(--muted)}
+.code .bar button{background:rgba(255,255,255,.08);border:0;border-radius:7px;color:var(--text);font-size:11.5px;padding:4px 10px;cursor:pointer}
+.code pre{margin:0;padding:12px 14px;overflow-x:auto;font-size:13px;line-height:1.55}.code pre code{background:none;padding:0;font-size:inherit}
+.t-k{color:#c4b5fd}.t-s{color:#86efac}.t-c{color:#7c9a8a;font-style:italic}.t-n{color:#fcd34d}
+.cursor::after{content:"";display:inline-block;width:7px;height:1em;margin-left:2px;background:var(--accent);vertical-align:text-bottom;animation:bl 1s steps(1) infinite}@keyframes bl{50%{opacity:0}}
+.hello{text-align:center;color:var(--muted);padding:9vh 12px 0}.hello .logo{width:56px;height:56px;border-radius:17px;margin:0 auto 14px}
+.hello h2{margin:0 0 6px;color:var(--text);font-size:22px}.hello p{margin:0 0 20px;font-size:14px}
+.chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;max-width:640px;margin:0 auto}
+.chips button{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;font-size:13px;cursor:pointer;text-align:left;line-height:1.4}.chips button:hover{border-color:var(--accent)}.chips b{display:block;margin-bottom:2px;font-size:13px}.chips span{color:var(--muted);font-size:12px}
+#foot{flex:none;padding:10px 18px 14px}
+.box{max-width:800px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;background:var(--surface-2);border:1px solid var(--border);border-radius:18px;padding:8px 8px 8px 16px}.box:focus-within{border-color:var(--accent)}
+textarea{flex:1;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:16px;resize:none;max-height:200px;padding:8px 0;line-height:1.4}
+#send{border:0;border-radius:12px;padding:9px 16px;cursor:pointer;font-weight:700;font-size:13.5px;background:var(--accent);color:#04130d}#send.stop{background:rgba(248,113,113,.22);color:#fca5a5}
+.note{max-width:800px;margin:8px auto 0;color:var(--muted);font-size:11.5px;text-align:center}
+#gate{position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;background:var(--surface);text-align:center;padding:24px}
+#gate .in{max-width:380px}#gate .logo{width:60px;height:60px;border-radius:18px;margin:0 auto 16px}#gate h2{margin:0 0 8px}#gate p{color:var(--muted);line-height:1.6;margin:0 0 20px}
+#gate button{border:0;border-radius:12px;padding:12px 22px;background:var(--accent);color:#04130d;font-weight:700;font-size:15px;cursor:pointer}
+body.out .me,body.out #q{display:none}
+@media(max-width:720px){#side{position:fixed;left:0;top:0;bottom:0;z-index:20;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.5)}#side.open{transform:none}#menu{display:block}}
+</style></head>
+<body>
+<aside id="side">
+  <div class="brand"><span class="logo" id="hlogo"></span>Herb AI</div>
+  <button id="newchat"></button>
+  <input id="q" type="text" placeholder="Search chats" autocomplete="off" spellcheck="false">
+  <div id="list"></div>
+  <div class="me"><span id="mei"></span><span>Signed in as <b id="mename"></b></span></div>
+</aside>
+<div id="main">
+  <div id="top"><button id="menu" title="Chats">☰</button><div id="ttl">New chat</div></div>
+  <div id="log"><div class="wrap" id="wrap"></div></div>
+  <div id="foot"><div class="box"><textarea id="in" rows="1" placeholder="Message Herb AI…  (Enter to send, Shift+Enter for a new line)" maxlength="8000"></textarea><button id="send">Send</button></div>
+  <div class="note">Herb AI can make mistakes. Chats are saved to your account and are private to you. Don't share passwords.</div></div>
+  <div id="gate"><div class="in"><div class="logo" id="glogo"></div><h2>Sign in to use Herb AI</h2><p>Herb AI is for signed-in accounts. Your chats are saved to your account, so you can pick them up on any device.</p><button id="gatebtn">Sign in or create account</button></div></div>
+</div>
+<script src="/js/herb-config.js"></script><script src="/js/herb-settings.js"></script><script src="/js/icons.js"></script>
+<script src="/js/vendor/firebase-app-compat.js"></script><script src="/js/vendor/firebase-auth-compat.js"></script><script src="/js/vendor/firebase-database-compat.js"></script><script src="/js/auth.js"></script>
+<script>
+(function () {
+  var $ = function (i) { return document.getElementById(i); };
+  var BASE = ['https://129-158-194-64.nip.io', 'https://lightspeedspeed.duckdns.org', 'https://leweirdlink.twilightparadox.com'];
+  var HOSTS = BASE.slice();
+  // the Cloudflare tunnel is the last resort; its address (published by the VM) is cached from the last visit
+  function tunnelHost() { try { var u = localStorage.getItem('herb.tunnel'); return /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(u || '') ? u : ''; } catch (e) { return ''; } }
+  function setHosts() { HOSTS = BASE.slice(); var t = tunnelHost(); if (t) HOSTS.push(t); }
+  setHosts();
+  fetch('https://copperchat-4cb91-default-rtdb.firebaseio.com/herb/tunnel/url.json').then(function (r) { return r.json(); }).then(function (u) {
+    if (typeof u === 'string' && /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(u)) { try { localStorage.setItem('herb.tunnel', u); } catch (e) {} setHosts(); }
+  }).catch(function () {});
+
+  // ---------- tiny, safe markdown + syntax highlighting ----------
+  function esc(s) { return s.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var KW = 'abstract|as|async|await|break|case|catch|class|const|continue|def|default|del|do|elif|else|enum|except|export|extends|false|finally|fn|for|from|func|function|if|implements|import|in|interface|is|lambda|let|match|new|none|null|nil|of|pass|private|public|raise|return|self|static|struct|super|switch|this|throw|true|try|type|typeof|undefined|use|var|void|while|with|yield|int|float|string|bool|char|long|double|package|namespace|using|echo|select|where|insert|update|delete|create|table';
+  var TOK = new RegExp('(\\/\\*[\\s\\S]*?\\*\\/|\\/\\/[^\\n]*|#[^\\n]*|--[^\\n]*)|("(?:\\\\.|[^"\\\\\\n])*"|\'(?:\\\\.|[^\'\\\\\\n])*\'|`(?:\\\\.|[^`\\\\])*`)|\\b(' + KW + ')\\b|\\b(0x[0-9a-fA-F]+|\\d+(?:\\.\\d+)?)\\b', 'gi');
+  function hl(code, lang) {
+    if (/^(html|xml|svg|css|json|md|markdown|text|txt)$/i.test(lang) && !/^(json|css)$/i.test(lang)) return esc(code);
+    var out = '', last = 0, m; TOK.lastIndex = 0;
+    while ((m = TOK.exec(code))) {
+      if (m[1] && m[1].charAt(0) === '#' && /^(js|javascript|ts|typescript|java|c|cpp|cs|css|go|rust|json)$/i.test(lang) && !/^css$/i.test(lang)) { continue; }
+      out += esc(code.slice(last, m.index));
+      out += '<span class="' + (m[1] ? 't-c' : m[2] ? 't-s' : m[3] ? 't-k' : 't-n') + '">' + esc(m[0]) + '</span>'; last = m.index + m[0].length;
+    }
+    return out + esc(code.slice(last));
+  }
+  function inline(s) {
+    var codes = []; s = s.replace(/`([^`\n]+)`/g, function (_, c) { codes.push(c); return '\u0000' + (codes.length - 1) + '\u0000'; });
+    s = esc(s).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>')
+      .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    return s.replace(/\u0000(\d+)\u0000/g, function (_, i) { return '<code>' + esc(codes[+i]) + '</code>'; });
+  }
+  function block(text) {
+    var lines = text.split('\n'), out = '', i = 0, para = [];
+    function flush() { if (para.length) { out += '<p>' + inline(para.join('\n')).replace(/\n/g, '<br>') + '</p>'; para = []; } }
+    function cells(l) { return l.trim().replace(/^\||\|$/g, '').split('|').map(function (c) { return c.trim(); }); }
+    while (i < lines.length) {
+      var l = lines[i], m;
+      if ((m = /^(#{1,4})\s+(.*)$/.exec(l))) { flush(); out += '<h' + m[1].length + '>' + inline(m[2]) + '</h' + m[1].length + '>'; i++; }
+      else if (/^\s*(-{3,}|\*{3,})\s*$/.test(l)) { flush(); out += '<hr>'; i++; }
+      else if (l.indexOf('|') >= 0 && i + 1 < lines.length && /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(lines[i + 1])) {
+        flush(); var head = cells(l); i += 2; var rows = []; while (i < lines.length && lines[i].indexOf('|') >= 0 && lines[i].trim()) rows.push(cells(lines[i++]));
+        out += '<table><thead><tr>' + head.map(function (c) { return '<th>' + inline(c) + '</th>'; }).join('') + '</tr></thead><tbody>' + rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + inline(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
+      }
+      else if (/^\s*[-*]\s+/.test(l)) { flush(); out += '<ul>'; while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) out += '<li>' + inline(lines[i++].replace(/^\s*[-*]\s+/, '')) + '</li>'; out += '</ul>'; }
+      else if (/^\s*\d+[.)]\s+/.test(l)) { flush(); out += '<ol>'; while (i < lines.length && /^\s*\d+[.)]\s+/.test(lines[i])) out += '<li>' + inline(lines[i++].replace(/^\s*\d+[.)]\s+/, '')) + '</li>'; out += '</ol>'; }
+      else if (/^>\s?/.test(l)) { flush(); var q = []; while (i < lines.length && /^>\s?/.test(lines[i])) q.push(lines[i++].replace(/^>\s?/, '')); out += '<blockquote>' + inline(q.join('\n')).replace(/\n/g, '<br>') + '</blockquote>'; }
+      else if (!l.trim()) { flush(); i++; }
+      else { para.push(l); i++; }
+    }
+    flush(); return out;
+  }
+  function md(src) {
+    var parts = src.split(/(```[^\n]*\n[\s\S]*?(?:```|$))/g), out = '';
+    parts.forEach(function (p) {
+      var m = /^```([^\n]*)\n([\s\S]*?)(```)?$/.exec(p);
+      if (m && p.indexOf('```') === 0) {
+        var lang = (m[1] || '').trim().split(/\s+/)[0] || '', body = m[2].replace(/\n$/, '');
+        out += '<div class="code"><div class="bar"><span>' + esc(lang || 'code') + '</span><button type="button" data-copy>Copy</button></div><pre><code>' + hl(body, lang) + '</code></pre></div>';
+      } else out += block(p);
+    });
+    return out;
+  }
+
+  // ---------- state ----------
+  var uid = null, chats = {}, cur = null, hist = [], busy = false, ctl = null, metaRef = null, ready = false;
+  var wrap = $('wrap'), log = $('log'), ta = $('in');
+  $('hlogo').innerHTML = HerbIcons.glyph('ai', 18, 2); $('glogo').innerHTML = HerbIcons.glyph('ai', 30, 1.8);
+  $('newchat').innerHTML = '<span style="font-size:17px;line-height:1">+</span> New chat';
+  function db() { return HerbAuth.db(); }
+  function newId() { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function mkTitle(t) { t = String(t || '').replace(/\s+/g, ' ').trim(); return (t.length > 48 ? t.slice(0, 47) + '\u2026' : t) || 'New chat'; }
+  function when(t) {
+    var d = new Date(t), n = new Date(), s = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime(), day = 86400000;
+    return t >= s ? 'Today' : t >= s - day ? 'Yesterday' : t >= s - 7 * day ? 'Previous 7 days' : 'Older';
+  }
+
+  // ---------- sidebar ----------
+  function renderList() {
+    var box = $('list'), q = $('q').value.trim().toLowerCase(), ids = Object.keys(chats).filter(function (k) { return !q || String(chats[k].title).toLowerCase().indexOf(q) >= 0; })
+      .sort(function (a, b) { return chats[b].updated - chats[a].updated; });
+    box.innerHTML = '';
+    if (!ids.length) { box.innerHTML = '<div class="none">' + (q ? 'No chats match.' : 'No saved chats yet. Start one!') + '</div>'; return; }
+    var last = '';
+    ids.forEach(function (id) {
+      var c = chats[id], g = when(c.updated); if (g !== last) { var h = document.createElement('div'); h.className = 'grp'; h.textContent = g; box.appendChild(h); last = g; }
+      var d = document.createElement('div'); d.className = 'ci' + (id === cur ? ' on' : ''); d.innerHTML = '<span class="t"></span><span class="acts"><button title="Rename" data-a="ren">\u270e</button><button title="Delete" data-a="del">\u2715</button></span>';
+      d.querySelector('.t').textContent = c.title; d.title = c.title;
+      d.onclick = function (e) { var b = e.target.closest('button'); if (b) { e.stopPropagation(); return b.dataset.a === 'del' ? del(id) : ren(id); } openChat(id); $('side').classList.remove('open'); };
+      box.appendChild(d);
+    });
+  }
+  function ren(id) { var t = prompt('Rename chat', chats[id].title); if (t === null) return; t = mkTitle(t); chats[id].title = t; renderList(); if (id === cur) $('ttl').textContent = t; db().ref('herb/aichats/' + uid + '/meta/' + id).update({ title: t }); }
+  function del(id) {
+    if (!confirm('Delete this chat? This can\u2019t be undone.')) return; var u = {}; u['herb/aichats/' + uid + '/meta/' + id] = null; u['herb/aichats/' + uid + '/data/' + id] = null;
+    delete chats[id]; db().ref().update(u); if (id === cur) newChat(); else renderList();
+  }
+  $('q').oninput = renderList;
+  $('menu').onclick = function () { $('side').classList.toggle('open'); };
+  document.addEventListener('pointerdown', function (e) { if (!e.target.closest('#side') && !e.target.closest('#menu')) $('side').classList.remove('open'); });
+
+  // ---------- chat view ----------
+  var SUGGEST = [['Explain something', 'How does a proxy server work?'], ['Write code', 'Write a Python script that renames all files in a folder by date'], ['Study help', 'Make me a study plan for a math test next week'], ['Brainstorm', 'Give me 10 ideas for a small web game I can build']];
+  function addMsg(role, content) {
+    var d = document.createElement('div'); d.className = 'msg ' + role;
+    d.innerHTML = '<div class="who">' + (role === 'user' ? 'You' : 'Herb AI') + '</div><div class="bub"></div>';
+    var b = d.lastChild; if (role === 'user') b.textContent = content; else if (role === 'error') { d.firstChild.remove(); b.textContent = content; } else b.innerHTML = md(content || '');
+    wrap.appendChild(d); return d;
+  }
+  function actions() {
+    wrap.querySelectorAll('.macts').forEach(function (x) { x.remove(); });
+    var msgs = wrap.querySelectorAll('.msg.assistant, .msg.user'), lastA = null, lastU = null;
+    msgs.forEach(function (m) { if (m.classList.contains('assistant')) lastA = m; else lastU = m; });
+    if (lastA && !busy) { var a = document.createElement('div'); a.className = 'macts'; a.innerHTML = '<button data-a="copy">Copy</button><button data-a="regen">Regenerate</button>'; lastA.appendChild(a); }
+    if (lastU && !busy && wrap.lastElementChild && wrap.lastElementChild.classList.contains('assistant')) { var u = document.createElement('div'); u.className = 'macts'; u.innerHTML = '<button data-a="edit">Edit</button>'; lastU.appendChild(u); }
+  }
+  function hello() {
+    wrap.innerHTML = '<div class="hello"><div class="logo">' + HerbIcons.glyph('ai', 28, 1.8) + '</div><h2>How can I help?</h2><p>Ask me anything. I can explain, write code, help you study, and more.</p><div class="chips">' +
+      SUGGEST.map(function (s, i) { return '<button type="button" data-i="' + i + '"><b>' + esc(s[0]) + '</b><span>' + esc(s[1]) + '</span></button>'; }).join('') + '</div></div>';
+  }
+  function render() {
+    wrap.innerHTML = ''; $('ttl').textContent = cur && chats[cur] ? chats[cur].title : 'New chat';
+    if (!hist.length) hello(); else hist.forEach(function (m) { addMsg(m.role, m.content); });
+    actions(); log.scrollTop = log.scrollHeight;
+  }
+  function openChat(id) {
+    if (busy) stop(); cur = id; hist = []; render(); renderList();
+    db().ref('herb/aichats/' + uid + '/data/' + id).once('value').then(function (s) { if (cur !== id) return; try { hist = JSON.parse(s.val() || '[]'); } catch (e) { hist = []; } render(); }, function () { addMsg('error', 'Couldn\u2019t load this chat.'); });
+  }
+  function newChat() { if (busy) stop(); cur = null; hist = []; render(); renderList(); ta.focus(); }
+  $('newchat').onclick = newChat;
+  function persist() {
+    if (!uid || !cur) return; var title = chats[cur] ? chats[cur].title : mkTitle((hist.filter(function (m) { return m.role === 'user'; })[0] || {}).content);
+    var keep = hist.slice(-60), data = JSON.stringify(keep); while (data.length > 190000 && keep.length > 2) { keep = keep.slice(2); data = JSON.stringify(keep); }
+    var now = Date.now(); chats[cur] = { title: title, updated: now }; renderList();
+    var u = {}; u['herb/aichats/' + uid + '/data/' + cur] = data; u['herb/aichats/' + uid + '/meta/' + cur] = { title: title, updated: now };
+    db().ref().update(u).catch(function () {});
+  }
+
+  // ---------- talking to the server ----------
+  function stick() { var near = log.scrollHeight - log.scrollTop - log.clientHeight < 140; if (near) log.scrollTop = log.scrollHeight; }
+  function setBusy(b) { busy = b; var s = $('send'); s.textContent = b ? 'Stop' : 'Send'; s.className = b ? 'stop' : ''; }
+  function stop() { if (ctl) ctl.abort(); }
+  function post(body, signal, token) {
+    var i = 0;
+    function next() {
+      return fetch(HOSTS[i] + '/api/herb-ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: body, signal: signal }).catch(function (e) {
+        if (e.name === 'AbortError' || ++i >= HOSTS.length) throw e; return next();   // server unreachable: try the next hostname
+      });
+    }
+    return next();
+  }
+  function run() {   // streams a reply to whatever is in hist (which must end with a user message)
+    if (busy || !hist.length) return;
+    if (!cur) { cur = newId(); }
+    var wasEmpty = wrap.querySelector('.hello'); if (wasEmpty) wrap.innerHTML = '';
+    wrap.querySelectorAll('.macts').forEach(function (x) { x.remove(); });
+    var el = addMsg('assistant', ''), bub = el.querySelector('.bub'), got = '', raf = 0; bub.classList.add('cursor'); log.scrollTop = log.scrollHeight;
+    $('ttl').textContent = chats[cur] ? chats[cur].title : mkTitle(hist[0].content);
+    function paint() { raf = 0; bub.innerHTML = md(got); bub.classList.add('cursor'); stick(); }
+    function fail(msg) { if (got) bub.classList.remove('cursor'); else el.remove(); addMsg('error', msg); stick(); }
+    ctl = new AbortController(); setBusy(true);
+    var payload = JSON.stringify({ messages: hist.slice(-30) });
+    HerbAuth.token().then(function (tok) { if (!tok) throw new Error('Please sign in again.'); return post(payload, ctl.signal, tok).then(function (r) {
+      if (r.status === 401) return HerbAuth.token(true).then(function (t2) { return t2 ? post(payload, ctl.signal, t2) : r; });
+      return r;
+    }); }).then(function (r) {
+      if (!r.ok) return r.json().catch(function () { return {}; }).then(function (j) { throw new Error(r.status === 401 ? 'Please sign in again.' : (j.message || 'Herb AI had a hiccup. Try again.')); });
+      var rd = r.body.getReader(), dec = new TextDecoder(), buf = '', errMsg = '';
+      function pump() {
+        return rd.read().then(function (x) {
+          if (x.done) return;
+          buf += dec.decode(x.value, { stream: true }); var lines = buf.split('\n'); buf = lines.pop();
+          lines.forEach(function (ln) {
+            ln = ln.trim(); if (ln.indexOf('data:') !== 0) return; var d = ln.slice(5).trim(); if (!d || d === '[DONE]') return;
+            try { var j = JSON.parse(d); if (j.error) errMsg = 'Herb AI is cooling down, try again shortly.'; var dl = j.choices && j.choices[0] && j.choices[0].delta, c = dl && dl.content; if (dl && dl.reasoning && !got) bub.innerHTML = '<span style="color:var(--muted)">Thinking\u2026</span>'; if (c) { got += c; if (!raf) raf = requestAnimationFrame(paint); } } catch (e) {}
+          });
+          return pump();
+        });
+      }
+      return pump().then(function () { if (errMsg && !got) throw new Error(errMsg); });
+    }).then(function () {
+      if (raf) cancelAnimationFrame(raf); bub.classList.remove('cursor'); bub.innerHTML = md(got);
+      if (got) { hist.push({ role: 'assistant', content: got }); persist(); } else { el.remove(); addMsg('error', 'No answer came back. Try again.'); }
+    }).catch(function (e) {
+      if (raf) cancelAnimationFrame(raf);
+      if (e.name === 'AbortError') { bub.classList.remove('cursor'); if (got) { bub.innerHTML = md(got); hist.push({ role: 'assistant', content: got }); persist(); } else { el.remove(); } return; }
+      var m = e.message || ''; fail(/Failed to fetch|NetworkError|Load failed/i.test(m) ? 'Can\u2019t reach Herb AI right now. Check your connection and try again.' : m);
+    }).then(function () { ctl = null; setBusy(false); actions(); ta.focus(); });
+  }
+  function send(text) {
+    text = (text || ta.value).trim(); if (!text || busy) return; if (!uid) return gate();
+    ta.value = ''; ta.style.height = 'auto'; if (!cur) cur = newId();
+    if (wrap.querySelector('.hello')) wrap.innerHTML = '';
+    hist.push({ role: 'user', content: text }); addMsg('user', text);
+    if (!chats[cur]) { chats[cur] = { title: mkTitle(text), updated: Date.now() }; renderList(); }
+    run();
+  }
+  $('send').onclick = function () { busy ? stop() : send(); };
+  ta.addEventListener('input', function () { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 200) + 'px'; });
+  ta.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
+  wrap.addEventListener('click', function (e) {
+    var c = e.target.closest('[data-copy]');
+    if (c) { var t = c.closest('.code').querySelector('code').textContent; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { c.textContent = 'Copied'; }, function () { c.textContent = 'Press Ctrl+C'; }); setTimeout(function () { c.textContent = 'Copy'; }, 1600); return; }
+    var s = e.target.closest('.chips button'); if (s) return send(SUGGEST[+s.dataset.i][1]);
+    var a = e.target.closest('.macts button'); if (!a || busy) return;
+    if (a.dataset.a === 'copy') { var last = hist[hist.length - 1]; if (last) (navigator.clipboard ? navigator.clipboard.writeText(last.content) : Promise.reject()).then(function () { a.textContent = 'Copied'; setTimeout(function () { a.textContent = 'Copy'; }, 1400); }, function () {}); }
+    else if (a.dataset.a === 'regen') { if (hist.length && hist[hist.length - 1].role === 'assistant') hist.pop(); render(); run(); }
+    else if (a.dataset.a === 'edit') { var l = hist[hist.length - 1]; if (l && l.role === 'assistant') hist.pop(); var u = hist.pop(); render(); ta.value = u ? u.content : ''; ta.dispatchEvent(new Event('input')); ta.focus(); }
+  });
+
+  // ---------- sign-in ----------
+  function gate() { $('gate').style.display = uid ? 'none' : 'flex'; document.body.classList.toggle('out', !uid); }
+  $('gatebtn').onclick = function () { try { parent.document.getElementById('acctchip').click(); } catch (e) {} };
+  HerbAuth.onChange(function (s) {
+    var nu = s.user ? s.user.uid : null; if (nu === uid && ready) return; uid = nu; ready = true;
+    if (metaRef) { try { metaRef.off(); } catch (e) {} metaRef = null; }
+    chats = {}; cur = null; hist = []; $('mename').textContent = s.name || ''; render(); renderList(); gate();
+    if (uid) { metaRef = db().ref('herb/aichats/' + uid + '/meta'); metaRef.on('value', function (sn) { chats = sn.val() || {}; renderList(); if (cur && chats[cur]) $('ttl').textContent = chats[cur].title; }, function () {}); }
+  });
+  if (!HerbAuth.available()) { $('gate').style.display = 'flex'; }
+  render(); renderList(); gate();
+})();
+</script></body></html>

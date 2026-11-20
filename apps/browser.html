@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/images/logo/herb.svg" type="image/svg+xml"><title>Web Browser</title>
+<link rel="stylesheet" href="/css/herb.css"><link rel="stylesheet" href="/css/app.css">
+<style>
+body{overflow:hidden;display:flex;flex-direction:column;height:100vh}
+#tabs{display:flex;align-items:flex-end;gap:3px;padding:7px 8px 0;background:var(--surface-2);overflow-x:auto;flex:none}
+#tabs::-webkit-scrollbar{display:none}
+.tab{display:flex;align-items:center;gap:8px;width:190px;flex:none;padding:8px 10px;border-radius:9px 9px 0 0;color:var(--muted);font-size:12.5px;cursor:pointer;white-space:nowrap}
+.tab:hover{background:rgba(255,255,255,.05)}.tab.active{background:var(--surface);color:var(--text)}
+.tab svg{color:var(--accent);flex:none}.tab span{flex:1;overflow:hidden;text-overflow:ellipsis}
+.tab .x{background:none;border:0;color:inherit;cursor:pointer;opacity:.6;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0}.tab .x:hover{opacity:1;background:rgba(255,255,255,.12)}
+#newtab{background:none;border:0;color:var(--muted);cursor:pointer;padding:6px 9px;border-radius:8px;display:flex}#newtab:hover{color:var(--accent);background:rgba(255,255,255,.06)}
+#nav{display:flex;align-items:center;gap:4px;padding:7px 10px;background:var(--surface);border-bottom:1px solid var(--border);flex:none}
+.nb{background:none;border:0;color:var(--muted);width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}.nb:hover{background:var(--surface-2);color:var(--text)}
+#addr{flex:1;display:flex;align-items:center;gap:9px;height:34px;padding:0 14px;background:var(--surface-2);border:1px solid var(--border);border-radius:999px}
+#addr:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.18)}
+#addr svg{color:var(--muted);flex:none}
+#url{flex:1;background:none;border:0;outline:none;color:var(--text);font-size:13.5px;min-width:0;height:auto;padding:0;box-shadow:none!important}
+#stage{flex:1;position:relative;min-height:0}
+#views iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}#views iframe.on{display:block}
+#ntp{position:absolute;inset:0;overflow:auto;background:var(--bg)}
+.center{display:flex;flex-direction:column;align-items:center;padding:6vh 16px 40px}
+.logo{font-family:'Snell Roundhand','Brush Script MT',Georgia,serif;font-style:italic;font-size:clamp(56px,10vw,104px);line-height:1;margin:0;background:linear-gradient(180deg,#fff,var(--accent) 70%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 20px rgba(var(--accent-rgb),.4))}
+.tag{font-family:Georgia,serif;font-style:italic;color:var(--muted);margin:4px 0 26px}
+#search{width:min(600px,92%);display:flex;align-items:center;gap:12px;height:52px;padding:0 18px;background:var(--glass);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:16px;color:var(--muted)}
+#search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.18)}
+#q{flex:1;background:none;border:0;outline:none;color:var(--text);font-size:16px;height:auto;padding:0;box-shadow:none!important}
+#tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,92px));gap:20px 14px;justify-content:center;width:min(640px,94%);margin-top:30px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-size:12.5px;cursor:pointer;background:none;border:0}
+.tile .hicon{transition:transform .15s}.tile:hover .hicon{transform:translateY(-4px)}.tile:hover{color:var(--text)}
+#banner{display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:5;background:#2a1618;border:1px solid #7f1d1d;color:#fecaca;padding:10px 14px;border-radius:12px;font-size:13px;max-width:92%;gap:10px;align-items:center}
+#banner.on{display:flex}#banner button{background:#7f1d1d;color:#fff;border:0;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;white-space:nowrap}
+</style></head>
+<body>
+<div id="tabs"><button id="newtab" title="New tab"></button></div>
+<div id="nav">
+  <button class="nb" id="back" title="Back"></button><button class="nb" id="fwd" title="Forward"></button><button class="nb" id="reload" title="Reload"></button>
+  <div id="addr"><span id="lock"></span><input id="url" type="text" placeholder="Search or enter URL" autocomplete="off" spellcheck="false"></div>
+  <button class="nb" id="home" title="Home"></button>
+  <button class="nb" id="devtools" title="Inspect – developer tools"></button>
+</div>
+<div id="stage">
+  <div id="banner"><span id="bmsg"></span><button id="bgo">Re-check servers</button></div>
+  <div id="views"></div>
+  <div id="ntp"><div class="center"><h1 class="logo">herb</h1><div class="tag">search the web, your way</div>
+    <div id="search"><span id="sico"></span><input id="q" type="text" placeholder="Search or enter URL" autocomplete="off" spellcheck="false"></div>
+    <div id="tiles"></div></div></div>
+</div>
+<script src="/js/herb-settings.js"></script><script src="/js/icons.js"></script>
+<script src="/uv/uv.bundle.js"></script><script src="/uv/uv.config.js"></script><script src="/baremux/index.js"></script>
+<script src="/js/wisp-config.js"></script><script src="/js/proxy-init.js"></script>
+<script src="/js/browser.js"></script>
+</body></html>

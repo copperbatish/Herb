@@ -1,0 +1,2 @@
+@mercuryworkshop/libcurl-transport v1.5.2 (AGPL-3.0) bundling libcurl.js 0.7.4 (LGPL-3.0) and libcurl (curl license).
+Source: https://github.com/MercuryWorkshop/libcurl-transport and https://github.com/ading2210/libcurl.js

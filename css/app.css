@@ -1,0 +1,10 @@
+/* Shared look for app pages that live inside desktop windows */
+body{background:var(--surface);color:var(--text);font-size:14px;overflow:auto}
+.btn{background:rgba(var(--accent-rgb),.16);color:var(--text);border:1px solid rgba(var(--accent-rgb),.35);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;transition:background .15s}
+.btn:hover{background:rgba(var(--accent-rgb),.28)}
+.btn.primary{background:var(--accent);color:#04130c;border-color:transparent}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:var(--surface-2);border-color:var(--border)}
+input[type=text],input[type=url],select{height:38px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:0 12px;font-size:14px;outline:none;width:100%}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.18)}
+.muted{color:var(--muted)}

@@ -1,0 +1,222 @@
+:root{--tb:40px;--ti:24px;--di:58px;--dcell:104px}
+html[data-tbsize=small]{--tb:32px;--ti:19px}
+html[data-tbsize=large]{--tb:48px;--ti:30px}
+html[data-iconsize=small]{--di:44px;--dcell:88px}
+html[data-iconsize=large]{--di:76px;--dcell:124px}
+html,body{overflow:hidden;background:#050b08}
+#desktop{position:fixed;inset:0;background:var(--bg);overflow:hidden;user-select:none;-webkit-user-select:none}
+/* wallpaper scene */
+.moon{position:absolute;top:-80px;right:9%;width:240px;height:240px;border-radius:50%;background:var(--moon);box-shadow:0 0 110px 36px rgba(var(--accent-rgb),.22)}
+.hill{position:absolute;bottom:0;left:-5%;width:110%;height:24%;background:var(--hill);border-radius:50% 50% 0 0/100% 100% 0 0}
+.hill.b{height:17%;left:-34%;width:92%;background:var(--hill-2)}
+html.no-scene .moon,html.no-scene .hill{display:none}
+.firefly{position:absolute;width:5px;height:5px;border-radius:50%;background:#d9fbe8;box-shadow:0 0 10px 3px rgba(var(--accent-rgb),.7);animation:fly linear infinite;opacity:0}
+@keyframes fly{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}85%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}
+html.no-particles .firefly{display:none}
+/* work area (everything except the taskbar) */
+#wins,#icons{position:absolute;left:0;right:0;top:0;bottom:var(--tb)}
+html[data-tbpos=top] #wins,html[data-tbpos=top] #icons{top:var(--tb);bottom:0}
+html.tb-autohide #wins,html.tb-autohide #icons{top:0!important;bottom:0!important}
+#wins{pointer-events:none}
+/* desktop icons */
+#icons{overflow:hidden}
+html.no-icons #icons{display:none}
+.dicon{position:absolute;width:calc(var(--dcell) - 8px);display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;border:1px solid transparent;border-radius:6px;background:none;color:#fff;cursor:pointer;font-size:12.5px;font-weight:500;text-shadow:0 1px 4px rgba(0,0,0,.85);touch-action:none}
+html.th-snow .dicon{color:#10231a;text-shadow:0 1px 2px rgba(255,255,255,.7)}
+.dicon:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.16)}
+.dicon.sel{background:rgba(var(--accent-rgb),.28);border-color:rgba(var(--accent-rgb),.6)}
+.dicon.dragging{opacity:.8;z-index:5}
+.dicon .hicon{width:var(--di)!important;height:var(--di)!important}
+.dicon .hicon svg,.tbbtn .hicon svg,.sm-item .hicon svg{width:54%;height:54%}
+html.no-labels .dicon span.lbl{display:none}
+/* taskbar */
+#taskbar{position:absolute;left:0;right:0;bottom:0;height:var(--tb);z-index:9000;display:flex;align-items:stretch;background:var(--glass);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);border-top:1px solid rgba(255,255,255,.07);transition:transform .2s}
+html[data-tbpos=top] #taskbar{bottom:auto;top:0;border-top:0;border-bottom:1px solid rgba(255,255,255,.07)}
+html.tb-autohide #taskbar{transform:translateY(calc(100% - 2px))}
+html.tb-autohide[data-tbpos=top] #taskbar{transform:translateY(calc(-100% + 2px))}
+html.tb-autohide #taskbar:hover,html.tb-autohide #taskbar.peek{transform:none}
+html.no-blur #taskbar,html.no-blur .win,html.no-blur #start,html.no-blur #ctx{backdrop-filter:none;-webkit-backdrop-filter:none}
+#tbapps{display:flex;align-items:stretch;flex:1;min-width:0}
+html[data-tbalign=center] #tbapps{justify-content:center}
+html[data-tbalign=center] #tbtray{position:absolute;right:0;top:0;bottom:0}
+html[data-tbalign=center] #start-btn{position:absolute;left:0;top:0;bottom:0}
+.tbbtn{position:relative;width:calc(var(--tb) * 1.2);display:flex;align-items:center;justify-content:center;background:none;border:0;padding:0;cursor:pointer;color:var(--text);transition:background .12s}
+.tbbtn:hover{background:rgba(255,255,255,.1)}
+.tbbtn:active{background:rgba(255,255,255,.16)}
+.tbbtn .hicon{width:var(--ti)!important;height:var(--ti)!important;border-radius:5px!important;box-shadow:none!important}
+.tbbtn .run{position:absolute;left:22%;right:22%;bottom:0;height:3px;background:var(--text);opacity:0;border-radius:2px;transition:left .15s,right .15s,background .15s}
+.tbbtn.running .run{opacity:.55}
+.tbbtn.active .run{opacity:1;background:var(--accent);left:12%;right:12%}
+.tbbtn.active{background:rgba(255,255,255,.12)}
+html[data-tbpos=top] .tbbtn .run{bottom:auto;top:0}
+#start-btn{width:calc(var(--tb) * 1.25)}
+#start-btn svg{color:var(--accent)}
+#start-btn.on{background:rgba(255,255,255,.14)}
+#tbtray{display:flex;align-items:stretch;gap:2px;font-size:12px;color:var(--text)}
+html.no-tray #trayinfo{display:none}
+.tray{display:flex;align-items:center;gap:7px;padding:0 10px;background:none;border:0;color:inherit;cursor:pointer;font-size:12px}
+.tray:hover{background:rgba(255,255,255,.1)}
+.sdot{width:8px;height:8px;border-radius:50%;background:#6d8a79}.sdot.ok{background:#22c55e;box-shadow:0 0 8px #22c55e}.sdot.bad{background:#ef4444;box-shadow:0 0 8px #ef4444}
+#clock{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.25;padding:0 10px;cursor:default;text-align:center}
+html.no-date #clock .d{display:none}html.no-clock #clock{display:none}
+#showdesk{width:6px;border-left:1px solid rgba(255,255,255,.18);background:none;border-top:0;border-right:0;border-bottom:0;cursor:pointer;padding:0;margin-left:2px}
+#showdesk:hover{background:rgba(255,255,255,.22)}
+/* start menu */
+#start{position:absolute;bottom:var(--tb);left:0;z-index:8950;width:330px;max-height:calc(100% - var(--tb) - 20px);display:none;flex-direction:column;background:var(--glass);backdrop-filter:blur(30px) saturate(1.5);-webkit-backdrop-filter:blur(30px) saturate(1.5);border:1px solid rgba(255,255,255,.1);box-shadow:0 -8px 40px rgba(0,0,0,.45);overflow:hidden}
+html[data-tbpos=top] #start{bottom:auto;top:var(--tb)}
+html[data-tbalign=center] #start{left:50%;transform:translateX(-50%)}
+#start.on{display:flex;animation:rise .16s ease-out}
+html.no-anim #start.on{animation:none}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+html[data-tbalign=center] #start.on{animation:none}
+.sm-head{padding:16px 18px 6px;font-weight:700;letter-spacing:.02em;display:flex;align-items:center;gap:10px}
+.sm-head svg{color:var(--accent)}
+.sm-sec{padding:6px 18px 4px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.sm-apps{padding:4px 10px;overflow:auto}
+.sm-item{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;color:var(--text);text-align:left;padding:8px;border-radius:6px;cursor:pointer;font-size:13.5px}
+.sm-item:hover{background:rgba(255,255,255,.1)}
+.sm-item .hicon{width:30px!important;height:30px!important;border-radius:7px!important;box-shadow:none!important}
+.sm-foot{display:flex;border-top:1px solid rgba(255,255,255,.08);padding:6px}
+.sm-foot button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:none;border:0;color:var(--text);padding:10px 6px;border-radius:6px;cursor:pointer;font-size:12.5px}
+.sm-foot button:hover{background:rgba(255,255,255,.1)}
+/* context menu */
+#ctx{position:absolute;z-index:9500;min-width:210px;padding:4px;background:var(--glass);backdrop-filter:blur(24px);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.5);display:none}
+#ctx.on{display:block}
+#ctx button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;color:var(--text);text-align:left;padding:8px 12px;cursor:pointer;font-size:13px}
+#ctx button:hover{background:rgba(var(--accent-rgb),.25)}
+#ctx hr{border:0;border-top:1px solid var(--border);margin:4px 2px}
+/* windows (Windows 10 style: square-ish, controls on the right) */
+.win{position:absolute;pointer-events:auto;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 16px 50px rgba(0,0,0,.5);overflow:hidden;animation:pop .18s ease-out}
+html[data-radius=square] .win{border-radius:0}
+html[data-radius=round] .win{border-radius:14px}
+html.no-anim .win{animation:none}
+@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.win.focus{border-color:rgba(var(--accent-rgb),.7);box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.win.min{display:none}
+.win.max{inset:0!important;width:auto!important;height:auto!important;border-radius:0!important}
+.win .tb{height:34px;flex:none;display:flex;align-items:center;background:var(--surface-2);cursor:default;font-size:12.5px}
+.win:not(.focus) .tb{opacity:.8}
+.win .wi{display:flex;align-items:center;padding:0 8px 0 10px;color:var(--accent)}
+.win .ttl{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.win .wc{display:flex;height:100%}
+.wc button{width:46px;height:100%;background:none;border:0;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .1s}
+.wc button:hover{background:rgba(255,255,255,.12)}
+.wc button.c:hover{background:#e81123;color:#fff}
+.win .body{flex:1;position:relative;background:var(--surface);min-height:0}
+.win iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--surface)}
+#desktop.drag .win iframe{pointer-events:none}
+#desktop.drag{cursor:grabbing}
+.rz{position:absolute;z-index:5}
+.rz.n{top:-3px;left:10px;right:10px;height:7px;cursor:ns-resize}.rz.s{bottom:-3px;left:10px;right:10px;height:7px;cursor:ns-resize}
+.rz.e{right:-3px;top:10px;bottom:10px;width:7px;cursor:ew-resize}.rz.w{left:-3px;top:10px;bottom:10px;width:7px;cursor:ew-resize}
+.rz.ne{top:-3px;right:-3px;width:14px;height:14px;cursor:nesw-resize}.rz.nw{top:-3px;left:-3px;width:14px;height:14px;cursor:nwse-resize}
+.rz.se{bottom:-3px;right:-3px;width:14px;height:14px;cursor:nwse-resize}.rz.sw{bottom:-3px;left:-3px;width:14px;height:14px;cursor:nesw-resize}
+#snap{position:absolute;z-index:8000;border:2px solid var(--accent);background:rgba(var(--accent-rgb),.14);display:none;pointer-events:none}
+body.mobile .win{inset:0!important;width:auto!important;height:auto!important;border-radius:0}
+body.mobile .rz,body.mobile .wc .x{display:none}
+body.mobile #trayinfo .lbl{display:none}
+
+/* ===== interface modes ===== */
+.tbbtn .lbl{display:none}
+.win.bg{display:none}
+body.ui-standard .win,body.ui-ipad .win{animation:none}
+body.ui-standard .win .tb,body.ui-ipad .win .tb,body.ui-standard .rz,body.ui-ipad .rz{display:none}
+
+/* standard: a browser-style proxy page – the browser fills the window, apps live on a bottom bar */
+body.ui-standard{--tb:68px}
+body.ui-standard #wins,body.ui-standard #icons{top:0!important;bottom:var(--tb)!important}
+body.ui-standard #icons,body.ui-standard #start,body.ui-standard #start-btn,body.ui-standard #showdesk,body.ui-standard #tbtray{display:none!important}
+body.ui-standard #taskbar{top:auto;bottom:0;height:var(--tb);border-top:1px solid rgba(255,255,255,.08);border-bottom:0;transform:none!important;background:rgba(6,12,9,.94);padding:0 18px;align-items:center;justify-content:space-between}
+body.ui-standard .win{inset:0!important;width:auto!important;height:auto!important;border:0;border-radius:0;box-shadow:none}
+#stdinfo{display:none;font-size:11.5px;line-height:1.55;color:var(--muted);letter-spacing:.02em;white-space:nowrap}
+body.ui-standard #stdinfo{display:block}
+body.ui-standard #tbapps{flex:none;gap:4px;justify-content:flex-end}
+body.ui-standard .tbbtn{width:auto;height:54px;padding:0 16px;flex-direction:column;gap:5px;border-radius:10px;color:var(--muted)}
+body.ui-standard .tbbtn:hover{color:var(--text);background:rgba(255,255,255,.07)}
+body.ui-standard .tbbtn .lbl{display:block;font-size:12px;font-weight:500}
+body.ui-standard .tbbtn .run{display:none}
+body.ui-standard .tbbtn .hicon{width:24px!important;height:24px!important;background:none!important;box-shadow:none!important;color:inherit!important}
+body.ui-standard .tbbtn .hicon svg{width:100%;height:100%}
+body.ui-standard .tbbtn.active{color:var(--accent);background:none}
+body.ui-standard .tbbtn[data-app=browser]{order:1}body.ui-standard .tbbtn[data-app=games]{order:2}body.ui-standard .tbbtn[data-app=movies]{order:3}
+body.ui-standard .tbbtn[data-app=copperchat]{order:4}body.ui-standard .tbbtn[data-app=vm]{order:5}body.ui-standard .tbbtn[data-app=settings]{order:6}
+body.ui-standard .moon,body.ui-standard .hill,body.ui-standard #flies{display:none}
+
+/* iPadOS-style: home screen of big icons, floating dock, apps fill the screen */
+body.ui-ipad{--tb:0px}
+body.ui-ipad #taskbar,body.ui-ipad #start{display:none!important}
+body.ui-ipad #wins{top:34px!important;bottom:0!important}
+body.ui-ipad .win{inset:6px 14px 18px 44px!important;width:auto!important;height:auto!important;border-radius:24px!important;border:1px solid var(--border);box-shadow:0 24px 70px rgba(0,0,0,.55)}
+body.ui-ipad #icons{display:grid!important;top:34px!important;bottom:140px!important;grid-template-columns:repeat(4,116px);justify-content:center;align-content:start;gap:34px 30px;padding-top:7vh;overflow:visible;transition:opacity .25s,transform .25s}
+body.ui-ipad .dicon{position:static!important;left:auto!important;top:auto!important;width:auto;background:none!important;border-color:transparent!important;font-size:13.5px;font-weight:600;cursor:pointer}
+body.ui-ipad .dicon .hicon{width:78px!important;height:78px!important;border-radius:21px!important}
+body.ui-ipad .dicon:active .hicon{transform:scale(.92)}
+#ipbar{display:none;position:absolute;top:0;left:0;right:0;height:34px;z-index:8000;align-items:center;justify-content:space-between;padding:0 26px;font-size:13px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.5);pointer-events:none}
+body.ui-ipad #ipbar{display:flex}
+html.th-snow #ipbar{text-shadow:none}
+#ipstat{display:flex;align-items:center;gap:6px}
+#ipdock{display:none;position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:8900;gap:16px;padding:12px 16px;background:var(--glass);backdrop-filter:blur(26px) saturate(1.5);-webkit-backdrop-filter:blur(26px) saturate(1.5);border:1px solid rgba(255,255,255,.12);border-radius:32px;transition:opacity .25s,transform .25s}
+body.ui-ipad #ipdock{display:flex}
+#ipdock button{background:none;border:0;padding:0;cursor:pointer;transition:transform .15s}
+#ipdock button:hover{transform:translateY(-6px) scale(1.1)}
+#ipdock .hicon{box-shadow:0 4px 14px rgba(0,0,0,.35)!important}
+body.ui-ipad.app-open #icons,body.ui-ipad.app-open #ipdock{opacity:0;pointer-events:none;transform:scale(.96)}
+body.ui-ipad.app-open #ipdock{transform:translateX(-50%) translateY(20px)}
+#iphome{display:none;position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:9000;width:28px;height:116px;border-radius:16px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.14);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:var(--accent);cursor:pointer;padding:0;align-items:center;justify-content:center;transition:background .15s,width .15s,box-shadow .15s}
+body.ui-ipad.app-open #iphome{display:flex}
+#iphome:hover{background:rgba(var(--accent-rgb),.3);width:34px}
+#iphome.pulse{animation:hpulse 1.3s ease-out infinite}
+@keyframes hpulse{0%{box-shadow:0 0 0 0 rgba(var(--accent-rgb),.75)}100%{box-shadow:0 0 0 22px rgba(var(--accent-rgb),0)}}
+#iphelp{pointer-events:auto;background:rgba(255,255,255,.14);border:0;color:inherit;width:22px;height:22px;border-radius:50%;cursor:pointer;font-weight:700;font-size:12px;padding:0;margin-left:10px}
+#iphelp:hover{background:rgba(var(--accent-rgb),.4)}
+/* iPad tutorial card */
+#tut{position:absolute;z-index:9600;left:50%;bottom:150px;transform:translateX(-50%);width:min(420px,calc(100vw - 32px));padding:20px 22px;background:var(--glass);backdrop-filter:blur(26px) saturate(1.5);-webkit-backdrop-filter:blur(26px) saturate(1.5);border:1px solid rgba(var(--accent-rgb),.5);border-radius:20px;box-shadow:0 18px 60px rgba(0,0,0,.55);display:none}
+#tut.on{display:block;animation:rise .25s ease-out}
+body.app-open #tut{bottom:auto;top:50%;left:76px;transform:translateY(-50%)}
+#tut h3{margin:0 0 6px;font-size:17px}#tut p{margin:0;color:var(--muted);line-height:1.55;font-size:14px}
+#tut .steps{display:flex;gap:6px;margin-bottom:12px}#tut .steps i{width:22px;height:4px;border-radius:2px;background:var(--border)}#tut .steps i.on{background:var(--accent)}
+#tut .btns{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+#tut button{border:0;border-radius:10px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;background:var(--surface-2);color:var(--text)}
+#tut button.primary{background:var(--accent);color:#04130c}
+
+#ipedge{display:none;position:absolute;left:0;top:0;bottom:0;width:20px;z-index:8990;touch-action:none}
+body.ui-ipad.app-open #ipedge{display:block}
+
+/* iPad/Safari: iframes inside overflow:hidden + rounded + animated boxes can stay unpainted (black) until a zoom forces a repaint. Give the body/iframe their own composited layer and keep the clip off the iframe's ancestors. */
+.win .body{-webkit-transform:translateZ(0);transform:translateZ(0);isolation:isolate}
+.win iframe{-webkit-transform:translateZ(0);transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}
+body.ui-ipad .win{overflow:visible!important}
+body.ui-ipad .win .body{border-radius:0 0 24px 24px;overflow:hidden;-webkit-mask-image:-webkit-radial-gradient(white,black)}
+body.ui-ipad .win iframe{border-radius:inherit}
+
+/* accounts */
+#acctchip{max-width:150px}#acctchip .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.ui-standard #acctchip{position:static;flex:none;margin-left:10px;height:54px;padding:0 14px;border-radius:10px;flex-direction:column;gap:5px;justify-content:center}
+body.ui-standard #tbapps{flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}
+@media (max-width:1000px){body.ui-standard .tbbtn{padding:0 9px;flex:none}body.ui-standard .tbbtn .lbl{white-space:nowrap;font-size:11.5px}body.ui-standard #stdinfo{display:none}body.ui-standard #taskbar{justify-content:center}}
+body.ui-ipad #acctchip{display:inline-flex;margin-right:8px;color:inherit;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.12);height:24px;font-size:12px}
+body.ui-standard .tbbtn[data-app=mineplacer]{order:5}body.ui-standard .tbbtn[data-app=admin]{order:7}
+#acct{position:fixed;inset:0;z-index:9800;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:16px}
+#acct.on{display:flex}
+#acct .box{position:relative;width:min(380px,100%);background:var(--surface,#10201a);border:1px solid var(--border);border-radius:18px;padding:30px 28px 26px;box-shadow:0 24px 70px rgba(0,0,0,.6);color:var(--text)}
+#acct .box>div{display:flex;flex-direction:column;gap:14px}
+#acct h3{margin:0;font-size:20px;line-height:1.2}#acct .sub{margin:-6px 0 4px;color:var(--muted);font-size:13px;line-height:1.4}
+#acct .x{position:absolute;right:12px;top:12px;background:none;border:0;color:var(--muted);cursor:pointer;padding:6px;display:flex;border-radius:8px}#acct .x:hover{background:rgba(255,255,255,.08)}
+#acct .seg{display:flex;gap:4px;background:rgba(255,255,255,.06);border-radius:11px;padding:4px;margin-bottom:2px}
+#acct .seg button{flex:1;padding:9px;border:0;border-radius:8px;background:none;color:var(--muted);cursor:pointer;font:inherit;font-size:13.5px}
+#acct .seg button.on{background:var(--accent);color:#04130d;font-weight:700}
+#acct input{width:100%;box-sizing:border-box;padding:13px 14px;border-radius:11px;border:1px solid var(--border);background:rgba(255,255,255,.06);color:var(--text);font:inherit;font-size:16px;outline:0}
+#acct input:focus{border-color:var(--accent)}
+#acct .err{min-height:0;color:#f87171;font-size:12.5px;line-height:1.4}#acct .err:empty{display:none}
+#acct .go{padding:13px;border:0;border-radius:11px;background:var(--accent);color:#04130d;font:inherit;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
+#acct .go.alt{background:rgba(255,255,255,.1);color:var(--text)}#acct .go:disabled{opacity:.5}
+#acct .fine{margin:2px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+body.ui-standard .tbbtn[data-app=ai]{order:2}
+
+/* Saved to the home screen: keep Herb clear of the iPad's own clock/battery bar and the home indicator. */
+@media (display-mode: standalone){#desktop{top:env(safe-area-inset-top);bottom:env(safe-area-inset-bottom)}}
+
+/* Saved to the home screen: keep Herb clear of the iPad's own clock/battery bar and the home indicator. */
+@media (display-mode: standalone){#desktop{top:env(safe-area-inset-top);bottom:env(safe-area-inset-bottom)}}
+
+

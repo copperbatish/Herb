@@ -1,0 +1,17 @@
+/* Herb – shared design tokens + themes (shell and every app page) */
+:root{
+  --accent:#34d399; --accent-2:#10b981; --accent-rgb:52,211,153;
+  --text:#eaf5ee; --muted:#9fb8a9; --surface:#0f1b15; --surface-2:#16271f; --border:#24392f;
+  --glass:rgba(12,24,18,.72); --moon:radial-gradient(circle at 35% 35%,#e3fbee,#8fd9b3 55%,#4aa37b);
+  --bg:radial-gradient(ellipse at 78% 0%,#16402f 0%,#0b1c15 42%,#050b08 80%);
+  --hill:#06100b; --hill-2:#040a07; --radius:14px;
+  --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+html.th-dusk{--bg:radial-gradient(ellipse at 78% 0%,#5b2a6e 0%,#24123a 45%,#0b0614 85%);--moon:radial-gradient(circle at 35% 35%,#ffe9f3,#f2a6cf 55%,#b25a95);--hill:#0a0614;--hill-2:#06030d;--surface:#1a1229;--surface-2:#261a3a;--border:#3a2a55;--glass:rgba(24,14,40,.72);--muted:#b6a6cf}
+html.th-ocean{--bg:radial-gradient(ellipse at 78% 0%,#0f4d6b 0%,#09283b 45%,#030c14 85%);--moon:radial-gradient(circle at 35% 35%,#e8f8ff,#8ccbe6 55%,#3f87a8);--hill:#041620;--hill-2:#030e16;--surface:#0b1d2a;--surface-2:#112b3d;--border:#1d4059;--glass:rgba(8,24,36,.72);--muted:#9ab9c9}
+html.th-sunrise{--bg:radial-gradient(ellipse at 78% 0%,#a14b1a 0%,#4a1f14 45%,#140808 85%);--moon:radial-gradient(circle at 35% 35%,#fff3d6,#ffc069 55%,#d0742a);--hill:#120706;--hill-2:#0c0404;--surface:#211210;--surface-2:#2e1a16;--border:#4a2a22;--glass:rgba(32,16,12,.72);--muted:#cdae9d}
+html.th-graphite{--bg:linear-gradient(160deg,#1b1d20,#0c0d0f);--moon:radial-gradient(circle at 35% 35%,#f2f2f2,#9a9fa5 60%,#5d6166);--hill:#090a0b;--hill-2:#060707;--surface:#16181b;--surface-2:#1f2226;--border:#2f3338;--glass:rgba(20,22,25,.74);--muted:#a3a8ae}
+html.th-snow{--bg:linear-gradient(170deg,#e6f1eb,#c4dccf 60%,#a5c8b5);--moon:radial-gradient(circle at 35% 35%,#ffffff,#dbeee3 60%,#b4d4c2);--hill:#8fb6a0;--hill-2:#79a58d;--text:#10231a;--muted:#4b6558;--surface:#f3f8f5;--surface-2:#e2eee7;--border:#c3d8cb;--glass:rgba(244,250,246,.72)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:var(--font);color:var(--text)}
+button,input,select{font-family:inherit}

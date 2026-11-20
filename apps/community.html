@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Community app</title>
+<link rel="stylesheet" href="/css/herb.css"><link rel="stylesheet" href="/css/app.css">
+<style>
+html,body{height:100%;margin:0;overflow:hidden}body{display:flex;flex-direction:column}
+#bar{flex:none;display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--muted)}#bar b{color:var(--text);font-size:13.5px}
+#bar .tag{padding:2px 8px;border-radius:99px;border:1px solid var(--border)}
+#frame{flex:1;width:100%;border:0;background:#fff}
+#info{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center}#info .box{max-width:420px}
+#info h2{margin:0 0 8px;font-size:22px}#info p{color:var(--muted);line-height:1.6}
+</style></head><body>
+<div id="bar"><b id="t">Loading…</b><span id="by"></span><span class="tag" id="kind"></span></div>
+<div id="info" style="display:none"></div><iframe id="frame" style="display:none" sandbox="allow-scripts allow-forms allow-pointer-lock allow-modals" allow="fullscreen"></iframe>
+<script src="/js/herb-config.js"></script><script src="/js/herb-settings.js"></script>
+<script>
+var DB='https://copperchat-4cb91-default-rtdb.firebaseio.com/herb/store/',$=function(i){return document.getElementById(i)};
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function msg(h){$('frame').style.display='none';var i=$('info');i.style.display='flex';i.innerHTML='<div class="box">'+h+'</div>'}
+// Approved HTML apps run in a locked box: sandboxed (no access to Herb), and this policy blocks all network access.
+var CSP="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'unsafe-inline' https://cdnjs.cloudflare.com; img-src data: blob:; media-src data: blob:; font-src data: https://cdnjs.cloudflare.com; connect-src 'none'; frame-src 'none'; object-src 'none'; worker-src blob:; form-action 'none'; base-uri 'none'";
+function wrap(h){var m='<meta http-equiv="Content-Security-Policy" content="'+CSP+'">';
+  if(/<head[^>]*>/i.test(h))return h.replace(/<head[^>]*>/i,function(x){return x+m});
+  return '<!doctype html><html><head>'+m+'</head><body>'+h+'</body></html>'}
+var id=new URLSearchParams((window.HERB_QS!==undefined?window.HERB_QS:location.search)).get('id')||'';
+if(!/^[A-Za-z0-9_-]{5,80}$/.test(id))msg('<h2>App not found</h2>');
+else fetch(DB+'apps/'+id+'.json',{cache:'no-store'}).then(function(r){return r.json()}).then(function(a){
+  if(!a)return msg('<h2>This app was removed</h2><p>It is no longer in the store. You can uninstall it from the Herb App Store.</p>');
+  $('t').textContent=a.title;$('by').textContent='by '+a.byName;$('kind').textContent=a.kind==='link'?'Website':'Community app';
+  if(a.kind==='link'){
+    // Websites open inside this window. "direct" loads the site itself in a frame; "proxy" loads it through Herb's proxy browser.
+    var f=$('frame'),prox=a.mode==='proxy',url=a.url,own=/(^|\.)(herb-games\.(web\.app|firebaseapp\.com)|copperchat-4cb91\.(web\.app|firebaseapp\.com)|jsdelivr\.net)$/i;
+    try{if(own.test(new URL(url).hostname))return msg('<h2>This link isn\u2019t allowed</h2>')}catch(e){return msg('<h2>This link isn\u2019t valid</h2>')}
+    $('kind').textContent=prox?'Website · proxy':'Website';
+    f.removeAttribute('sandbox');
+    if(prox){f.src=(window.HerbConfig?HerbConfig.url('/apps/browser.html'):'/apps/browser.html')+'?url='+encodeURIComponent(url)}
+    else{f.setAttribute('credentialless','');f.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock allow-modals');f.src=url}
+    f.style.display='block';$('info').style.display='none';
+    var bar=$('bar'),o=document.createElement('span');o.style.cssText='margin-left:auto;display:flex;gap:8px';
+    o.innerHTML='<button class="btn" id="b1" style="padding:4px 10px;font-size:12px">'+(prox?'Open direct':'Use the proxy')+'</button><a class="btn" href="'+esc(url)+'" target="_blank" rel="noopener" style="padding:4px 10px;font-size:12px;text-decoration:none">New tab \u2197</a>';
+    bar.appendChild(o);
+    $('b1').onclick=function(){if(prox){var n=f.cloneNode(false);n.setAttribute('credentialless','');n.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock allow-modals');n.src=url;f.replaceWith(n);f=n;prox=false}else{var n2=f.cloneNode(false);n2.removeAttribute('credentialless');n2.removeAttribute('sandbox');n2.src=(window.HerbConfig?HerbConfig.url('/apps/browser.html'):'/apps/browser.html')+'?url='+encodeURIComponent(url);f.replaceWith(n2);f=n2;prox=true}$('b1').textContent=prox?'Open direct':'Use the proxy'};
+    return}
+  return fetch(DB+'files/'+id+'.json',{cache:'no-store'}).then(function(r){return r.json()}).then(function(h){
+    if(typeof h!=='string')return msg('<h2>Couldn’t load this app</h2>');
+    var f=$('frame');f.style.display='block';$('info').style.display='none';f.srcdoc=wrap(h)});
+}).catch(function(){msg('<h2>Couldn’t load this app</h2><p>Check your connection.</p>')});
+</script></body></html>

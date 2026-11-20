@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/images/logo/herb.svg" type="image/svg+xml"><title>Games</title>
+<link rel="stylesheet" href="/css/herb.css"><link rel="stylesheet" href="/css/app.css">
+<style>
+html,body{height:100%}
+body{margin:0;overflow:hidden;display:flex;flex-direction:column;background:var(--surface)}
+header{flex:none;display:flex;align-items:center;gap:14px;padding:14px 22px;background:linear-gradient(180deg,var(--surface-2),var(--surface));border-bottom:1px solid var(--border)}
+header h1{margin:0;font-size:22px;letter-spacing:.01em}
+.count{font-size:12px;font-weight:700;color:var(--accent);background:rgba(var(--accent-rgb),.16);border:1px solid rgba(var(--accent-rgb),.35);padding:2px 9px;border-radius:999px}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:3px}
+.tabs button{display:flex;align-items:center;gap:7px;background:none;border:0;color:var(--muted);padding:6px 14px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:600}
+.tabs button:hover{color:var(--text)}.tabs button.on{background:rgba(var(--accent-rgb),.22);color:var(--text)}
+.tabs button.on svg{color:var(--accent)}
+.soon{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:70%;padding:40px 20px}
+.soon .tag{margin:12px 0;padding:4px 12px;border-radius:999px;background:rgba(var(--accent-rgb),.18);border:1px solid rgba(var(--accent-rgb),.4);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.soon h2{margin:16px 0 0;font-size:24px;color:var(--text);text-transform:none;letter-spacing:0}
+.soon p{color:var(--muted);max-width:380px;line-height:1.6;margin:0}
+.search{flex:1;max-width:420px;margin-left:auto;display:flex;align-items:center;gap:10px;height:38px;padding:0 14px;background:var(--surface);border:1px solid var(--border);border-radius:999px;color:var(--muted)}
+.search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.18)}
+.search input{flex:1;height:auto;background:none;border:0;padding:0;box-shadow:none!important;color:var(--text);font-size:14px;outline:none;min-width:0}
+main{flex:1;overflow:auto;padding:8px 22px 28px;scroll-behavior:smooth}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:22px 0 12px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:16px}
+.card{position:relative;display:flex;flex-direction:column;padding:0;border:1px solid var(--border);border-radius:14px;background:var(--surface-2);color:var(--text);cursor:pointer;text-align:left;overflow:hidden;transition:transform .16s,border-color .16s,box-shadow .16s}
+.card:hover,.card:focus-visible{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 12px 28px rgba(0,0,0,.35),0 0 0 1px rgba(var(--accent-rgb),.4);outline:none}
+.thumb{position:relative;aspect-ratio:16/10;background:#000;overflow:hidden}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.card:hover .thumb img{transform:scale(1.06)}
+.thumb .fb{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:800;color:rgba(255,255,255,.92);text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.meta{padding:11px 12px 13px}
+.n{font-weight:700;font-size:13.5px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.d{color:var(--muted);font-size:11.5px;margin-top:3px}
+.empty{color:var(--muted);text-align:center;padding:60px 0}
+</style></head>
+<body>
+<header>
+  <h1>Games</h1><span class="count" id="count">0</span>
+  <div class="tabs" id="tabs"><button class="on" data-t="library"></button><button data-t="cloud"></button></div>
+  <label class="search"><span id="sico"></span><input id="f" type="text" placeholder="Search games" autocomplete="off" spellcheck="false"></label>
+</header>
+<main id="main"></main>
+<script src="/js/herb-config.js"></script><script src="/js/herb-settings.js"></script><script src="/js/icons.js"></script>
+<script>
+var GRADS=[['#60a5fa','#2563eb'],['#a78bfa','#6d28d9'],['#34d399','#047857'],['#fb7185','#be123c'],['#a3e635','#15803d'],['#38bdf8','#0369a1'],['#fbbf24','#b45309'],['#f472b6','#9333ea'],['#fb923c','#c2410c'],['#2dd4bf','#0f766e']];
+var RECENT_KEY='herb.recentgames',all=[],byFile={};
+function pretty(f){return f.replace(/\.html$/,'').replace(/[_-]+/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase()})}
+function hash(s){var h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
+function recents(){try{return JSON.parse(localStorage.getItem(RECENT_KEY)||'[]')}catch(e){return[]}}
+function pushRecent(f){var r=recents().filter(function(x){return x!==f});r.unshift(f);try{localStorage.setItem(RECENT_KEY,JSON.stringify(r.slice(0,8)))}catch(e){}}
+document.getElementById('sico').innerHTML=HerbIcons.glyph('search',16);
+var tab='library',tabsEl=document.getElementById('tabs');
+tabsEl.querySelector('[data-t=library]').innerHTML=HerbIcons.glyph('games',16)+'Library';tabsEl.querySelector('[data-t=cloud]').innerHTML=HerbIcons.glyph('cloud',16)+'Cloud';
+tabsEl.onclick=function(e){var b=e.target.closest('button');if(!b)return;tab=b.dataset.t;[].forEach.call(tabsEl.children,function(x){x.classList.toggle('on',x===b)});draw()};
+// an image that is (almost) one flat color is a failed/blank capture – fall back to the gradient tile
+function looksBlank(img){try{var c=document.createElement('canvas');c.width=16;c.height=10;var x=c.getContext('2d');x.drawImage(img,0,0,16,10);var d=x.getImageData(0,0,16,10).data,sum=0,sq=0,n=d.length/4;
+ for(var i=0;i<d.length;i+=4){var l=.3*d[i]+.59*d[i+1]+.11*d[i+2];sum+=l;sq+=l*l}var m=sum/n;return Math.sqrt(Math.max(0,sq/n-m*m))<6}catch(e){return false}}
+function card(g){
+  var b=document.createElement('button');b.className='card';b.title=g.title;
+  var gr=GRADS[hash(g.file)%GRADS.length];
+  b.innerHTML='<div class="thumb" style="background:linear-gradient(145deg,'+gr[0]+','+gr[1]+')"><span class="fb">'+g.title.charAt(0).toUpperCase()+'</span></div><div class="meta"><div class="n"></div></div>';
+  b.querySelector('.n').textContent=g.title;
+  var im=new Image();im.alt='';im.onload=function(){if(looksBlank(im))return;var t=b.querySelector('.thumb');t.querySelector('.fb').remove();t.insertBefore(im,t.firstChild)};
+  im.src=HerbConfig.asset('/games/icons/'+encodeURIComponent(g.file.replace(/\.html$/,''))+'.jpg');
+  b.onclick=function(){pushRecent(g.file);try{parent.HerbDesktop.openLocal('game:'+g.file,g.title,'/games/'+encodeURIComponent(g.file))}catch(e){window.open('/games/'+encodeURIComponent(g.file))}if(!document.getElementById('f').value)draw()};
+  return b}
+function section(title,list){var wrap=document.createDocumentFragment();if(title){var h=document.createElement('h2');h.textContent=title;wrap.appendChild(h)}
+  var g=document.createElement('div');g.className='grid';list.forEach(function(x){g.appendChild(card(x))});wrap.appendChild(g);return wrap}
+function draw(){if(tab==='cloud'){var cm=document.getElementById('main');cm.innerHTML='<h2>Cloud games</h2><div class="grid" id="cg"></div><div class="empty" style="padding:28px 0 0">More cloud games are coming soon.</div>';var cb=document.createElement('button');cb.className='card';cb.title='Mineplacer';cb.innerHTML='<div class="thumb" style="background:linear-gradient(145deg,#a78bfa,#6d28d9);display:flex;align-items:center;justify-content:center;color:#fff">'+HerbIcons.glyph('mineplacer',54,1.5)+'</div><div class="meta"><div class="n">Mineplacer</div></div>';cb.onclick=function(){try{parent.HerbDesktop.open('mineplacer')}catch(e){window.open('/mineplacer/index.html')}};document.getElementById('cg').appendChild(cb);document.querySelector('.search').style.visibility='hidden';document.getElementById('count').style.visibility='hidden';return}document.querySelector('.search').style.visibility='';document.getElementById('count').style.visibility='';var q=document.getElementById('f').value.trim().toLowerCase(),m=document.getElementById('main'),top=m.scrollTop;m.innerHTML='';
+  var list=all.filter(function(i){return i.title.toLowerCase().indexOf(q)>=0});
+  if(!list.length){m.innerHTML='<div class="empty">No games match “'+q.replace(/</g,'&lt;')+'”.</div>';return}
+  if(!q){var r=recents().map(function(f){return byFile[f]}).filter(Boolean);if(r.length)m.appendChild(section('Recently played',r))}
+  m.appendChild(section(q?list.length+' result'+(list.length===1?'':'s'):'All games',list));m.scrollTop=top}
+HerbConfig.json('/games/games.json').then(function(list){
+  all=list.map(function(g){return{file:g.file,title:pretty(g.file),mb:g.mb}}).sort(function(a,b){return a.title.localeCompare(b.title,undefined,{numeric:true})});
+  all.forEach(function(g){byFile[g.file]=g});document.getElementById('count').textContent=all.length;draw()
+}).catch(function(){document.getElementById('main').innerHTML='<div class="empty">Could not load the game list.</div>'});
+document.getElementById('f').oninput=draw;
+</script></body></html>

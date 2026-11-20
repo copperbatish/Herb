@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/images/logo/herb.svg" type="image/svg+xml"><title>Coming soon</title>
+<link rel="stylesheet" href="/css/herb.css"><link rel="stylesheet" href="/css/app.css">
+<style>
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;overflow:hidden;background:var(--bg)}
+.card{text-align:center;padding:32px;max-width:420px}
+.card .hicon{margin-bottom:18px}
+h1{margin:0 0 6px;font-size:28px}
+.tag{display:inline-block;margin:6px 0 14px;padding:4px 12px;border-radius:999px;background:rgba(var(--accent-rgb),.18);border:1px solid rgba(var(--accent-rgb),.4);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+p{color:var(--muted);line-height:1.6;margin:0}
+</style></head>
+<body><div class="card"><div id="ico"></div><h1 id="t">Movies</h1><div class="tag">Coming soon</div><p id="d">We’re working on this. Check back later.</p></div>
+<script src="/js/herb-settings.js"></script><script src="/js/icons.js"></script>
+<script>
+var q=new URLSearchParams(location.search),app=q.get('app')||'movies';
+var info={movies:['Movies','movies','Movies are on the way. Herb will list free, legal streaming sources here.']};
+var i=info[app]||info.movies;document.getElementById('t').textContent=i[0];document.getElementById('d').textContent=i[2];document.getElementById('ico').innerHTML=HerbIcons.tile(i[1],84);
+</script></body></html>

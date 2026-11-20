@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/images/logo/herb.svg" type="image/svg+xml"><title>Virtual Machine</title>
+<link rel="stylesheet" href="/css/herb.css"><link rel="stylesheet" href="/css/app.css">
+<style>
+:root{--strip:0px}
+body{margin:0;height:100vh;overflow:hidden;background:var(--bg)}
+.stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+.card{width:min(460px,100%);text-align:center}
+.card h1{margin:16px 0 4px;font-size:26px}
+.card p{color:var(--muted);line-height:1.6;margin:8px 0 0}
+.tag{display:inline-block;margin:6px 0 4px;padding:3px 11px;border-radius:999px;background:rgba(var(--accent-rgb),.18);border:1px solid rgba(var(--accent-rgb),.4);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.btn.big{margin-top:22px;padding:12px 30px;font-size:15px}
+.warn{margin-top:20px;text-align:left;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:12.5px;color:var(--muted);line-height:1.55}
+.warn b{color:var(--text)}
+.hide{display:none!important}
+.opt{display:flex;align-items:flex-start;gap:10px;justify-content:center;margin-top:16px;font-size:13px;color:var(--muted);text-align:left;cursor:pointer}
+.opt input{width:auto;height:auto;margin-top:3px;accent-color:var(--accent)}
+.opt b{color:var(--text)}
+.slots{display:inline-flex;align-items:center;gap:8px;margin-top:14px;font-size:12.5px;color:var(--muted)}
+.slots i{width:11px;height:11px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);display:inline-block}
+.slots i.on{background:var(--accent);border-color:var(--accent)}
+/* waiting / setup panel */
+.pos{font-size:64px;font-weight:800;line-height:1;margin:14px 0 4px;color:var(--accent)}
+.sub{color:var(--muted);font-size:13px}
+.steps{margin:22px 0 0;text-align:left;display:flex;flex-direction:column;gap:12px}
+.step{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted)}
+.step .dot{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.step.on{color:var(--text)}.step.on .dot{border-color:var(--accent);border-top-color:transparent;animation:spin .9s linear infinite}
+.step.done{color:var(--text)}.step.done .dot{background:var(--accent);border-color:var(--accent);color:#04130c;animation:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bar{height:8px;border-radius:99px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden;margin-top:18px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#6ee7b7);transition:width .3s}
+/* top strip + frame */
+#strip{position:absolute;left:0;right:0;top:0;height:40px;z-index:5;display:flex;align-items:center;justify-content:center;gap:14px;padding:0 14px;background:var(--surface-2);border-bottom:1px solid var(--accent);font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden}
+#strip b{color:var(--accent)}
+#strip button{background:var(--accent);color:#04130c;border:0;border-radius:8px;padding:6px 14px;font-weight:700;font-size:12.5px;cursor:pointer}
+#strip.warn{background:rgba(251,191,36,.18);border-bottom-color:#fbbf24}
+#strip.warn b{color:#fbbf24}
+#strip.go{background:rgba(var(--accent-rgb),.22);animation:glow 1.4s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:inset 0 0 0 2px var(--accent)}}
+iframe{position:absolute;left:0;right:0;top:var(--strip);bottom:0;width:100%;height:calc(100% - var(--strip));border:0;background:#000;display:none}
+</style></head>
+<body>
+<div id="strip" class="hide"></div>
+
+<div class="stage" id="idle"><div class="card"><span id="ico"></span><h1>Firefox</h1><div class="tag">Runs in your browser</div>
+<p>A full copy of the Firefox engine, running inside this tab and browsing through Herb’s proxy server.</p>
+<button class="btn primary big" id="open">Open Firefox</button>
+<div class="slots hide" id="slots"><span id="dots"></span><span id="slotsT"></span></div>
+<label class="opt" id="liteopt"><input type="checkbox" id="lite" checked><span><b>Lite mode</b> – uses less memory, CPU and graphics (smaller picture, 30 fps, lighter settings). Turn off for full quality.</span></label>
+<div class="warn" id="headsup"><b>Heads up:</b> about 50 MB downloads the first time, and it needs plenty of memory (several GB of RAM). Only <b>3 people</b> can run Firefox at once, for <b>20 minutes</b> each – if it’s full you’ll wait in line and can use the Firefox-style browser meanwhile.</div>
+<div class="warn hide" id="nosupport"><b>Compatibility mode:</b> this device can’t run the full Firefox engine (Safari on iPhone and iPad doesn’t support what it needs). So Open Firefox will start a Firefox-style browser that works here instead, and it browses through Herb’s proxy.</div></div></div>
+
+<div class="stage hide" id="wait"><div class="card">
+  <div class="sub" id="qlabel">Getting you a spot…</div>
+  <div class="pos hide" id="pos">1</div>
+  <div class="sub" id="qsub"></div>
+  <div class="bar"><i id="barfill"></i></div>
+  <div class="sub" id="pct" style="margin-top:8px">Installing…</div>
+  <div class="steps">
+    <div class="step on" id="s1"><span class="dot"></span><span id="s1t">Joining the queue</span></div>
+    <div class="step on" id="s2"><span class="dot"></span><span id="s2t">Installing Firefox</span></div>
+    <div class="step" id="s3"><span class="dot"></span><span>Starting Firefox</span></div>
+  </div>
+  <button class="btn primary big hide" id="waitbrowse">Use the Firefox-style browser while you wait</button>
+</div></div>
+
+<div class="stage hide" id="ended"><div class="card"><span id="icoend"></span><h1>Time’s up</h1><p>Your 20 minutes are over, so the next person can use Firefox. Thanks for sharing the spot!</p><button class="btn primary big" id="again">Get back in line</button></div></div>
+
+<iframe id="f" allow="cross-origin-isolated; fullscreen; clipboard-read; clipboard-write; autoplay; microphone; camera"></iframe>
+<script src="/js/vendor/firebase-app-compat.js"></script><script src="/js/vendor/firebase-database-compat.js"></script>
+<script src="/js/herb-settings.js"></script><script src="/js/icons.js"></script><script src="/js/vm-queue.js"></script>
+<script>
+document.getElementById('ico').innerHTML=HerbIcons.tile('vm',76);document.getElementById('icoend').innerHTML=HerbIcons.tile('vm',64);
+var $=function(i){return document.getElementById(i)};
+var FILES=['/firefox/gecko.wasm.zst','/firefox/chrome-assets.tar.zst'];   // swapped for small files in compatibility mode
+var supported=(typeof WebAssembly!=='undefined')&&typeof WebAssembly.Suspending==='function'&&typeof WebAssembly.promising==='function';
+var compat=!supported;
+var running=false,ctl=null,installed=false,granted=false,inWaitingRoom=false,started=false,endsAtMs=0,clockT=null;
+function fmt(ms){ms=Math.max(0,ms);var t=Math.ceil(ms/1000),m=Math.floor(t/60),s=t%60;return m+':'+(s<10?'0':'')+s}
+function tick(){
+  if(!endsAtMs||!window.HerbQueue)return;var left=endsAtMs-Date.now();
+  if(left<=0){endSession();return}
+  if(started&&!inWaitingRoom){showStrip('Firefox session · <b>'+fmt(left)+'</b> left'+(left<=120000?' – wrapping up soon':''),left<=120000?'warn':'')}
+  else if(inWaitingRoom&&granted&&!started){paintStrip(lastState)}
+}
+function startClock(){if(!clockT)clockT=setInterval(tick,1000)}
+function endSession(){ // time is up: free the spot for the next person
+  clearInterval(clockT);clockT=null;endsAtMs=0;if(ctl){ctl.leave();ctl=null}
+  var f=$('f');f.style.display='none';f.src='about:blank';hideStrip();$('wait').classList.add('hide');$('idle').classList.add('hide');$('ended').classList.remove('hide');
+}
+function resetForNewSession(){running=false;granted=false;started=false;inWaitingRoom=false;installed=true;endsAtMs=0;mark('s1','on');$('s1t').textContent='Joining the queue';mark('s3',null);$('qlabel').textContent='Getting you a spot…';$('pos').classList.add('hide');$('qsub').textContent='';$('waitbrowse').classList.add('hide')}
+function mark(id,state){var e=$(id);e.classList.remove('on','done');if(state)e.classList.add(state);e.querySelector('.dot').textContent=state==='done'?'✓':''}
+function showStrip(html,cls){var s=$('strip');s.className=cls||'';s.innerHTML=html;document.documentElement.style.setProperty('--strip','40px')}
+function hideStrip(){$('strip').className='hide';document.documentElement.style.setProperty('--strip','0px')}
+function firefoxUrl(){return '/firefox/?autostart=1'+($('lite').checked?'&lite=1':'')}
+
+// ---- idle screen: live slot counter (real full Firefox only) ----
+if(compat){$('liteopt').classList.add('hide');$('headsup').classList.add('hide');$('nosupport').classList.remove('hide');FILES=['/apps/fox.html','/js/browser.js','/js/proxy-init.js','/uv/uv.bundle.js','/baremux/index.js'];}
+else if(window.HerbQueue&&HerbQueue.available()){
+  $('slots').classList.remove('hide');
+  HerbQueue.watch(function(s){var d='';for(var i=0;i<HerbQueue.MAX;i++)d+='<i class="'+(i<s.active?'on':'')+'"></i>';$('dots').innerHTML=d;
+    $('slotsT').textContent=s.full?'Firefox is full ('+s.active+' of '+HerbQueue.MAX+' in use)'+(s.waiting?' · '+s.waiting+' waiting':''):s.active+' of '+HerbQueue.MAX+' Firefox spots in use';});
+}
+try{var sv=localStorage.getItem('herb.ffLite');if(sv!==null)$('lite').checked=sv==='1'}catch(e){}
+$('lite').onchange=function(){try{localStorage.setItem('herb.ffLite',this.checked?'1':'0')}catch(e){}};
+
+// ---- "install": warm the browser cache with the files Firefox needs ----
+function install(onProgress){
+  var total=0,loaded=0;
+  return Promise.all(FILES.map(function(u){return fetch(u,{method:'HEAD'}).then(function(r){total+=+r.headers.get('content-length')||0}).catch(function(){})})).then(function(){
+    return Promise.all(FILES.map(function(u){return fetch(u).then(function(r){
+      var rd=r.body.getReader();return(function pump(){return rd.read().then(function(x){if(x.done)return;loaded+=x.value.length;onProgress(loaded,total);return pump()})})()
+    }).catch(function(){})}))});
+}
+
+// ---- starting the real thing ----
+function launch(){
+  if(started||!(granted&&installed))return;started=true;
+  startClock();mark('s3','on');$('qlabel').textContent='Starting Firefox…';$('pct').textContent='Almost there…';
+  setTimeout(function(){var f=$('f');f.src=compat?'/apps/fox.html':firefoxUrl();f.style.display='block';$('wait').classList.add('hide');hideStrip()},600);
+}
+function toWaitingRoom(){ // let people use the Firefox-style browser while they wait
+  inWaitingRoom=true;$('wait').classList.add('hide');var f=$('f');f.src='/apps/fox.html';f.style.display='block';paintStrip(lastState);
+}
+var lastState=null;
+function paintStrip(s){
+  if(!inWaitingRoom||started)return;
+  if(s&&s.state==='waiting')showStrip('Firefox is full ('+HerbQueue.MAX+' of '+HerbQueue.MAX+' in use) · You’re <b>#'+s.position+'</b> in line · keep browsing below while you wait');
+  else if(granted)showStrip((installed?'<b>It’s your turn!</b> Your 20 minutes are running – '+(endsAtMs?'<b>'+fmt(endsAtMs-Date.now())+'</b> left. ':'')+'<button id="gofx">Start Firefox</button>':'<b>It’s your turn!</b> Finishing install…'),'go');
+  var b=$('gofx');if(b)b.onclick=function(){inWaitingRoom=false;launch()};
+}
+function onQueue(s){
+  lastState=s;
+  if(s.state==='connecting'){return}
+  if(s.state==='unavailable'){ // can't reach the queue: don't block anyone
+    if(!granted){granted=true;mark('s1','done');$('s1t').textContent='Ready (queue offline)';$('qlabel').textContent='Setting up…';}
+    return launchIfReady();
+  }
+  if(s.state==='expired'){endSession();return}
+  if(s.state==='active'){
+    if(s.endsAt){endsAtMs=s.endsAt;startClock()}
+    if(!granted){granted=true;mark('s1','done');$('s1t').textContent='You have a Firefox spot';$('qlabel').textContent='It’s your turn';$('pos').classList.add('hide');$('qsub').textContent='';$('waitbrowse').classList.add('hide')}
+    if(inWaitingRoom)paintStrip(s);else launchIfReady();
+  }else if(s.state==='waiting'){
+    if(granted){return}
+    $('qlabel').textContent='Firefox is full right now';$('pos').classList.remove('hide');$('pos').textContent='#'+s.position;
+    $('qsub').textContent=(s.ahead===0?'You’re next':s.ahead+' '+(s.ahead===1?'person':'people')+' ahead of you')+' · '+HerbQueue.MAX+' of '+HerbQueue.MAX+' spots in use';
+    $('s1t').textContent='Waiting in line';$('waitbrowse').classList.remove('hide');paintStrip(s);
+  }
+}
+function launchIfReady(){if(inWaitingRoom){paintStrip(lastState);return}launch()}
+
+function start(){
+  if(running)return;running=true;$('idle').classList.add('hide');$('wait').classList.remove('hide');
+  var mb=function(n){return(n/1048576).toFixed(0)};
+  install(function(l,tot){var p=tot?Math.min(100,Math.round(l/tot*100)):0;$('barfill').style.width=p+'%';$('pct').textContent='Installing Firefox… '+p+'% ('+mb(l)+' of '+mb(tot)+' MB)'})
+    .then(function(){$('barfill').style.width='100%';mark('s2','done');$('s2t').textContent='Firefox installed';installed=true;if(inWaitingRoom)paintStrip(lastState);else launchIfReady()});
+  if(compat){ // the Firefox-style browser is not a VM, so no queue
+    granted=true;mark('s1','done');$('s1t').textContent='Ready';$('qlabel').textContent='Setting up…';
+  }else{
+    if(window.HerbQueue){ctl=HerbQueue.join('firefox',onQueue)}
+    else{granted=true;mark('s1','done');$('s1t').textContent='Ready (queue offline)';$('qlabel').textContent='Setting up…'}  // queue script blocked: don't block anyone
+  }
+}
+$('open').onclick=start;
+$('again').onclick=function(){$('ended').classList.add('hide');resetForNewSession();$('idle').classList.remove('hide');start()};
+$('waitbrowse').onclick=toWaitingRoom;
+addEventListener('pagehide',function(){if(ctl)ctl.leave()});
+</script></body></html>
