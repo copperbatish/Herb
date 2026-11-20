@@ -40,7 +40,7 @@
       dyn[id].classList.add('running'); dyn[id].classList.toggle('active', focused === id && !wins[id].el.classList.contains('min'));
     });
     Object.keys(dyn).forEach(function (id) { if (!wins[id]) { dyn[id].remove(); delete dyn[id]; } });
-    APPS.forEach(function (a) { var b = tbBtns[a.id], w = wins[a.id];
+    APPS.forEach(function (a) { var b = tbBtns[a.id], w = wins[a.id]; if (!b) return;   // store apps have no button on the standard bar
       b.classList.toggle('running', !!w); b.classList.toggle('active', !!w && focused === a.id && !w.el.classList.contains('min')); });
   }
   $('showdesk').onclick = function () {
