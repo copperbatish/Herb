@@ -115,9 +115,9 @@
         var pre = (window.HERB_SHIM ? '<script>' + window.HERB_SHIM + '<\/script>' : '') + '<script>window.HERB_QS=' + JSON.stringify(qs) + ';window.HERB_SINGLE_FILE=true;window.HERB_CONFIG={serverUrl:' + JSON.stringify(server()) + '}<\/script>';
         frame.srcdoc = rootFix(apps[path]).replace(/<head[^>]*>/i, function (m) { return m + '<base href="' + server() + '/">' + pre; });
       } else if (SW_APPS.indexOf(path) >= 0) {   // proxy apps need a real origin for their service worker; a CDN can't give them one
-        var host = clean(ls(HKEY));
+        var host = clean(ls(HKEY)) || DEFAULT_API_URL;
         if (host) { frame.src = host + src; openChip(frame, host + src); }
-        else frame.srcdoc = '<body style="margin:0;background:#0b1c15;color:#cde7dc;font:15px/1.5 system-ui;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;padding:24px"><div><b>This app needs a proxy host</b><br>It uses a service worker, which GitHub/jsDelivr can\u2019t provide.<br>Click the gear in the taskbar and enter the address of a host that serves Herb (GitHub Pages works).</div></body>';
+        else frame.srcdoc = '<body style="margin:0;background:#0b1c15;color:#cde7dc;font:15px/1.5 system-ui;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;padding:24px"><div><b>This app needs a proxy host</b><br>It uses a service worker, which GitHub/jsDelivr can\u2019t provide.<br>Click the gear in the taskbar and enter the address of a host that serves Herb.</div></body>';
       } else if (/cdn\.jsdelivr\.net/.test(server())) { C.htmlFrame(frame, server() + path + qs); }
       else { frame.src = server() + src; checkVersion(); openChip(frame, server() + src); }
     },
@@ -133,7 +133,7 @@
     var b = document.createElement('button'); b.className = 'tray'; b.id = 'srvgear'; b.title = 'Proxy host for browser/movies/VM';
     b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>';
     b.onclick = function () {
-      var v = prompt('Proxy host for the browser, movies, VM and Firefox apps.\nA site that serves Herb with service workers (e.g. https://yourname.github.io/Herb). Leave empty to clear.', ls(HKEY) || '');
+      var v = prompt('Proxy host for the browser, movies, VM and Firefox apps (default: the Wisp VM).\nLeave empty to use the default.', ls(HKEY) || '');
       if (v === null) return;
       if (v.trim() && !clean(v)) { alert('That doesn\u2019t look like a web address. Use something like https://example.com'); return; }
       ls(HKEY, clean(v) || null); location.reload();

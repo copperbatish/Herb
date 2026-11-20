@@ -10,12 +10,19 @@
 // (a) adds YOUR TURN server first and (b) uses iceTransportPolicy "relay", sending all media through that server.
 // Leave TURN.urls empty to disable it completely (nothing is injected).
 var TURN = {
-    // Herb's own coturn relay on the Wisp VM. TLS/TCP first so it works when UDP is blocked; plain UDP last.
-    urls: ['turns:129-158-194-64.nip.io:5349?transport=tcp', 'turn:129-158-194-64.nip.io:3478?transport=tcp', 'turn:129-158-194-64.nip.io:3478'],
-    username: 'herb',
-    credential: 'mWuP1xAAiopf4odUVKfefUvPgudVmChR',
+    // No password lives in this file. The Wisp VM mints short-lived TURN credentials (coturn "REST API" auth: username = expiry
+    // timestamp, credential = HMAC of it with a secret that only the VM knows) and the service worker fetches them from here.
+    api: 'https://129-158-194-64.nip.io/api/turn',
     hosts: '(^|\\.)(geforcenow\\.com|nvidiagrid\\.net)$',   // regex of proxied site hostnames that get the wrapper
 };
+var __turnCreds = null, __turnAt = 0;
+function herbRefreshTurn() {   // service worker only; credentials last 1 hour on the server, refreshed every 30 minutes
+    if (typeof ServiceWorkerGlobalScope === 'undefined' || !TURN.api || Date.now() - __turnAt < 30 * 60 * 1000) return;
+    __turnAt = Date.now();
+    fetch(TURN.api, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+        if (j && j.urls && j.username && j.credential) __turnCreds = j; else __turnAt = 0;
+    }).catch(function () { __turnAt = 0; });
+}
 
 function herbTurnInjection(cfg) {
     // This function's body is serialised and runs INSIDE the proxied page, before the page's own scripts.
@@ -53,10 +60,15 @@ function herbTurnInjection(cfg) {
 }
 
 var __herbInject = [];
-if (TURN.urls && TURN.urls.length) {
+if (TURN.api) {
+    herbRefreshTurn();
+    // `html` is a getter: UV reads it on every page load, so it always uses the latest credentials (nothing is injected until they arrive).
     __herbInject.push({
         host: TURN.hosts, injectTo: 'head',
-        html: '<script>(' + herbTurnInjection.toString() + ')(' + JSON.stringify({ urls: TURN.urls, username: TURN.username, credential: TURN.credential }) + ');</script>',
+        get html() {
+            herbRefreshTurn();
+            return __turnCreds ? '<script>(' + herbTurnInjection.toString() + ')(' + JSON.stringify(__turnCreds) + ');</script>' : '';
+        },
     });
 }
 
