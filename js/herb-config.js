@@ -14,7 +14,7 @@
   var CDN_JSON = { '/games/games.json': '/games/games.json', '/apps/shows.json': '/shows.json' }, REPO_OF = {};
   var SW_APPS = ['/apps/browser.html', '/apps/vm.html', '/apps/movies.html', '/apps/cloud.html', '/apps/fox.html'], HKEY = 'herb.hostUrl';
   function rootFix(h) { return h.replace(/(\s(?:src|href|action|poster)=["'])\/(?!\/)/gi, '$1' + server() + '/'); }
-  function cdnOn() { return window.HERB_CDN === true || (window.HERB_CDN !== false && single); }
+  function cdnOn() { return window.HERB_CDN !== false; }   // games, icons and catalogs always come from GitHub; set window.HERB_CDN = false to use this server's own copies
   var single = window.HERB_SINGLE_FILE === true || location.protocol === 'file:' || !!(window.HERB_CONFIG && window.HERB_CONFIG.serverUrl);
   function ready(fn) { if (document.readyState === 'loading') addEventListener('DOMContentLoaded', fn); else fn(); }
   function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} return null; }
