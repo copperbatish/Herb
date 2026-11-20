@@ -54,7 +54,18 @@
     if (v.trim() && !clean(v)) { alert('Use a full address like https://example.com'); return; }
     try { if (v.trim()) localStorage.setItem(KEY, clean(v)); else localStorage.removeItem(KEY); } catch (e) {} location.reload();
   };
-  Promise.all([get('/dist/herb.css'), get('/dist/herb.js')]).then(function (r) {
+  // jsDelivr can keep serving an old copy of a branch (@main) for hours. For GitHub-hosted bundles, ask GitHub for the newest commit and
+  // load the bundle at that exact commit instead: new commits show up straight away. Falls back to @main if GitHub can't be reached.
+  function pin() {
+    var m = /^(https:\/\/cdn\.jsdelivr\.net\/gh\/([^\/]+)\/([^\/@]+))@main$/.exec(bundle); if (!m) return Promise.resolve();
+    var c = null; try { c = JSON.parse(ls(C + 'sha') || 'null'); } catch (e) {}
+    if (c && c.s && Date.now() - c.t < 120000) { bundle = m[1] + '@' + c.s; return Promise.resolve(); }
+    var ac = typeof AbortController === 'function' ? new AbortController() : null, tm = ac && setTimeout(function () { ac.abort(); }, 3500);
+    return fetch('https://api.github.com/repos/' + m[2] + '/' + m[3] + '/commits/main', { headers: { Accept: 'application/vnd.github.sha' }, cache: 'no-store', signal: ac ? ac.signal : undefined })
+      .then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) { t = String(t).trim(); if (/^[0-9a-f]{40}$/.test(t)) { bundle = m[1] + '@' + t; ls(C + 'sha', JSON.stringify({ s: t, t: Date.now() })); } })
+      .catch(function () {}).then(function () { if (tm) clearTimeout(tm); });
+  }
+  pin().then(function () { return Promise.all([get('/dist/herb.css'), get('/dist/herb.js')]); }).then(function (r) {
     ls(C + 'css', r[0]); ls(C + 'js', r[1]);       // last working bundle, kept as the offline fallback (skipped quietly if storage is full)
     start(r[0], r[1], 'live');
   }).catch(function (e) {
