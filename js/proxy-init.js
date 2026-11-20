@@ -18,8 +18,10 @@
     return reg;
   }
 
-  var applied = null;
-  async function applyTransport() {
+  var applied = null, chain = Promise.resolve();
+  // one at a time: a second setTransport while the first is still loading libcurl resets it ("wasm not loaded yet")
+  function applyTransport() { chain = chain.then(doApply, doApply); return chain; }
+  async function doApply() {
     var url = await HerbWisp.ensure();
     if (url === applied) return;
     if (!connection) connection = new BareMux.BareMuxConnection('/baremux/worker.js');
