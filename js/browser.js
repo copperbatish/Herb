@@ -56,13 +56,13 @@
     if (!tabs.length) { active = null; newTab(); return; } if (active === t) active = tabs[Math.max(0, i - 1)]; render();
   }
   // The transport can report ready a moment before libcurl's wasm has finished loading; the first page then shows that error.
-  // It is gone on the next try, so retry quietly (up to 4 times) instead of making the user press reload.
+  // It is gone on the next try, so retry quietly (up to 12 times, 1.5 s apart) instead of making the user press reload.
   function retryWasm(frame, n) {
     frame.addEventListener('load', function h() {
       frame.removeEventListener('load', h);
       try {
         var t = frame.contentDocument && frame.contentDocument.documentElement && frame.contentDocument.documentElement.textContent;   // the message sits in a <textarea>, which innerText skips
-        if (t && /wasm not loaded yet/.test(t) && n < 4) setTimeout(function () { try { frame.contentWindow.location.reload(); } catch (e) {} retryWasm(frame, n + 1); }, 900);
+        if (t && /wasm not loaded yet/.test(t) && n < 12) setTimeout(function () { try { frame.contentWindow.location.reload(); } catch (e) {} retryWasm(frame, n + 1); }, 1500);
       } catch (e) {}
     });
   }
