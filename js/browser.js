@@ -55,12 +55,23 @@
     var i = tabs.indexOf(t); tabs.splice(i, 1); t.el.remove(); t.frame.remove();
     if (!tabs.length) { active = null; newTab(); return; } if (active === t) active = tabs[Math.max(0, i - 1)]; render();
   }
+  // The transport can report ready a moment before libcurl's wasm has finished loading; the first page then shows that error.
+  // It is gone on the next try, so retry quietly (up to 4 times) instead of making the user press reload.
+  function retryWasm(frame, n) {
+    frame.addEventListener('load', function h() {
+      frame.removeEventListener('load', h);
+      try {
+        var t = frame.contentDocument && frame.contentDocument.body && frame.contentDocument.body.innerText;
+        if (t && /wasm not loaded yet/.test(t) && n < 4) setTimeout(function () { try { frame.contentWindow.location.reload(); } catch (e) {} retryWasm(frame, n + 1); }, 900);
+      } catch (e) {}
+    });
+  }
   async function go(input) {
     input = (input || '').trim(); if (!input) return; if (!active) newTab(); banner.classList.remove('on');
     var dest = HerbProxy.resolve(input);
     try { await HerbProxy.init(); } catch (e) { warn('Proxy failed to start: ' + e.message, true); return; }
     var st = HerbWisp.status(); if (st && !st.best) { warn('No proxy server is reachable right now.', true); return; }
-    active.loaded = true; active.frame.src = dest; $('q').value = ''; render();
+    active.loaded = true; active.frame.src = dest; $('q').value = ''; render(); retryWasm(active.frame, 0);
   }
   $('newtab').onclick = newTab;
   $('home').onclick = function () { if (active) { active.loaded = false; active.frame.src = 'about:blank'; banner.classList.remove('on'); render(); } };
