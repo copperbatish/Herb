@@ -25,6 +25,7 @@
   $('start-btn').innerHTML = HerbIcons.glyph('leaf', 20, 2);
   var tbBtns = {};
   function addTb(a) {
+    if (a.store && UI === 'standard') return;   // standard mode: apps from the App Store open from inside the Store, not from the bottom bar
     var k = document.createElement('button'); k.className = 'tbbtn'; k.title = a.title; k.dataset.app = a.id;
     k.innerHTML = HerbIcons.tile(a.icon, 24) + '<span class="lbl">' + a.title + '</span><i class="run"></i>'; k.onclick = function () { toggle(a.id); };
     $('tbapps').appendChild(k); tbBtns[a.id] = k;
@@ -208,12 +209,13 @@
   }
 
   // ---------- proxy status + clock ----------
+  function srvNum(url) { try { var l = HerbWisp.list(); for (var i = 0; i < l.length; i++) if (l[i].url === url) return '#' + (i + 1); } catch (e) {} return '#?'; }
   function paintProxy() {
     var st = null; try { st = JSON.parse(localStorage.getItem('herb.wisp.status') || 'null'); } catch (e) {}
     var dot = $('sdot'), txt = $('stxt'), n = HerbWisp.workingCount();
     if (!st) { dot.className = 'sdot'; txt.textContent = 'checking…'; return; }
     if (st.best) { dot.className = 'sdot ok'; txt.textContent = st.results[st.best].ms + ' ms'; } else { dot.className = 'sdot bad'; txt.textContent = 'offline'; }
-    $('trayinfo').title = 'Proxy: ' + n[0] + ' of ' + n[1] + ' servers online' + (st.best ? ' · using ' + st.best : '');
+    $('trayinfo').title = 'Proxy: ' + n[0] + ' of ' + n[1] + ' servers online' + (st.best ? ' · using server ' + srvNum(st.best) : '');
   }
   $('trayinfo').onclick = function () { open('settings', { section: 'proxy' }); };
   function tick() { var d = new Date(), h = d.getHours(), m = ('0' + d.getMinutes()).slice(-2), t;
@@ -295,7 +297,20 @@
   function paintStd() {
     if (UI !== 'standard') return; var st = null; try { st = JSON.parse(localStorage.getItem('herb.wisp.status') || 'null'); } catch (e) {}
     $('stdping').textContent = !st ? 'ping: checking…' : (st.best ? 'ping: ' + st.results[st.best].ms + ' ms' : 'ping: offline');
-    $('stdsrv').textContent = st && st.best ? 'server: ' + st.best.replace(/^wss?:\/\//, '').replace(/\/.*$/, '') : '';
+    $('stdsrv').textContent = st && st.best ? 'server: ' + srvNum(st.best) : '';
+  }
+
+  // ---------- keep what was open when the interface mode changes (the page reloads) ----------
+  var SESS = 'herb.session', browserUrl = '';
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.herb === 'bstate' && typeof d.url === 'string') browserUrl = d.url.slice(0, 2000); });
+  function saveSession() {
+    try { localStorage.setItem(SESS, JSON.stringify({ t: Date.now(), open: Object.keys(wins).filter(function (k) { return byId[k] && k.indexOf('game:') !== 0; }), focus: focused, url: wins.browser ? browserUrl : '' })); } catch (e) {}
+  }
+  function restoreSession() {
+    var v = null; try { v = JSON.parse(localStorage.getItem(SESS) || 'null'); localStorage.removeItem(SESS); } catch (e) {}
+    if (!v || Date.now() - v.t > 60000 || !Array.isArray(v.open)) return false;
+    v.open.forEach(function (id) { if (byId[id]) open(id, id === 'browser' && v.url ? { url: v.url } : undefined); });
+    if (v.focus && wins[v.focus]) focus(v.focus); return v.open.length > 0;
   }
 
   // ---------- public API ----------
@@ -310,7 +325,7 @@
       layoutIcons(); refreshTaskbar();
     },
     recheck: function () { return HerbWisp.check(); },
-    apply: function () { if (((S.get('ui') || 'desktop')) !== UI) { location.reload(); return; } HerbSettings.apply(); applyWallpaper(); layoutIcons(); tick(); },
+    apply: function () { if (((S.get('ui') || 'desktop')) !== UI) { saveSession(); location.reload(); return; } HerbSettings.apply(); applyWallpaper(); layoutIcons(); tick(); },
     layout: layoutIcons,
     replayTutorial: function () { try { localStorage.removeItem(TUT_KEY); } catch (e) {} return startTutorial(); },
     ui: UI,
@@ -328,5 +343,5 @@
   paintProxy(); HerbWisp.check(); setInterval(function () { HerbWisp.check(); }, 60000);
   paintIp(); paintStd();
   if (UI === 'ipad') { var seen = false; try { seen = !!localStorage.getItem(TUT_KEY); } catch (e) {} if (!seen) setTimeout(startTutorial, 800); }
-  var qs = new URLSearchParams(location.search); if (qs.get('app') && byId[qs.get('app')]) open(qs.get('app')); else if (UI === 'standard') open('browser');
+  var qs = new URLSearchParams(location.search); if (qs.get('app') && byId[qs.get('app')]) open(qs.get('app')); else if (restoreSession()) {} else if (UI === 'standard') open('browser');
 })();

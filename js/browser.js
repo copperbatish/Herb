@@ -69,7 +69,7 @@
   $('reload').onclick = function () { try { active.frame.contentWindow.location.reload(); } catch (e) {} };
   $('back').onclick = function () { try { active.frame.contentWindow.history.back(); } catch (e) {} };
   $('fwd').onclick = function () { try { active.frame.contentWindow.history.forward(); } catch (e) {} };
-  setInterval(render, 1000);
+  setInterval(function () { render(); try { var u = active && active.loaded ? (currentUrl(active) || active.last || '') : ''; if (u !== lastSent) { lastSent = u; parent.postMessage({ herb: 'bstate', url: u }, '*'); } } catch (e) {} }, 1000); var lastSent = null;
   window.addEventListener('message', function (e) { if (e.origin === location.origin && e.data && e.data.herb === 'nav' && e.data.url) go(e.data.url); });
   // ---------- developer tools (Inspect): eruda, injected into the proxied page ----------
   // The page is same-origin (served through /uv/service/), so we can reach into its document. The <script> is created in

@@ -143,7 +143,7 @@ body.ui-standard .win,body.ui-ipad .win{animation:none}
 body.ui-standard .win .tb,body.ui-ipad .win .tb,body.ui-standard .rz,body.ui-ipad .rz{display:none}
 
 /* standard: a browser-style proxy page – the browser fills the window, apps live on a bottom bar */
-body.ui-standard{--tb:68px}
+body.ui-standard{--tb:56px}
 body.ui-standard #wins,body.ui-standard #icons{top:0!important;bottom:var(--tb)!important}
 body.ui-standard #icons,body.ui-standard #start,body.ui-standard #start-btn,body.ui-standard #showdesk,body.ui-standard #tbtray{display:none!important}
 body.ui-standard #taskbar{top:auto;bottom:0;height:var(--tb);border-top:1px solid rgba(255,255,255,.08);border-bottom:0;transform:none!important;background:rgba(6,12,9,.94);padding:0 18px;align-items:center;justify-content:space-between}
@@ -151,11 +151,11 @@ body.ui-standard .win{inset:0!important;width:auto!important;height:auto!importa
 #stdinfo{display:none;font-size:11.5px;line-height:1.55;color:var(--muted);letter-spacing:.02em;white-space:nowrap}
 body.ui-standard #stdinfo{display:block}
 body.ui-standard #tbapps{flex:none;gap:4px;justify-content:flex-end}
-body.ui-standard .tbbtn{width:auto;height:54px;padding:0 16px;flex-direction:column;gap:5px;border-radius:10px;color:var(--muted)}
+body.ui-standard .tbbtn{width:auto;height:44px;padding:0 14px;flex-direction:column;gap:3px;border-radius:10px;color:var(--muted)}
 body.ui-standard .tbbtn:hover{color:var(--text);background:rgba(255,255,255,.07)}
-body.ui-standard .tbbtn .lbl{display:block;font-size:12px;font-weight:500}
+body.ui-standard .tbbtn .lbl{display:block;font-size:11px;font-weight:500}
 body.ui-standard .tbbtn .run{display:none}
-body.ui-standard .tbbtn .hicon{width:24px!important;height:24px!important;background:none!important;box-shadow:none!important;color:inherit!important}
+body.ui-standard .tbbtn .hicon{width:17px!important;height:17px!important;background:none!important;box-shadow:none!important;color:inherit!important}
 body.ui-standard .tbbtn .hicon svg{width:100%;height:100%}
 body.ui-standard .tbbtn.active{color:var(--accent);background:none}
 body.ui-standard .tbbtn[data-app=browser]{order:1}body.ui-standard .tbbtn[data-app=games]{order:2}body.ui-standard .tbbtn[data-app=movies]{order:3}
@@ -211,7 +211,7 @@ body.ui-ipad .win iframe{border-radius:inherit}
 
 /* accounts */
 #acctchip{max-width:150px}#acctchip .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-body.ui-standard #acctchip{position:static;flex:none;margin-left:10px;height:54px;padding:0 14px;border-radius:10px;flex-direction:column;gap:5px;justify-content:center}
+body.ui-standard #acctchip{position:static;flex:none;margin-left:10px;height:44px;padding:0 12px;border-radius:10px;flex-direction:column;gap:3px;justify-content:center}
 body.ui-standard #tbapps{flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}
 @media (max-width:1000px){body.ui-standard .tbbtn{padding:0 9px;flex:none}body.ui-standard .tbbtn .lbl{white-space:nowrap;font-size:11.5px}body.ui-standard #stdinfo{display:none}body.ui-standard #taskbar{justify-content:center}}
 body.ui-ipad #acctchip{display:inline-flex;margin-right:8px;color:inherit;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.12);height:24px;font-size:12px}

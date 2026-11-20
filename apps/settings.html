@@ -80,7 +80,7 @@ section{display:none;max-width:620px}section.on{display:block}
   <div class="card"><div id="servers"></div>
    <div class="row"><div><div class="t" id="using">Checking…</div><div class="d" id="pmsg">Rechecks automatically every minute.</div></div><button class="btn" id="check">Check now</button></div></div>
   <div class="card"><div class="row"><div><div class="t">Connection engine</div><div class="d" id="engmsg">libcurl is best for live sites (WebSockets, cloud games). Epoxy is the older fallback. Applies after you reload the browser app.</div></div><div class="ctl"><select id="engine-sel"><option value="libcurl">libcurl (recommended)</option><option value="epoxy">Epoxy (fallback)</option></select></div></div></div>
-  <div class="card"><div class="add" style="padding:12px 0"><input type="text" id="custom" placeholder="Add a server: wss://your-server/wisp/"><button class="btn primary" id="add">Add</button></div></div>
+  <div class="card"><div class="add" style="padding:12px 0"><input type="text" id="custom" placeholder="Add your own server address"><button class="btn primary" id="add">Add</button></div></div>
  </section>
  <section id="s-browser"><h1>Browser</h1><p class="sub">Defaults for the Web Browser app.</p>
   <div class="card"><div class="row"><div><div class="t">Search engine</div><div class="d">Used when you type something that isn’t a URL.</div></div><div class="ctl"><select id="engine"></select></div></div></div></section>
@@ -137,9 +137,9 @@ $('alogo').innerHTML=HerbIcons.tile('settings',54,['#34d399','#0d9488']).replace
 $('reset').onclick=function(){if(confirm('Reset all Herb settings?')){S.reset();try{localStorage.removeItem('herb.iconpos');localStorage.removeItem('herb.wallimg')}catch(e){}location.reload()}};
 // proxy (read-only status – Herb picks the server itself)
 function servers(){var st=HerbWisp.status(),box=$('servers');box.innerHTML='';
- HerbWisp.list().forEach(function(s){var r=st&&st.results&&st.results[s.url],using=st&&st.best===s.url,row=document.createElement('div');row.className='server';
+ HerbWisp.list().forEach(function(s,i){var r=st&&st.results&&st.results[s.url],using=st&&st.best===s.url,row=document.createElement('div');row.className='server';
   var pill=!st?'checking…':(r&&r.ok?(r.ms+' ms'):'offline');
-  row.innerHTML='<span class="sdotx" style="width:9px;height:9px;border-radius:50%;background:'+(r&&r.ok?'#22c55e':(st?'#ef4444':'#6d8a79'))+'"></span><span class="u" title="'+s.url+'">'+s.url+'</span>'+(using?'<span class="pill ok">in use</span>':'')+'<span class="pill'+(r&&r.ok?'':(st?' bad':''))+'">'+pill+'</span>';
+  row.innerHTML='<span class="sdotx" style="width:9px;height:9px;border-radius:50%;background:'+(r&&r.ok?'#22c55e':(st?'#ef4444':'#6d8a79'))+'"></span><span class="u">Server '+(i+1)+(s.label==='Custom'?' (yours)':'')+'</span>'+(using?'<span class="pill ok">in use</span>':'')+'<span class="pill'+(r&&r.ok?'':(st?' bad':''))+'">'+pill+'</span>';
   if(s.label==='Custom'){var x=document.createElement('button');x.className='btn ghost';x.textContent='✕';x.style.padding='4px 9px';x.onclick=function(){HerbWisp.removeCustom(s.url).then(servers)};row.appendChild(x)}
   box.appendChild(row)});
  var n=HerbWisp.workingCount();$('using').textContent=st?(st.best?n[0]+' of '+n[1]+' servers online':'No servers reachable right now'):'Checking servers…'}

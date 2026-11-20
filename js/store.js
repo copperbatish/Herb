@@ -12,12 +12,12 @@
     // community apps: ids look like c_<submissionId>; their title is remembered in installedMeta so the desktop doesn't need the network
     on.forEach(function (id) {
       if (id.indexOf('c_') !== 0 || HerbDesktop.apps.some(function (x) { return x.id === id; })) return;
-      var m = mm[id] || {}; HerbDesktop.addApp({ id: id, title: m.title || 'App', icon: 'apps', src: '/apps/community.html?id=' + id.slice(2), w: 900, h: 640 });
+      var m = mm[id] || {}; HerbDesktop.addApp({ id: id, title: m.title || 'App', icon: 'apps', src: '/apps/community.html?id=' + id.slice(2), w: 900, h: 640, store: true });
     });
     HerbDesktop.apps.slice().forEach(function (x) { if (x.id.indexOf('c_') === 0 && on.indexOf(x.id) < 0) HerbDesktop.removeApp(x.id); });
     CATALOG.forEach(function (a) {
       var has = HerbDesktop.apps.some(function (x) { return x.id === a.id; });
-      if (on.indexOf(a.id) >= 0 && !has) HerbDesktop.addApp({ id: a.id, title: a.title, icon: a.icon, src: a.src, w: a.w, h: a.h });
+      if (on.indexOf(a.id) >= 0 && !has) HerbDesktop.addApp({ id: a.id, title: a.title, icon: a.icon, src: a.src, w: a.w, h: a.h, store: true });
       if (on.indexOf(a.id) < 0 && has) HerbDesktop.removeApp(a.id);
     });
   }
