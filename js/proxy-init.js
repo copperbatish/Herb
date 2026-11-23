@@ -36,10 +36,30 @@
     applied = url;
   }
 
+  // setTransport can return before libcurl's wasm has finished loading, and the first proxied page then fails with "wasm not loaded yet".
+  // So load a tiny page through the proxy in a hidden frame and wait until that works, before any app starts its own page.
+  function warm() {
+    return new Promise(function (resolve) {
+      var f = document.createElement('iframe'), tries = 0, done = false;
+      f.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden'; f.setAttribute('aria-hidden', 'true');
+      function finish() { if (done) return; done = true; clearTimeout(cap); setTimeout(function () { try { f.remove(); } catch (e) {} }, 50); resolve(); }
+      var cap = setTimeout(finish, 25000);   // never block an app for long: it still has its own retry
+      function check() {
+        var bad = false;
+        try { var ta = f.contentDocument && f.contentDocument.querySelector('textarea'); bad = !!(ta && /wasm not loaded yet/.test(ta.value)); } catch (e) {}
+        if (!bad || ++tries > 16) return finish();
+        setTimeout(function () { try { f.contentWindow.location.reload(); } catch (e) { finish(); } }, 1200);
+      }
+      f.addEventListener('load', check);
+      f.src = __uv$config.prefix + __uv$config.encodeUrl('https://example.com/');
+      (document.body || document.documentElement).appendChild(f);
+    });
+  }
+
   var ready = null;
   window.HerbProxy = {
     init: function () {
-      if (!ready) ready = Promise.all([registerSW(), applyTransport()]);
+      if (!ready) ready = Promise.all([registerSW(), applyTransport()]).then(function (r) { return warm().then(function () { return r; }); });
       return ready;
     },
     // Turn what the user typed into a proxied URL.
