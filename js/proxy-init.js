@@ -29,7 +29,10 @@
       (function () {
         // Transport: 'libcurl' (default) or 'epoxy' (fallback). Switch with localStorage 'herb.transport'.
         var t = 'libcurl'; try { t = localStorage.getItem('herb.transport') || 'libcurl'; } catch (e) {}
-        return t === 'epoxy' ? connection.setTransport('/epoxy/index.mjs', [{ wisp: url }]) : connection.setTransport('/libcurl/index.mjs', [{ websocket: url }]);
+        // The transports insist the address ends in "/". A server with a password ends in "?password=...", so add a throwaway parameter
+        // that ends in a slash; the server ignores it and still reads the password.
+        var wu = /\/$/.test(url) ? url : (url.indexOf('?') >= 0 ? url + '&_=/' : url + '/');
+        return t === 'epoxy' ? connection.setTransport('/epoxy/index.mjs', [{ wisp: wu }]) : connection.setTransport('/libcurl/index.mjs', [{ websocket: wu }]);
       })(),
       new Promise(function (_, rej) { setTimeout(function () { rej(new Error('Timed out configuring transport')); }, 15000); }),
     ]);
