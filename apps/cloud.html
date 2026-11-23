@@ -14,7 +14,7 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000
 #msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:20px}
 </style></head>
 <body>
-<div id="bar"><span class="t" id="title">Cloud Games</span><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
+<div id="bar"><span class="t" id="title">Cloud Games</span><span id="pv" style="font-size:11px;opacity:.6"></span><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
 <div id="note"></div>
 <div id="stage"><div id="msg">Starting the proxy…</div></div>
 <script src="/js/herb-settings.js"></script><script src="/js/icons.js"></script>
@@ -29,6 +29,16 @@ $('title').textContent=site.name+' · cloud gaming';
 function launch(){
   $('msg').textContent='Connecting…';
   HerbProxy.init().then(function(){
+    return HerbProxy.workerVersion().then(function(v){
+      var ok=v===HerbProxy.version;$('pv').textContent='proxy '+(v||'?')+(ok?'':' (old)');
+      if(ok){try{sessionStorage.removeItem('herb.swfix')}catch(e){}}
+      if(!ok){   // an old proxy worker is still running (common in the iPad home-screen app): remove it and reload once
+        var done=false;try{done=sessionStorage.getItem('herb.swfix')}catch(e){}
+        if(!done){try{sessionStorage.setItem('herb.swfix','1')}catch(e){}
+          return navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.filter(function(r){return r.scope.indexOf(__uv$config.prefix)>=0}).map(function(r){return r.unregister()}))}).then(function(){location.reload();return new Promise(function(){})});}
+      }
+    });
+  }).then(function(){
     frame=document.createElement('iframe');
     frame.setAttribute('allow','fullscreen; gamepad; autoplay; clipboard-read; clipboard-write; pointer-lock'); frame.allowFullscreen=true;
     frame.src=__uv$config.prefix+__uv$config.encodeUrl(site.url);

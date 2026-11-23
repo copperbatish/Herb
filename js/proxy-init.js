@@ -4,7 +4,7 @@
 (function () {
   // Bump this whenever uv/ files change: a new script address makes every browser (iOS home-screen apps especially, which keep an old
   // service worker for a long time) install the new proxy straight away instead of waiting for its own update check.
-  var SW_VERSION = '20261123c';
+  var SW_VERSION = '20261123d';
   var connection = null;
 
   async function registerSW() {
@@ -64,6 +64,13 @@
 
   var ready = null;
   window.HerbProxy = {
+    version: SW_VERSION,
+    // Which proxy worker the browser is really running ('' if none). Compare with `version`: a mismatch means an old worker is still active.
+    workerVersion: function () {
+      return navigator.serviceWorker.getRegistration(__uv$config.prefix).then(function (r) {
+        var w = r && (r.active || r.waiting || r.installing), m = w && /[?&]v=([^&]+)/.exec(w.scriptURL); return m ? m[1] : '';
+      }, function () { return ''; });
+    },
     init: function () {
       if (!ready) ready = Promise.all([registerSW(), applyTransport()]).then(function (r) { return warm().then(function () { return r; }); });
       return ready;
