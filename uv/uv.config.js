@@ -85,11 +85,27 @@ function herbUrlPartsShim() {
 
 // Passkeys (WebAuthn) are bound to the exact website address, so they can never work through a proxy. NVIDIA's sign-in pages try one and show
 // "Passkey login isn't available". Telling them WebAuthn is absent makes them skip it and offer the normal email + password sign-in.
+// NVIDIA's sign-in is opened with window.open(): as a separate pop-up window on iPadOS/Safari. A pop-up is a fresh page that has to rebuild the proxy
+// connection on its own (and the page that opened it may be paused while the pop-up is in front), which left a blank grey sign-in. Opening the
+// sign-in in the same window keeps it inside the Cloud app where the connection already works; NVIDIA's own site supports that ("_self") flow.
+function herbSameWindowLogin() {
+    function install() {
+        var orig = window.open; if (typeof orig !== 'function' || orig.__herbSelf) return;
+        var w = function (url, target, features) {
+            try { if (/^https?:\/\/(login\.nvidia\.com|[a-z0-9-]+\.nvgs\.nvidia\.com)\//i.test(String(url))) return orig.call(this, url, '_self'); } catch (e) {}
+            return orig.apply(this, arguments);
+        };
+        w.__herbSelf = true; window.open = w;
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install); else install();
+    window.addEventListener('load', install);   // after Ultraviolet's own window.open wrapper is in place
+}
+
 function herbNoPasskeys() { try { Object.defineProperty(window, 'PublicKeyCredential', { value: undefined, configurable: true, writable: true }); } catch (e) {} }
 
 var __herbInject = [
     { host: '.*', injectTo: 'head', html: '<script>(' + herbUrlPartsShim.toString() + ')();</script>' },
-    { host: '(^|\\.)nvidia\\.com$', injectTo: 'head', html: '<script>(' + herbNoPasskeys.toString() + ')();</script>' },
+    { host: '(^|\\.)(nvidia\\.com|geforcenow\\.com)$', injectTo: 'head', html: '<script>(' + herbNoPasskeys.toString() + ')();(' + herbSameWindowLogin.toString() + ')();</script>' },
 ];
 if (TURN.api.length) {
     herbRefreshTurn();
