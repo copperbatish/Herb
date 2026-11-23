@@ -137,13 +137,18 @@ $('alogo').innerHTML=HerbIcons.tile('settings',54,['#34d399','#0d9488']).replace
 $('reset').onclick=function(){if(confirm('Reset all Herb settings?')){S.reset();try{localStorage.removeItem('herb.iconpos');localStorage.removeItem('herb.wallimg')}catch(e){}location.reload()}};
 // proxy (read-only status – Herb picks the server itself)
 function servers(){var st=HerbWisp.status(),box=$('servers');box.innerHTML='';
- HerbWisp.list().forEach(function(s,i){var r=st&&st.results&&st.results[s.url],using=st&&st.best===s.url,row=document.createElement('div');row.className='server';
+ var pin=HerbWisp.pinned(),L=HerbWisp.list(),autoRow=document.createElement('div');autoRow.className='server';
+ autoRow.innerHTML='<input type="radio" name="srv" title="Choose automatically"'+(pin?'':' checked')+'><span class="u"><b>Automatic</b> – the fastest working server</span>';
+ autoRow.querySelector('input').onclick=function(){HerbWisp.setPinned('').then(servers)};box.appendChild(autoRow);
+ L.forEach(function(s,i){var r=st&&st.results&&st.results[s.url],using=st&&st.best===s.url,row=document.createElement('div');row.className='server';
   var pill=!st?'checking…':(r&&r.ok?(r.ms+' ms'):'offline');
   row.innerHTML='<span class="sdotx" style="width:9px;height:9px;border-radius:50%;background:'+(r&&r.ok?'#22c55e':(st?'#ef4444':'#6d8a79'))+'"></span><span class="u">Server '+(i+1)+(s.label==='Custom'?' (yours)'+(HerbWisp.hasPassword(s.url)?' 🔒':''):'')+'</span>'+(using?'<span class="pill ok">in use</span>':'')+'<span class="pill'+(r&&r.ok?'':(st?' bad':''))+'">'+pill+'</span>';
   if(s.label==='Custom'){var k=document.createElement('button');k.className='btn ghost';k.textContent='🔑';k.title='Set or change the password';k.style.padding='4px 9px';k.onclick=function(){var p=prompt('Password for this server (leave empty to remove it):');if(p===null)return;HerbWisp.setPassword(s.url,p).then(servers)};row.appendChild(k);
    var x=document.createElement('button');x.className='btn ghost';x.textContent='✕';x.style.padding='4px 9px';x.onclick=function(){HerbWisp.removeCustom(s.url).then(servers)};row.appendChild(x)}
+  var rb=document.createElement('input');rb.type='radio';rb.name='srv';rb.checked=(pin===s.url);rb.title='Use this server';rb.onclick=function(){HerbWisp.setPinned(s.url).then(servers)};row.insertBefore(rb,row.firstChild);
   box.appendChild(row)});
- var n=HerbWisp.workingCount();$('using').textContent=st?(st.best?n[0]+' of '+n[1]+' servers online':'No servers reachable right now'):'Checking servers…'}
+ var n=HerbWisp.workingCount();var pi=-1,bi=-1;L.forEach(function(x,j){if(x.url===pin)pi=j;if(st&&x.url===st.best)bi=j});
+ $('using').textContent=st?(st.best?(pin&&pin!==st.best?'Server '+(pi+1)+' is offline – using Server '+(bi+1)+' until it is back':(pin?'Using Server '+(pi+1)+' (your choice)':n[0]+' of '+n[1]+' servers online')):'No servers reachable right now'):'Checking servers…'}
 servers();window.addEventListener('herb:wisp-status',servers);window.addEventListener('storage',function(e){if(e.key==='herb.wisp.status')servers()});
 $('check').onclick=function(){var b=this;b.textContent='Checking…';HerbWisp.check().then(function(){b.textContent='Check now';servers()})};
 $('eye').onclick=function(){var f=$('custom');f.type=f.type==='password'?'text':'password'};

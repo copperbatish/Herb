@@ -12,7 +12,7 @@
     ],
   };
   var TUNNEL_DB = 'https://copperchat-4cb91-default-rtdb.firebaseio.com/herb/tunnel/url.json', K_TUNNEL = 'herb.tunnel';
-  var K_STATUS = 'herb.wisp.status', K_CUSTOM = 'herb.wisp.custom', TTL = 90000;
+  var K_STATUS = 'herb.wisp.status', K_CUSTOM = 'herb.wisp.custom', K_PIN = 'herb.wisp.pin', TTL = 90000;
 
   function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -41,6 +41,12 @@
       if (typeof u === 'string' && /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(u)) set(K_TUNNEL, u);
     }).catch(function () {}).then(function () { if (t) clearTimeout(t); return tunnelUrl(); });
   }
+  // A server you picked in Settings is used whenever it answers; if it is down Herb falls back to the fastest working one until it is back.
+  function pinned() { var p = get(K_PIN) || ''; return p && H.list().some(function (x) { return x.url === p; }) ? p : ''; }
+  function pickBest(results) {
+    var pin = pinned(); if (pin && results[pin] && results[pin].ok) return pin;
+    var best = null; for (var u in results) if (results[u].ok && (!best || results[u].ms < results[best].ms)) best = u; return best;
+  }
   var running = null;
   var H = {
     defaults: DEFAULTS, tunnel: tunnelUrl, fetchTunnel: fetchTunnel,
@@ -59,7 +65,8 @@
       if (running) return running;
       running = fetchTunnel().then(function () { var list = H.list(); return Promise.all(list.map(function (s) { return probe(s.url).then(function (r) { return [s.url, r]; }); })); }).then(function (pairs) {
         var results = {}, best = null;
-        pairs.forEach(function (p) { results[p[0]] = p[1]; if (p[1].ok && (!best || p[1].ms < results[best].ms)) best = p[0]; });
+        pairs.forEach(function (p) { results[p[0]] = p[1]; });
+        best = pickBest(results);
         var st = { ts: Date.now(), results: results, best: best };
         set(K_STATUS, JSON.stringify(st));
         window.dispatchEvent(new CustomEvent('herb:wisp-status', { detail: st }));
@@ -120,7 +127,14 @@
       set(K_CUSTOM, JSON.stringify(customList().map(function (u) { return u === oldUrl ? nu : u; })));
       return H.check();
     },
-    removeCustom: function (url) { set(K_CUSTOM, JSON.stringify(customList().filter(function (u) { return u !== url; }))); return H.check(); },
+    pinned: pinned,
+    // url = a server from the list, or '' for Automatic. Applies straight away from the last check, then re-checks.
+    setPinned: function (url) {
+      set(K_PIN, url || '');
+      var st = status(); if (st && st.results) { st.best = pickBest(st.results); set(K_STATUS, JSON.stringify(st)); window.dispatchEvent(new CustomEvent('herb:wisp-status', { detail: st })); }
+      return H.check();
+    },
+    removeCustom: function (url) { if (get(K_PIN) === url) set(K_PIN, ''); set(K_CUSTOM, JSON.stringify(customList().filter(function (u) { return u !== url; }))); return H.check(); },
   };
   window.HerbWisp = H;
 })();
