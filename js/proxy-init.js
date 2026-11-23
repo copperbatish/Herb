@@ -2,11 +2,14 @@
 // selected Wisp server through the Epoxy transport.
 // Requires (in order): /uv/uv.bundle.js, /uv/uv.config.js, /baremux/index.js, /js/wisp-config.js
 (function () {
+  // Bump this whenever uv/ files change: a new script address makes every browser (iOS home-screen apps especially, which keep an old
+  // service worker for a long time) install the new proxy straight away instead of waiting for its own update check.
+  var SW_VERSION = '20261123c';
   var connection = null;
 
   async function registerSW() {
     if (!('serviceWorker' in navigator)) throw new Error('Service workers are not supported in this browser.');
-    var reg = await navigator.serviceWorker.register('/uv/sw.js', { scope: __uv$config.prefix });
+    var reg = await navigator.serviceWorker.register('/uv/sw.js?v=' + SW_VERSION, { scope: __uv$config.prefix });
     // NOTE: serviceWorker.ready never resolves here because this page is outside the SW scope,
     // so wait on the registration's own worker instead.
     var w = reg.installing || reg.waiting || reg.active;

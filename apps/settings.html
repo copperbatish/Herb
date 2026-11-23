@@ -78,7 +78,8 @@ section{display:none;max-width:620px}section.on{display:block}
   </div></section>
  <section id="s-proxy"><h1>Proxy</h1><p class="sub">Herb checks every server when it starts and automatically uses the fastest one that works.</p>
   <div class="card"><div id="servers"></div>
-   <div class="row"><div><div class="t" id="using">Checking…</div><div class="d" id="pmsg">Rechecks automatically every minute.</div></div><button class="btn" id="check">Check now</button></div></div>
+   <div class="row"><div><div class="t" id="using">Checking…</div><div class="d" id="pmsg">Rechecks automatically every minute.</div></div><button class="btn" id="check">Check now</button></div>
+   <div class="row"><div><div class="t">Reset proxy</div><div class="d" id="rstmsg">If a site or the GeForce NOW sign-in looks broken after an update (common in the iPad home-screen app), this clears the proxy&rsquo;s saved background worker and reloads Herb. Your accounts and settings are kept.</div></div><button class="btn" id="resetproxy">Reset</button></div></div>
   <div class="card"><div class="row"><div><div class="t">Connection engine</div><div class="d" id="engmsg">libcurl is best for live sites (WebSockets, cloud games). Epoxy is the older fallback. Applies after you reload the browser app.</div></div><div class="ctl"><select id="engine-sel"><option value="libcurl">libcurl (recommended)</option><option value="epoxy">Epoxy (fallback)</option></select></div></div></div>
   <div class="card"><div class="add" style="padding:12px 0"><input type="password" id="custom" placeholder="Server address, with its password if it has one" autocomplete="off" autocapitalize="none" spellcheck="false"><button class="btn ghost" id="eye" type="button" title="Show or hide" style="padding:6px 10px">&#128065;</button><button class="btn primary" id="add">Add</button></div></div>
  </section>
@@ -150,6 +151,13 @@ function servers(){var st=HerbWisp.status(),box=$('servers');box.innerHTML='';
  var n=HerbWisp.workingCount();var pi=-1,bi=-1;L.forEach(function(x,j){if(x.url===pin)pi=j;if(st&&x.url===st.best)bi=j});
  $('using').textContent=st?(st.best?(pin&&pin!==st.best?'Server '+(pi+1)+' is offline – using Server '+(bi+1)+' until it is back':(pin?'Using Server '+(pi+1)+' (your choice)':n[0]+' of '+n[1]+' servers online')):'No servers reachable right now'):'Checking servers…'}
 servers();window.addEventListener('herb:wisp-status',servers);window.addEventListener('storage',function(e){if(e.key==='herb.wisp.status')servers()});
+$('resetproxy').onclick=function(){var b=this;b.disabled=true;b.textContent='Resetting…';
+ (async function(){
+  try{var rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(function(r){return r.scope.indexOf('/uv/service/')>=0}).map(function(r){return r.unregister()}))}catch(e){}
+  try{var ks=await caches.keys();await Promise.all(ks.map(function(k){return caches.delete(k)}))}catch(e){}
+  try{localStorage.removeItem('herb.wisp.status')}catch(e){}
+  try{parent.location.reload()}catch(e){location.reload()}
+ })()};
 $('check').onclick=function(){var b=this;b.textContent='Checking…';HerbWisp.check().then(function(){b.textContent='Check now';servers()})};
 $('eye').onclick=function(){var f=$('custom');f.type=f.type==='password'?'text':'password'};
 $('add').onclick=function(){
