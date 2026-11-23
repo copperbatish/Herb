@@ -80,7 +80,7 @@ section{display:none;max-width:620px}section.on{display:block}
   <div class="card"><div id="servers"></div>
    <div class="row"><div><div class="t" id="using">Checking…</div><div class="d" id="pmsg">Rechecks automatically every minute.</div></div><button class="btn" id="check">Check now</button></div></div>
   <div class="card"><div class="row"><div><div class="t">Connection engine</div><div class="d" id="engmsg">libcurl is best for live sites (WebSockets, cloud games). Epoxy is the older fallback. Applies after you reload the browser app.</div></div><div class="ctl"><select id="engine-sel"><option value="libcurl">libcurl (recommended)</option><option value="epoxy">Epoxy (fallback)</option></select></div></div></div>
-  <div class="card"><div class="add" style="padding:12px 0"><input type="text" id="custom" placeholder="Add your own server address"><button class="btn primary" id="add">Add</button></div></div>
+  <div class="card"><div class="add" style="padding:12px 0"><input type="password" id="custom" placeholder="Server address, with its password if it has one" autocomplete="off" autocapitalize="none" spellcheck="false"><button class="btn ghost" id="eye" type="button" title="Show or hide" style="padding:6px 10px">&#128065;</button><button class="btn primary" id="add">Add</button></div></div>
  </section>
  <section id="s-browser"><h1>Browser</h1><p class="sub">Defaults for the Web Browser app.</p>
   <div class="card"><div class="row"><div><div class="t">Search engine</div><div class="d">Used when you type something that isn’t a URL.</div></div><div class="ctl"><select id="engine"></select></div></div></div></section>
@@ -139,13 +139,27 @@ $('reset').onclick=function(){if(confirm('Reset all Herb settings?')){S.reset();
 function servers(){var st=HerbWisp.status(),box=$('servers');box.innerHTML='';
  HerbWisp.list().forEach(function(s,i){var r=st&&st.results&&st.results[s.url],using=st&&st.best===s.url,row=document.createElement('div');row.className='server';
   var pill=!st?'checking…':(r&&r.ok?(r.ms+' ms'):'offline');
-  row.innerHTML='<span class="sdotx" style="width:9px;height:9px;border-radius:50%;background:'+(r&&r.ok?'#22c55e':(st?'#ef4444':'#6d8a79'))+'"></span><span class="u">Server '+(i+1)+(s.label==='Custom'?' (yours)':'')+'</span>'+(using?'<span class="pill ok">in use</span>':'')+'<span class="pill'+(r&&r.ok?'':(st?' bad':''))+'">'+pill+'</span>';
-  if(s.label==='Custom'){var x=document.createElement('button');x.className='btn ghost';x.textContent='✕';x.style.padding='4px 9px';x.onclick=function(){HerbWisp.removeCustom(s.url).then(servers)};row.appendChild(x)}
+  row.innerHTML='<span class="sdotx" style="width:9px;height:9px;border-radius:50%;background:'+(r&&r.ok?'#22c55e':(st?'#ef4444':'#6d8a79'))+'"></span><span class="u">Server '+(i+1)+(s.label==='Custom'?' (yours)'+(HerbWisp.hasPassword(s.url)?' 🔒':''):'')+'</span>'+(using?'<span class="pill ok">in use</span>':'')+'<span class="pill'+(r&&r.ok?'':(st?' bad':''))+'">'+pill+'</span>';
+  if(s.label==='Custom'){var k=document.createElement('button');k.className='btn ghost';k.textContent='🔑';k.title='Set or change the password';k.style.padding='4px 9px';k.onclick=function(){var p=prompt('Password for this server (leave empty to remove it):');if(p===null)return;HerbWisp.setPassword(s.url,p).then(servers)};row.appendChild(k);
+   var x=document.createElement('button');x.className='btn ghost';x.textContent='✕';x.style.padding='4px 9px';x.onclick=function(){HerbWisp.removeCustom(s.url).then(servers)};row.appendChild(x)}
   box.appendChild(row)});
  var n=HerbWisp.workingCount();$('using').textContent=st?(st.best?n[0]+' of '+n[1]+' servers online':'No servers reachable right now'):'Checking servers…'}
 servers();window.addEventListener('herb:wisp-status',servers);window.addEventListener('storage',function(e){if(e.key==='herb.wisp.status')servers()});
 $('check').onclick=function(){var b=this;b.textContent='Checking…';HerbWisp.check().then(function(){b.textContent='Check now';servers()})};
-$('add').onclick=function(){try{HerbWisp.addCustom($('custom').value.trim()).then(servers);$('custom').value='';$('pmsg').textContent='Added – checking it now.'}catch(e){$('pmsg').textContent=e.message}};
+$('eye').onclick=function(){var f=$('custom');f.type=f.type==='password'?'text':'password'};
+$('add').onclick=function(){
+ // The password goes in the address itself: wss://host/wisp/?password=SECRET, or host?password=SECRET, or wss://user:SECRET@host/
+ var url;try{url=HerbWisp.normalize($('custom').value)}catch(e){$('pmsg').textContent=e.message;return}
+ function save(pw){try{HerbWisp.addCustom(pw?HerbWisp.withPassword(url,pw):url).then(servers);$('custom').value='';$('custom').type='password';$('pmsg').textContent='Added – checking it now.'}catch(e){$('pmsg').textContent=e.message}}
+ if(HerbWisp.hasPassword(url)){save('');return}
+ // No password in the address: ask the server whether it needs one, and prompt if so.
+ $('pmsg').textContent='Checking the server…';
+ HerbWisp.needsPassword(url).then(function(r){
+  if(r!=='needed'){save('');return}
+  var p=prompt('This server needs a password. Enter it:');
+  if(p)save(p);else $('pmsg').textContent='Not added – this server needs a password.';
+ });
+};
 try{$('engine-sel').value=localStorage.getItem('herb.transport')||'libcurl'}catch(e){}
 $('engine-sel').onchange=function(){try{localStorage.setItem('herb.transport',this.value);$('engmsg').textContent='Saved – reload the Web Browser window to use '+this.value+'.'}catch(e){}};
 var sec=new URLSearchParams(location.search).get('section')||'interface';show(sec);

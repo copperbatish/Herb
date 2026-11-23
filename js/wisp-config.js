@@ -81,6 +81,45 @@
       var c = customList(); if (c.indexOf(url) < 0) { c.push(url); set(K_CUSTOM, JSON.stringify(c)); }
       return H.check();
     },
+    // ---- password-protected servers -------------------------------------------------------------
+    // A server that wants a password takes it as ?password=... on the Wisp address. It is stored with the
+    // address on this device only.
+    // Accepts "host", "https://host" or "wss://host/wisp/" and returns a clean wss://host/wisp/ address.
+    normalize: function (input) {
+      var s = String(input || '').trim();
+      if (!s) throw new Error('Enter a server address');
+      if (!/^[a-z]+:\/\//i.test(s)) s = 'wss://' + s;
+      s = s.replace(/^https:\/\//i, 'wss://').replace(/^http:\/\//i, 'ws://');
+      var u; try { u = new URL(s); } catch (e) { throw new Error('That is not a valid address'); }
+      if (u.protocol !== 'wss:' && u.protocol !== 'ws:') throw new Error('Wisp URL must start with ws:// or wss://');
+      // wss://user:SECRET@host/ (or wss://SECRET@host/): browsers refuse credentials in a WebSocket address, so move it to ?password=
+      var pw = u.password ? decodeURIComponent(u.password) : decodeURIComponent(u.username || '');
+      if (pw) { u.username = ''; u.password = ''; u.searchParams.set('password', pw); }
+      if (u.pathname === '/') u.pathname = '/wisp/';
+      if (!/\/$/.test(u.pathname)) u.pathname += '/';
+      return u.toString();
+    },
+    withPassword: function (url, pw) {
+      var u = new URL(url);
+      if (pw) u.searchParams.set('password', pw); else u.searchParams.delete('password');
+      return u.toString();
+    },
+    hasPassword: function (url) { try { return !!new URL(url).searchParams.get('password'); } catch (e) { return false; } },
+    // Asks the server over plain HTTPS whether it wants a password: 'needed' (none given or wrong), 'ok', or 'unknown'.
+    needsPassword: function (url) {
+      var u; try { u = new URL(url); } catch (e) { return Promise.resolve('unknown'); }
+      var http = (u.protocol === 'wss:' ? 'https:' : 'http:') + '//' + u.host + '/' + u.search;
+      var c = typeof AbortController === 'function' ? new AbortController() : null, t = c && setTimeout(function () { c.abort(); }, 6000);
+      return fetch(http, { cache: 'no-store', signal: c ? c.signal : undefined }).then(function (r) {
+        return r.status === 401 || r.status === 429 ? 'needed' : (r.ok ? 'ok' : 'unknown');
+      }).catch(function () { return 'unknown'; }).then(function (v) { if (t) clearTimeout(t); return v; });
+    },
+    // Swap the password on a saved custom server.
+    setPassword: function (oldUrl, pw) {
+      var nu = H.withPassword(oldUrl, pw);
+      set(K_CUSTOM, JSON.stringify(customList().map(function (u) { return u === oldUrl ? nu : u; })));
+      return H.check();
+    },
     removeCustom: function (url) { set(K_CUSTOM, JSON.stringify(customList().filter(function (u) { return u !== url; }))); return H.check(); },
   };
   window.HerbWisp = H;
