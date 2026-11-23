@@ -63,7 +63,27 @@ function herbTurnInjection(cfg) {
     })();
 }
 
-var __herbInject = [];
+// Compatibility shim, injected into every proxied page before its own scripts run.
+// Ultraviolet rewrites an <a>/<area> element's `href` but leaves pathname/search/hash/host/hostname/port/protocol/origin pointing at the
+// proxy's internal address (/uv/service/...). Angular reads `a.pathname` to work out its base path, so single-page apps like NVIDIA's
+// sign-in page (login.nvgs.nvidia.com) lost their route and redirected to "not found". These getters now derive the parts from the real address.
+function herbUrlPartsShim() {
+    ['HTMLAnchorElement', 'HTMLAreaElement'].forEach(function (cls) {
+        var C = window[cls]; if (!C || !C.prototype) return;
+        ['pathname', 'search', 'hash', 'host', 'hostname', 'port', 'protocol', 'origin'].forEach(function (p) {
+            var d = Object.getOwnPropertyDescriptor(C.prototype, p); if (!d || !d.get || d.get.__herbParts) return;
+            var orig = d.get;
+            var get = function () {
+                try { var h = this.href; if (h) return new URL(h)[p]; } catch (e) {}
+                return orig.call(this);
+            };
+            get.__herbParts = true;
+            Object.defineProperty(C.prototype, p, { get: get, set: d.set, enumerable: d.enumerable, configurable: true });
+        });
+    });
+}
+
+var __herbInject = [{ host: '.*', injectTo: 'head', html: '<script>(' + herbUrlPartsShim.toString() + ')();</script>' }];
 if (TURN.api.length) {
     herbRefreshTurn();
     // `html` is a getter: UV reads it on every page load, so it always uses the latest credentials (nothing is injected until they arrive).
