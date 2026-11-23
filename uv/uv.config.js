@@ -83,7 +83,14 @@ function herbUrlPartsShim() {
     });
 }
 
-var __herbInject = [{ host: '.*', injectTo: 'head', html: '<script>(' + herbUrlPartsShim.toString() + ')();</script>' }];
+// Passkeys (WebAuthn) are bound to the exact website address, so they can never work through a proxy. NVIDIA's sign-in pages try one and show
+// "Passkey login isn't available". Telling them WebAuthn is absent makes them skip it and offer the normal email + password sign-in.
+function herbNoPasskeys() { try { Object.defineProperty(window, 'PublicKeyCredential', { value: undefined, configurable: true, writable: true }); } catch (e) {} }
+
+var __herbInject = [
+    { host: '.*', injectTo: 'head', html: '<script>(' + herbUrlPartsShim.toString() + ')();</script>' },
+    { host: '(^|\\.)nvidia\\.com$', injectTo: 'head', html: '<script>(' + herbNoPasskeys.toString() + ')();</script>' },
+];
 if (TURN.api.length) {
     herbRefreshTurn();
     // `html` is a getter: UV reads it on every page load, so it always uses the latest credentials (nothing is injected until they arrive).
