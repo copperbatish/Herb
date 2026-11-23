@@ -4,7 +4,8 @@
   var DEFAULTS = {
     theme: 'emerald', accent: '#34d399', clock24: false, blur: true, anim: true, particles: true,
     search: 'duckduckgo', panicKey: '`', panicUrl: 'https://classroom.google.com',
-    copperchatUrl: 'https://copperchat-4cb91.web.app/copperchat/', vmUrl: '',
+    copperchatUrl: '',   // empty = Herb's own servers (/copperchat/); a full address overrides it
+    vmUrl: '',
     ui: 'desktop',
     // desktop + taskbar
     taskbarPos: 'bottom', taskbarSize: 'medium', taskbarAlign: 'left', taskbarAutohide: false, showClock: true, showDate: true, showTray: true,

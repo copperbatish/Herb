@@ -10,7 +10,17 @@
 <iframe id="f" allow="camera; microphone; clipboard-read; clipboard-write; fullscreen; autoplay; notifications"></iframe>
 <div id="fab"><a id="ext" href="#" target="_blank" rel="noopener">Open in new tab ↗</a></div>
 <script src="/js/herb-settings.js"></script>
-<script>var u=HerbSettings.get('copperchatUrl'),f=document.getElementById('f');f.src=u;document.getElementById('ext').href=u;
+<script src="/js/herb-config.js"></script>
+<script>
+// Copperchat is served by Herb's own servers (/copperchat/), not Firebase Hosting. Hosted pages use their own address; the single-file
+// loader asks HerbConfig for the first working server. An address you set yourself in 'copperchatUrl' still wins.
+var f=document.getElementById('f'),OLD='https://copperchat-4cb91.web.app/copperchat/',saved=HerbSettings.get('copperchatUrl');
+function where(){
+  if(saved&&saved!==OLD)return Promise.resolve(saved);
+  if(!(window.HerbConfig&&HerbConfig.single))return Promise.resolve('/copperchat/');
+  return HerbConfig.pageHost().then(function(h){return h+'/copperchat/'});
+}
+where().then(function(u){f.src=u;document.getElementById('ext').href=u});
 // If the embedded page hasn't loaded after a few seconds (some browsers refuse to embed it), point to the new-tab button.
 var t=setTimeout(function(){document.getElementById('fab').classList.add('show')},4000);f.addEventListener('load',function(){clearTimeout(t);
 // Safari/iPad can leave the frame unpainted (black) until something forces a repaint: nudge it a few times.

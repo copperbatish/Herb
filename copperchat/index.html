@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="CopperChat"/>
+<meta name="theme-color" content="#080808"/>
+<!-- no inline event handlers, no third-party scripts except Google's Firebase SDK -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src https: wss:; frame-src https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'self'"/>
+<link rel="manifest" href="manifest.webmanifest"/>
+<link rel="apple-touch-icon" href="icon-180.png"/>
+<title>CopperChat</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body,#R{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;font-size:14px;-webkit-text-size-adjust:100%}
+#R{display:flex;flex-direction:column;background:#080808;color:#e2e2e2;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button{cursor:pointer;font:inherit;border:none;background:none;color:inherit;padding:0}
+input,textarea{font:inherit;color:#e2e2e2;background:none;border:none;outline:none;font-size:16px}
+input::placeholder{color:#555}
+:root{--c1:#080808;--c2:#101010;--c3:#181818;--c4:#222;--c5:#2e2e2e;--t1:#e2e2e2;--t2:#999;--t3:#666;--acc:#4f7fff;--acc2:rgba(79,127,255,.14);--r:10px;--rL:16px;--rXL:22px;--bd:1px solid rgba(255,255,255,.07)}
+.lw{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+.lb{width:100%;max-width:360px;background:var(--c2);border:1px solid rgba(255,255,255,.09);border-radius:var(--rXL);padding:30px;display:flex;flex-direction:column;gap:14px}
+.llogo{text-align:center;font-size:24px;font-weight:700;letter-spacing:-.4px}.llogo b{color:var(--acc)}
+.lsub{text-align:center;color:var(--t3);font-size:12px;margin-top:-8px}
+.inp{width:100%;background:var(--c3);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);padding:11px 13px;color:var(--t1)}
+.inp:focus{border-color:rgba(79,127,255,.55)}
+.err{font-size:12px;color:#f87171;min-height:15px;text-align:center}.ok{color:#4ade80}
+.row{display:flex;gap:8px}
+.btnP{flex:1;padding:11px;background:var(--acc);color:#fff;font-weight:600;border-radius:var(--r)}
+.btnS{flex:1;padding:11px;background:var(--c4);color:var(--t1);font-weight:600;border-radius:var(--r);border:1px solid rgba(255,255,255,.08)}
+.btnG{display:flex;align-items:center;justify-content:center;gap:10px;padding:11px;background:#fff;color:#111;font-weight:600;border-radius:var(--r)}
+.btnP:disabled,.btnS:disabled{opacity:.5}
+.link{color:var(--t2);font-size:12px;text-align:center;text-decoration:underline}
+.div{display:flex;align-items:center;gap:10px;color:var(--t3);font-size:11px}.div::before,.div::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
+.shell{flex:1;display:flex;overflow:hidden;min-height:0}
+.sb{width:64px;background:#0a0a0a;border-right:var(--bd);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:6px;flex-shrink:0}
+.sbi{position:relative;width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--t3);flex-shrink:0;transition:all .2s}
+.sbi:hover{background:var(--c3);color:var(--t1)}.sbi.on{background:var(--acc2);color:var(--acc)}
+.sbi svg{width:19px;height:19px}
+.sep{width:28px;height:1px;background:rgba(255,255,255,.07);flex-shrink:0}
+.srvl{flex:1;width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;overflow-y:auto;scrollbar-width:none}
+.srb{position:relative;width:44px;height:44px;border-radius:22px;background:var(--c3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;overflow:hidden;color:var(--t2);flex-shrink:0;transition:all .22s}
+.srb:hover,.srb.on{border-radius:14px;background:var(--acc);color:#fff}.srb img{width:100%;height:100%;object-fit:cover}
+.dot{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;background:#f87171;border-radius:8px;font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #0a0a0a}
+.col{width:250px;background:#0b0b0b;border-right:var(--bd);display:flex;flex-direction:column;flex-shrink:0;min-height:0}
+.colh{padding:16px 16px 10px;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cols{overflow-y:auto;flex:1;padding:4px 8px}
+.item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;cursor:pointer;color:var(--t2);position:relative}
+.item:hover{background:rgba(255,255,255,.04)}.item.on{background:var(--acc2);color:var(--t1)}
+.item.unread{color:#fff;font-weight:600}.item.unread::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--acc);margin-left:auto}
+.item .meta{flex:1;min-width:0}.item .nm{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.item .ls{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#0c0c0c;min-width:0}
+.chdr{min-height:52px;border-bottom:var(--bd);display:flex;align-items:center;padding:0 14px;gap:9px;flex-shrink:0}
+.chdr .t{font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib{color:var(--t3);border-radius:8px;padding:6px;display:flex}.ib:hover{color:var(--t1);background:var(--c3)}.ib svg{width:18px;height:18px}
+.back{display:none}
+.item .ts{font-size:10px;color:var(--t3);font-weight:400;flex-shrink:0;align-self:flex-start;margin-top:2px}
+.av.gav{background:linear-gradient(135deg,#4f7fff,#a78bfa)}.av.gav svg{width:55%;height:55%}
+.srb.unr{box-shadow:0 0 0 2px #fff}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{display:flex;align-items:center;gap:6px;background:var(--c4);border-radius:14px;padding:4px 6px 4px 10px;font-size:12px}.chip button{color:var(--t3);font-size:13px}
+.msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;-webkit-overflow-scrolling:touch}
+.day{align-self:center;font-size:10px;color:var(--t3);margin:10px 0 4px;letter-spacing:.5px}
+.mr{display:flex;gap:11px;padding:2px 6px;border-radius:8px;margin-top:8px}.mr.cont{margin-top:0}.mr.cont .av,.mr.cont .mm{visibility:hidden;height:0}.mr.cont .av{height:0}
+.mr:hover{background:rgba(255,255,255,.02)}
+.av{width:36px;height:36px;border-radius:50%;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;background:var(--acc);color:#fff}.av img{width:100%;height:100%;object-fit:cover}
+.av.sm{width:30px;height:30px;font-size:11px}.av.lg{width:72px;height:72px;font-size:26px}
+.mb{flex:1;min-width:0}.mm{display:flex;align-items:baseline;gap:7px;margin-bottom:1px}.mn{font-weight:600;font-size:13px;color:#fff}.mt{font-size:10px;color:var(--t3)}
+.mx{font-size:14px;color:#c4c8d0;line-height:1.5;word-break:break-word;white-space:pre-wrap}.mx a{color:#7aa2ff}
+.mdel{opacity:0;color:var(--t3);font-size:11px;margin-left:auto}.mr:hover .mdel{opacity:1}
+.ftr{padding:10px 12px;flex-shrink:0}
+.irow{display:flex;align-items:flex-end;gap:8px;background:var(--c3);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:4px 8px 4px 14px}
+.mi{flex:1;padding:9px 0;max-height:120px;resize:none;overflow-y:auto;line-height:1.4}
+.bsend{width:34px;height:34px;border-radius:10px;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-bottom:1px}.bsend:disabled{opacity:.3}.bsend svg{width:15px;height:15px}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--t3);padding:32px;text-align:center}.empty h3{color:var(--t1);font-size:16px}.empty p{font-size:13px;max-width:280px;line-height:1.6;color:var(--t2)}
+.mwrap{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.72)}
+.mc{width:100%;max-width:380px;max-height:90vh;overflow:auto;background:var(--c2);border:1px solid rgba(255,255,255,.1);border-radius:var(--rXL);padding:24px;display:flex;flex-direction:column;gap:14px}
+.mhdr{display:flex;justify-content:space-between;align-items:center}.mhdr h3{font-size:16px}
+.sub{font-size:12px;color:var(--t3)}.slbl{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.7px;text-transform:uppercase;margin:6px 0 8px}
+.pr{flex:1;overflow-y:auto;padding:22px 18px}.card{background:var(--c3);border:var(--bd);border-radius:var(--rL);padding:16px;margin-bottom:16px}
+.hero{display:flex;align-items:center;gap:16px}.hero b{font-size:18px}.hero small{display:block;color:var(--t3);margin-top:2px}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;font-size:13px}
+.swt{width:42px;height:24px;border-radius:12px;background:var(--c5);position:relative;flex-shrink:0;transition:background .2s}.swt::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s}.swt.on{background:var(--acc)}.swt.on::after{left:21px}
+.sres{background:var(--c3);border:var(--bd);border-radius:var(--r);overflow:hidden;margin:6px 8px}
+.danger{color:#f87171;font-size:13px;font-weight:600;padding:8px 0}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:22px;letter-spacing:3px;text-align:center;background:var(--c3);border:1px dashed rgba(255,255,255,.2);border-radius:var(--r);padding:12px;user-select:all}
+.mem{display:flex;align-items:center;gap:9px;padding:6px 0}.mem .nm{flex:1;font-size:13px}.mem small{color:var(--t3)}
+@media (max-width:760px){
+  .col{width:100%;border-right:none}
+  .shell[data-pane="chat"] .col,.shell[data-pane="chat"] .sb{display:none}
+  .shell[data-pane="list"] .main{display:none}
+  .back{display:flex}
+  .sb{width:58px}
+}
+</style>
+</head>
+<body>
+<div id="R"></div>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, deleteField, onSnapshot, query, where, orderBy, limit, startAt, endAt, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js';
+import { getAuth, signInAnonymously, EmailAuthProvider, linkWithCredential, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js';
+
+const app = initializeApp({
+  apiKey: "AIzaSyB05wOLEOkrp7FEqbS_ryvby1kBMfD9WNA", authDomain: "copperchat-4cb91.firebaseapp.com", projectId: "copperchat-4cb91",
+  storageBucket: "copperchat-4cb91.firebasestorage.app", messagingSenderId: "1045463824701", appId: "1:1045463824701:web:6c40cf5167c05bb1a56d54"
+});
+const auth = getAuth(app), db = getFirestore(app);
+// Mineplacer lives in a different Firebase project. A second app instance talks to it (anonymous sign-in, same as Mineplacer itself) for account linking.
+const mpApp = initializeApp({ apiKey: "AIzaSyCSzeZJlKbOF_uG6rLrHFuqaulfVaZl2cA", authDomain: "cloud-4f3d4.firebaseapp.com", projectId: "cloud-4f3d4", appId: "1:814188421792:web:d520026b99a4029c971fc5" }, 'mp');
+const mpAuth = getAuth(mpApp), mpDb = getFirestore(mpApp);
+const mpReady = async () => { if (!mpAuth.currentUser) await signInAnonymously(mpAuth); };
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const PHOTO = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+const safePhoto = (p) => (typeof p === 'string' && p.length < 60000 && PHOTO.test(p)) ? p : '';
+const avatar = (p, name, cls = '') => safePhoto(p && p.photo !== undefined ? p.photo : p) ? `<div class="av ${cls}"><img alt="" src="${safePhoto(p && p.photo !== undefined ? p.photo : p)}"></div>` : `<div class="av ${cls}">${esc((name || '?')[0].toUpperCase())}</div>`;
+const linkify = (t) => esc(t).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)])/g, (u) => `<a href="${u}" target="_blank" rel="noopener noreferrer nofollow">${u}</a>`);
+const ICON = {
+  send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>',
+  dm: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  join: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>',
+  more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+  grp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  gplus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="17" y1="11" x2="23" y2="11"/></svg>',
+  ppl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+};
+
+/* ---------------- state ---------------- */
+let me = null, prof = null;
+const S = { tab: 'dms', dmUid: null, grpId: null, groups: [], friends: [], freqs: [], srvChans: {}, srvId: null, chId: null, dms: [], servers: [], reads: {}, blocks: {}, channels: [], members: [], srvDoc: null, pane: 'list', showMembers: false };
+const users = new Map();                    // uid -> profile (cached promises, so a name is fetched once)
+const subs = { top: [], chat: null, srv: [], sw: {} };
+const getUser = (uid) => { if (!users.has(uid)) users.set(uid, getDoc(doc(db, 'cc_users', uid)).then((s) => (s.exists() ? { uid, ...s.data() } : { uid, name: 'Unknown', handle: '?' })).catch(() => ({ uid, name: 'Unknown', handle: '?' }))); return users.get(uid); };
+const findUsers = async (v) => { try { const snap = await getDocs(query(collection(db, 'cc_users'), orderBy('handle'), startAt(v), endAt(v + '\uf8ff'), limit(8))); return snap.docs.filter((d) => d.id !== me.uid).map((d) => ({ uid: d.id, ...d.data() })); } catch (e) { return []; } };
+const dmId = (a, b) => [a, b].sort().join('_');
+const ms = (t) => (t && t.toMillis ? t.toMillis() : (typeof t === 'number' ? t : 0));
+
+function resizeImg(file, mx) {
+  return new Promise((ok, no) => {
+    const r = new FileReader();
+    r.onerror = no;
+    r.onload = (e) => { const i = new Image(); i.onerror = no; i.onload = () => { const c = document.createElement('canvas'); let w = i.width, h = i.height; const k = Math.min(1, mx / Math.max(w, h)); w = Math.round(w * k); h = Math.round(h * k); c.width = w; c.height = h; c.getContext('2d').drawImage(i, 0, 0, w, h); ok(c.toDataURL('image/jpeg', 0.8)); }; i.src = e.target.result; };
+    r.readAsDataURL(file);
+  });
+}
+const toast = (m) => { const t = document.createElement('div'); t.textContent = m; t.style.cssText = 'position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#222;border:1px solid rgba(255,255,255,.15);padding:10px 16px;border-radius:12px;z-index:999;font-size:13px;max-width:90vw'; document.body.appendChild(t); setTimeout(() => t.remove(), 2800); };
+const fail = (e, where) => { console.warn(where || '', e); toast(e && e.code === 'permission-denied' ? 'Not allowed' + (where ? ' (' + where + ')' : '') + '. If this is every screen, the CopperChat Firestore rules are not published yet.' : 'Something went wrong. Check your connection.'); };
+const failAt = (where) => (e) => fail(e, where);
+
+/* ---------------- sign in ---------------- */
+function renderLogin(note) {
+  $('R').innerHTML = `<div class="lw"><div class="lb">
+    <div class="llogo">Copper<b>Chat</b></div><p class="lsub">Private. Realtime. Yours.</p>
+    <input id="le" class="inp" type="text" placeholder="Username (or email)" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
+    <input id="lp" class="inp" type="password" placeholder="Password (8+ characters)" autocomplete="current-password">
+    <div id="lerr" class="err">${esc(note || '')}</div>
+    <div class="row"><button class="btnP" id="lsi">Sign in</button><button class="btnS" id="lsu">Create account</button></div>
+    <button class="link" id="lfp">Forgot password?</button>
+    <div class="div">or</div>
+    <button class="btnG" id="lgg"><img alt="" width="17" height="17" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">Continue with Google</button>
+    <p class="sub" style="text-align:center;margin-top:-2px;line-height:1.5">No email needed: just pick a username and password, press Create account, then choose your @handle. Your account is saved, and the same username and password also work on Herb.</p>
+  </div></div>`;
+  const msg = (m, good) => { $('lerr').textContent = m; $('lerr').className = 'err' + (good ? ' ok' : ''); };
+  const nice = (e) => ({ 'auth/invalid-credential': 'Wrong email or password.', 'auth/email-already-in-use': 'That email already has an account. Sign in instead.', 'auth/weak-password': 'Password needs 8+ characters.', 'auth/invalid-email': 'That email looks wrong.', 'auth/too-many-requests': 'Too many tries. Wait a minute.', 'auth/popup-closed-by-user': '' }[e.code] ?? 'Could not sign in.');
+  // a plain username becomes "<name>@herb.local" behind the scenes (never shown, never emailed); anything with an @ is treated as a real email, so older accounts still work
+  const toId = (v) => { v = v.trim(); if (v.includes('@')) return v; v = v.toLowerCase(); if (!/^[a-z0-9_]{3,20}$/.test(v)) throw new Error('Username: 3-20 letters, numbers or _ (no spaces).'); return v + '@herb.local'; };
+  const idErr = (e) => { if (e && e.code === 'auth/invalid-credential') return 'Wrong username or password.'; if (e && e.code === 'auth/email-already-in-use' && !$('le').value.includes('@')) return 'That username is taken.'; return e && e.code ? nice(e) : (e && e.message) || 'Could not sign in.'; };
+  $('lsi').onclick = async () => { try { await signInWithEmailAndPassword(auth, toId($('le').value), $('lp').value); } catch (e) { msg(idErr(e)); } };
+  $('lsu').onclick = async () => { if ($('lp').value.length < 8) return msg('Password needs 8+ characters.'); try { await createUserWithEmailAndPassword(auth, toId($('le').value), $('lp').value); } catch (e) { msg(idErr(e)); } };
+  $('lfp').onclick = async () => { if (!$('le').value.trim()) return msg('Type your email above first.'); if (!$('le').value.includes('@')) return msg('Username accounts have no email, so they can\'t be reset. Keep your password somewhere safe.'); try { await sendPasswordResetEmail(auth, $('le').value.trim()); msg('Reset link sent. Check your email.', true); } catch (e) { msg(nice(e)); } };
+  $('lgg').onclick = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { if (/popup-blocked|operation-not-supported|web-storage/.test(e.code || '')) { try { await signInWithRedirect(auth, new GoogleAuthProvider()); } catch (x) { msg(nice(x)); } } else msg(nice(e)); } };
+}
+
+/* ---------------- first run: pick a @handle ---------------- */
+function renderOnboard() {
+  const guess = (me.displayName || (me.email || '').split('@')[0] || 'user').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+  $('R').innerHTML = `<div class="lw"><div class="lb">
+    <div class="llogo">Welcome</div><p class="lsub">Pick a @handle (people find you with it) and a display name.</p>
+    <input id="oh" class="inp" placeholder="handle, e.g. copper_bat" maxlength="20" autocapitalize="none" value="${esc(guess.length >= 3 ? guess : '')}">
+    <input id="on" class="inp" placeholder="Display name" maxlength="32" value="${esc(me.displayName || '')}">
+    <div id="oerr" class="err"></div>
+    <button class="btnP" id="ogo" style="flex:none">Continue</button>
+    <button class="link" id="oout">Sign out</button>
+  </div></div>`;
+  $('oout').onclick = () => signOut(auth);
+  $('ogo').onclick = async () => {
+    const h = $('oh').value.trim().toLowerCase(), n = $('on').value.trim() || h, err = (m) => { $('oerr').textContent = m; };
+    if (!/^[a-z0-9_]{3,20}$/.test(h)) return err('Handle: 3-20 letters, numbers or underscores.');
+    $('ogo').disabled = true; err('');
+    try {
+      if ((await getDoc(doc(db, 'cc_handles', h))).exists()) { $('ogo').disabled = false; return err('That handle is taken.'); }
+      const b = writeBatch(db);
+      b.set(doc(db, 'cc_handles', h), { uid: me.uid });
+      b.set(doc(db, 'cc_users', me.uid), { handle: h, name: n.slice(0, 32), photo: null, createdAt: serverTimestamp() });
+      await b.commit();
+    } catch (e) { $('ogo').disabled = false; err(e.code === 'permission-denied' ? 'That handle was just taken. Try another.' : 'Could not save. Try again.'); }
+  };
+}
+
+/* ---------------- shell ---------------- */
+function renderShell() {
+  $('R').innerHTML = `<div class="shell" id="shell" data-pane="list">
+    <aside class="sb">
+      <button class="sbi" id="sbd" title="Messages">${ICON.dm}<span class="dot" id="dmdot" hidden></span></button>
+      <button class="sbi" id="sbf" title="Friends">${ICON.grp}<span class="dot" id="frdot" hidden></span></button>
+      <div class="sep"></div><div class="srvl" id="srvl"></div><div class="sep"></div>
+      <button class="sbi" id="sbn" title="New server" style="color:#4ade80">${ICON.plus}</button>
+      <button class="sbi" id="sbj" title="Join a server" style="color:#a78bfa">${ICON.join}</button>
+      <button class="sbi" id="sbp" title="You">${ICON.user}</button>
+    </aside>
+    <div class="col" id="col"></div>
+    <main class="main" id="main"></main>
+  </div><div id="MR"></div>`;
+  $('sbd').onclick = () => go({ tab: 'dms', dmUid: null, grpId: null });
+  $('sbp').onclick = () => { mainKey = ''; go({ tab: 'me' }); };
+  $('sbf').onclick = () => go({ tab: 'fr', dmUid: null, grpId: null });
+  $('sbn').onclick = modalCreate; $('sbj').onclick = modalJoin;
+  go({});
+}
+function go(p) {
+  if (p.dmUid) p.grpId = null; if (p.grpId) p.dmUid = null;
+  Object.assign(S, p);
+  if (p.tab === 'srv' && p.srvId) openServer(p.srvId, p.chId);
+  else if (p.tab && p.tab !== 'srv') { closeServerSubs(); S.srvId = null; S.chId = null; }
+  S.pane = S.tab === 'fr' ? 'list' : (S.tab === 'dms' && !S.dmUid && !S.grpId) || (S.tab === 'srv' && !S.chId) ? 'list' : 'chat';
+  if (S.tab === 'me') S.pane = 'chat';
+  paint();
+}
+function paint(force) {
+  const sh = $('shell'); if (!sh) return; sh.dataset.pane = S.pane;
+  $('sbf').classList.toggle('on', S.tab === 'fr'); { const d = $('frdot'); if (d) { d.hidden = !S.freqs.length; d.textContent = S.freqs.length; } }
+  $('sbd').classList.toggle('on', S.tab === 'dms'); $('sbp').classList.toggle('on', S.tab === 'me');
+  paintServers(); paintCol(); paintMain(force); updateBadge();
+}
+const unreadOf = (id, last, lastFrom) => lastFrom !== me.uid && ms(last) > (S.reads[id] || 0);
+function dmUnread() { return S.dms.filter((d) => unreadOf(d.id, d.lastAt, d.lastFrom)).length + S.groups.filter((g) => unreadOf('g_' + g.id, g.lastAt, g.lastFrom)).length; }
+const srvUnread = (sid) => (S.srvChans[sid] || []).filter((c) => unreadOf(`${sid}_${c.id}`, c.lastAt, c.lastBy)).length;
+function paintServers() {
+  const el = $('srvl'); if (!el) return;
+  el.innerHTML = S.servers.map((s) => `<button class="srb ${S.tab === 'srv' && S.srvId === s.id ? 'on' : ''} ${srvUnread(s.id) ? 'unr' : ''}" data-s="${esc(s.id)}" title="${esc(s.name)}">${safePhoto(s.logo) ? `<img alt="" src="${safePhoto(s.logo)}">` : esc(s.name.slice(0, 2).toUpperCase())}</button>`).join('');
+  el.querySelectorAll('.srb').forEach((b) => { b.onclick = () => go({ tab: 'srv', srvId: b.dataset.s, chId: null }); });
+  const n = dmUnread(); const dot = $('dmdot'); if (dot) { dot.hidden = !n; dot.textContent = n; }
+}
+function updateBadge() {
+  const n = dmUnread() + S.servers.reduce((a, s) => a + srvUnread(s.id), 0);
+  try { if (navigator.setAppBadge) { n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } } catch (e) {}
+  document.title = n ? `(${n}) CopperChat` : 'CopperChat';
+}
+
+/* ---------------- left column ---------------- */
+async function paintCol() {
+  const col = $('col'); if (!col) return;
+  if (S.tab === 'dms') {
+    const fresh = !$('dsi');
+    if (fresh) col.innerHTML = `<div class="colh">Messages<button class="ib" id="newg" title="New group chat">${ICON.gplus}</button></div>
+      <div style="padding:0 12px 8px"><input class="inp" id="dsi" placeholder="Find someone by @handle…" autocapitalize="none" autocomplete="off"></div><div id="dsr"></div><div class="cols" id="dml"></div>`;
+    const items = [...S.dms.map((d) => ({ k: 'dm', d })), ...S.groups.map((d) => ({ k: 'grp', d }))].sort((a, b) => ms(b.d.lastAt) - ms(a.d.lastAt));
+    const rows = await Promise.all(items.map(async (it) => (it.k === 'dm' ? { ...it, o: await getUser(it.d.members.find((x) => x !== me.uid)) } : { ...it, o: await getUser(it.d.lastFrom) })));
+    if (S.tab !== 'dms') return;
+    const when = (t) => { if (!t) return ''; const d = new Date(t); return d.toDateString() === new Date().toDateString() ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : d.toLocaleDateString([], { month: 'short', day: 'numeric' }); };
+    $('dml').innerHTML = rows.map(({ k, d, o }) => k === 'dm'
+      ? `<div class="item ${S.dmUid === o.uid ? 'on' : ''} ${unreadOf(d.id, d.lastAt, d.lastFrom) ? 'unread' : ''}" data-u="${esc(o.uid)}">${avatar(o, o.name, 'sm')}<div class="meta"><div class="nm">${esc(o.name)}</div><div class="ls">${esc(d.lastText || 'No messages yet')}</div></div><span class="ts">${esc(when(ms(d.lastAt)))}</span></div>`
+      : `<div class="item ${S.grpId === d.id ? 'on' : ''} ${unreadOf('g_' + d.id, d.lastAt, d.lastFrom) ? 'unread' : ''}" data-g="${esc(d.id)}"><div class="av sm gav">${ICON.grp}</div><div class="meta"><div class="nm">${esc(d.name)} <span class="sub" style="font-weight:400">· ${d.members.length}</span></div><div class="ls">${esc(d.lastText ? (d.lastFrom === me.uid ? 'You' : o.name) + ': ' + d.lastText : 'No messages yet')}</div></div><span class="ts">${esc(when(ms(d.lastAt)))}</span></div>`).join('') || '<div class="sub" style="padding:14px">No conversations yet. Search for a @handle above, or start a group with the button in the top corner.</div>';
+    $('dml').querySelectorAll('.item').forEach((it) => { it.onclick = () => go(it.dataset.g ? { tab: 'dms', grpId: it.dataset.g } : { tab: 'dms', dmUid: it.dataset.u }); });
+    if (!fresh) return;
+    $('newg').onclick = () => modalGroup();
+    let tm = null;
+    $('dsi').oninput = (e) => {
+      clearTimeout(tm); const v = e.target.value.trim().toLowerCase().replace(/^@/, ''); if (!v) { $('dsr').innerHTML = ''; return; }
+      tm = setTimeout(async () => {
+        const res = await findUsers(v);
+        $('dsr').innerHTML = res.length ? `<div class="sres">${res.map((u) => `<div class="item" data-u="${esc(u.uid)}">${avatar(u, u.name, 'sm')}<div class="meta"><div class="nm">${esc(u.name)}</div><div class="ls">@${esc(u.handle)}</div></div></div>`).join('')}</div>` : '<div class="sub" style="padding:6px 16px">Nobody with that handle.</div>';
+        $('dsr').querySelectorAll('.item').forEach((it) => { it.onclick = () => { users.set(it.dataset.u, Promise.resolve(res.find((u) => u.uid === it.dataset.u))); $('dsi').value = ''; $('dsr').innerHTML = ''; go({ tab: 'dms', dmUid: it.dataset.u }); }; });
+      }, 300);
+    };
+  } else if (S.tab === 'srv') {
+    const s = S.srvDoc;
+    col.innerHTML = `<div class="colh"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s ? s.name : '…')}</span><button class="ib" id="srvm" title="Server menu">${ICON.more}</button></div><div class="cols" id="chl"></div>`;
+    $('chl').innerHTML = S.channels.slice().sort((a, b) => (a.id === 'general' ? -1 : b.id === 'general' ? 1 : a.name.localeCompare(b.name))).map((c) => `<div class="item ${S.chId === c.id ? 'on' : ''} ${unreadOf(`${S.srvId}_${c.id}`, c.lastAt, c.lastBy) ? 'unread' : ''}" data-c="${esc(c.id)}"><span style="color:var(--t3)">#</span><div class="meta"><div class="nm">${esc(c.name)}</div></div></div>`).join('');
+    $('chl').querySelectorAll('.item').forEach((it) => { it.onclick = () => go({ tab: 'srv', chId: it.dataset.c }); });
+    $('srvm').onclick = modalServer;
+  } else if (S.tab === 'fr') {
+    const people = await Promise.all([...S.freqs, ...S.friends].map(getUser)); if (S.tab !== 'fr') return;
+    const byId = Object.fromEntries(people.map((u) => [u.uid, u]));
+    col.innerHTML = `<div class="colh">Friends</div>
+      <div style="padding:0 12px 8px"><div class="row"><input class="inp" id="fa" placeholder="Add by exact @handle" autocapitalize="none" autocomplete="off"><button class="btnP" id="fag" style="flex:none;padding:0 14px">Add</button></div><div class="err" id="fe"></div></div>
+      <div class="cols">${S.freqs.length ? `<div class="slbl" style="padding:0 6px">Requests</div>` + S.freqs.map((id) => { const u = byId[id]; return `<div class="item" style="cursor:default">${avatar(u, u.name, 'sm')}<div class="meta"><div class="nm">${esc(u.name)}</div><div class="ls">@${esc(u.handle)}</div></div><button class="btnP" data-ok="${esc(id)}" style="flex:none;padding:6px 10px;font-size:12px">Accept</button><button class="btnS" data-no="${esc(id)}" style="flex:none;padding:6px 10px;font-size:12px">✕</button></div>`; }).join('') : ''}
+      <div class="slbl" style="padding:0 6px">Friends (${S.friends.length})</div>${S.friends.map((id) => { const u = byId[id]; return `<div class="item" style="cursor:default">${avatar(u, u.name, 'sm')}<div class="meta"><div class="nm">${esc(u.name)}</div><div class="ls">@${esc(u.handle)}</div></div><button class="ib" data-dm="${esc(id)}" title="Message">${ICON.dm}</button><button class="ib" data-rm="${esc(id)}" title="Remove">✕</button></div>`; }).join('') || '<div class="sub" style="padding:8px 10px">No friends yet. Add someone by their @handle.</div>'}</div>`;
+    $('fag').onclick = async () => {
+      const h = $('fa').value.trim().toLowerCase().replace(/^@/, ''), err = (m) => { $('fe').textContent = m; }; if (!h) return;
+      try {
+        const q = await getDocs(query(collection(db, 'cc_users'), where('handle', '==', h), limit(1))); if (q.empty) return err('Nobody has that handle.');
+        const to = q.docs[0].id; if (to === me.uid) return err("That's you."); if (S.friends.includes(to)) return err('Already friends.');
+        if (S.freqs.includes(to)) return acceptFriend(to);
+        await setDoc(doc(db, 'cc_freq', to, 'from', me.uid), { at: serverTimestamp() }); $('fa').value = ''; err(''); toast('Request sent.');
+      } catch (e) { err('Could not send it (already asked?).'); }
+    };
+    col.querySelectorAll('[data-ok]').forEach((b) => { b.onclick = () => acceptFriend(b.dataset.ok); });
+    col.querySelectorAll('[data-no]').forEach((b) => { b.onclick = () => deleteDoc(doc(db, 'cc_freq', me.uid, 'from', b.dataset.no)).catch(fail); });
+    col.querySelectorAll('[data-dm]').forEach((b) => { b.onclick = () => go({ tab: 'dms', dmUid: b.dataset.dm, grpId: null }); });
+    col.querySelectorAll('[data-rm]').forEach((b) => { b.onclick = async () => { if (!confirm('Remove this friend?')) return; try { const bt = writeBatch(db); bt.delete(doc(db, 'cc_friends', me.uid, 'list', b.dataset.rm)); bt.delete(doc(db, 'cc_friends', b.dataset.rm, 'list', me.uid)); await bt.commit(); } catch (e) { fail(e); } }; });
+  } else { col.innerHTML = `<div class="colh">You</div><div class="sub" style="padding:0 16px">Profile, notifications and sign out.</div>`; }
+}
+
+/* ---------------- main pane ---------------- */
+let mainKey = '';
+async function paintMain(force) {
+  const M = $('main'); if (!M) return;
+  const key = [S.tab, S.dmUid, S.grpId, (S.groups.find((x) => x.id === S.grpId) || { members: [] }).members.length, S.srvId, S.chId, S.tab === 'srv' ? S.channels.some((c) => c.id === S.chId) : '', S.tab === 'dms' && S.dmUid ? (!!S.blocks[S.dmUid]) + '/' + S.dms.some((d) => d.id === dmId(me.uid, S.dmUid)) : ''].join('|');
+  if (!force && key === mainKey && M.firstChild) return; mainKey = key;
+  closeChatSub();
+  if (S.tab === 'me') return paintProfile(M);
+  if (S.tab === 'dms' && S.dmUid) {
+    const o = await getUser(S.dmUid); if (S.dmUid !== o.uid || S.tab !== 'dms') return;
+    return paintChat(M, { title: o.name, sub: '@' + o.handle, id: dmId(me.uid, o.uid), path: ['cc_dms', dmId(me.uid, o.uid), 'messages'], dm: o });
+  }
+  if (S.tab === 'dms' && S.grpId) {
+    const g = S.groups.find((x) => x.id === S.grpId); if (!g) { M.innerHTML = '<div class="empty"><p>Loading…</p></div>'; return; }
+    return paintChat(M, { title: g.name, sub: g.members.length + ' members', id: 'g_' + g.id, path: ['cc_groups', g.id, 'messages'], grp: g });
+  }
+  if (S.tab === 'srv' && S.srvId && S.chId) {
+    const c = S.channels.find((x) => x.id === S.chId); if (!c) { M.innerHTML = '<div class="empty"><p>Loading…</p></div>'; return; }
+    return paintChat(M, { title: '# ' + c.name, sub: S.srvDoc ? S.srvDoc.name : '', id: `${S.srvId}_${c.id}`, path: ['cc_servers', S.srvId, 'channels', c.id, 'messages'], ch: c });
+  }
+  if (S.tab === 'fr') { M.innerHTML = `<div class="empty">${ICON.grp}<h3>Friends</h3><p>Friends work in CopperChat and in Mineplacer (when your Mineplacer account signs in with CopperChat). Add someone by their @handle.</p></div>`; return; }
+  M.innerHTML = `<div class="empty">${S.tab === 'srv' ? ICON.ppl : ICON.dm}<h3>${S.tab === 'srv' ? 'Pick a channel' : 'Your messages'}</h3><p>${S.tab === 'srv' ? 'Choose a channel on the left.' : 'Search for a @handle to start a conversation. Messages are private to the two of you.'}</p></div>`;
+}
+async function acceptFriend(from) {
+  try { const b = writeBatch(db); b.set(doc(db, 'cc_friends', me.uid, 'list', from), { at: serverTimestamp() }); b.set(doc(db, 'cc_friends', from, 'list', me.uid), { at: serverTimestamp() }); b.delete(doc(db, 'cc_freq', me.uid, 'from', from)); await b.commit(); toast('You are friends now.'); } catch (e) { fail(e); }
+}
+function closeChatSub() { if (subs.chat) { subs.chat(); subs.chat = null; } }
+
+function paintChat(M, c) {
+  const blocked = c.dm && S.blocks[c.dm.uid];
+  M.innerHTML = `<div class="chdr"><button class="ib back" id="bk">${ICON.back}</button>${c.dm ? avatar(c.dm, c.dm.name, 'sm') : (c.grp ? `<div class="av sm gav">${ICON.grp}</div>` : '')}<div class="t">${esc(c.title)} <span class="sub" style="font-weight:400">${esc(c.sub)}</span></div>
+      ${c.grp ? `<button class="ib" id="grm" title="Group info">${ICON.more}</button>` : c.dm ? `<button class="ib" id="dmm" title="More">${ICON.more}</button>` : (S.tab === 'srv' ? `<button class="ib" id="mbr" title="Members">${ICON.ppl}</button>` : '')}</div>
+    <div class="msgs" id="msgs"></div>
+    <div class="ftr">${blocked ? '<div class="sub" style="text-align:center;padding:8px">You blocked this person. Unblock them from the ⋯ menu to chat.</div>' : `<div class="irow"><textarea class="mi" id="mi" rows="1" placeholder="Message ${esc(c.title)}" maxlength="2000"></textarea><button class="bsend" id="bs" disabled>${ICON.send}</button></div>`}</div>`;
+  $('bk').onclick = () => { if (S.tab === 'dms') go({ dmUid: null, grpId: null }); else go({ chId: null }); };
+  if (c.grp) $('grm').onclick = () => modalGroupInfo(c.grp.id);
+  if (c.dm) $('dmm').onclick = () => modalDm(c.dm);
+  if ($('mbr')) $('mbr').onclick = modalMembers;
+  const mi = $('mi'), bs = $('bs');
+  if (mi) {
+    mi.oninput = () => { bs.disabled = !mi.value.trim(); mi.style.height = 'auto'; mi.style.height = Math.min(120, mi.scrollHeight) + 'px'; };
+    mi.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(c); } };
+    bs.onclick = () => send(c);
+    if (matchMedia('(pointer:fine)').matches) mi.focus();
+  }
+  if (c.dm && !S.dms.find((d) => d.id === c.id)) { $('msgs').innerHTML = '<div class="empty"><p>No messages yet. Say hi 👋 (the conversation is created when you send the first one)</p></div>'; return; }   // no conversation document yet, so there is nothing the rules would let us read
+  const q = query(collection(db, ...c.path), orderBy('at', 'desc'), limit(100));
+  subs.chat = onSnapshot(q, async (snap) => {
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) })).reverse();
+    const profs = await Promise.all([...new Set(list.map((m) => m.from))].map(getUser)); const byId = Object.fromEntries(profs.map((p) => [p.uid, p]));
+    const el = $('msgs'); if (!el) return;
+    const stick = el.scrollHeight - el.scrollTop - el.clientHeight < 120; let html = '', lastDay = '', prev = null;
+    for (const m of list) {
+      const t = ms(m.at), d = new Date(t), day = d.toDateString(), p = byId[m.from] || { name: '?' };
+      if (day !== lastDay) { html += `<div class="day">${esc(d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase())}</div>`; lastDay = day; prev = null; }
+      const cont = prev && prev.from === m.from && t - ms(prev.at) < 300000;
+      html += `<div class="mr ${cont ? 'cont' : ''}">${avatar(p, p.name)}<div class="mb"><div class="mm"><span class="mn">${esc(p.name)}</span><span class="mt">${esc(d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))}</span>${m.from === me.uid ? `<button class="mdel" data-m="${esc(m.id)}">delete</button>` : ''}</div><div class="mx">${linkify(m.text)}</div></div></div>`;
+      prev = m;
+    }
+    el.innerHTML = html || '<div class="empty"><p>No messages yet. Say hi 👋</p></div>';
+    el.querySelectorAll('.mdel').forEach((b) => { b.onclick = () => deleteDoc(doc(db, ...c.path, b.dataset.m)).catch(fail); });
+    if (stick) el.scrollTop = el.scrollHeight;
+    markRead(c);
+  }, fail);
+}
+function markRead(c) {
+  const last = c.dm ? S.dms.find((d) => d.id === c.id) : c.grp ? S.groups.find((g) => 'g_' + g.id === c.id) : c.ch; const t = last ? ms(last.lastAt) : 0;
+  if (!t || (S.reads[c.id] || 0) >= t || document.hidden) return;
+  S.reads[c.id] = t; setDoc(doc(db, 'cc_users', me.uid, 'reads', c.id), { at: serverTimestamp() }).catch(() => {});
+  paintServers(); updateBadge();
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) paint(); });
+
+async function send(c) {
+  const mi = $('mi'), text = (mi.value || '').trim(); if (!text) return;
+  mi.value = ''; $('bs').disabled = true; mi.style.height = 'auto';
+  try {
+    const b = writeBatch(db), mref = doc(collection(db, ...c.path));
+    if (c.dm) {
+      const ref = doc(db, 'cc_dms', c.id);
+      if (!S.dms.find((d) => d.id === c.id)) { const s = await getDoc(ref); if (!s.exists()) await setDoc(ref, { members: [me.uid, c.dm.uid].sort(), lastText: '', lastFrom: me.uid, lastAt: serverTimestamp() }); }
+      b.set(mref, { from: me.uid, text, at: serverTimestamp() });
+      b.update(ref, { lastText: text.slice(0, 120), lastFrom: me.uid, lastAt: serverTimestamp() });
+    } else if (c.grp) {
+      b.set(mref, { from: me.uid, text, at: serverTimestamp() });
+      b.update(doc(db, 'cc_groups', c.grp.id), { lastText: text.slice(0, 120), lastFrom: me.uid, lastAt: serverTimestamp() });
+    } else {
+      b.set(mref, { from: me.uid, text, at: serverTimestamp() });
+      b.update(doc(db, 'cc_servers', S.srvId, 'channels', c.ch.id), { lastAt: serverTimestamp(), lastBy: me.uid });
+    }
+    await b.commit();
+  } catch (e) { mi.value = text; $('bs').disabled = false; fail(e); }
+}
+
+/* ---------------- servers ---------------- */
+function closeServerSubs() { subs.srv.forEach((u) => u()); subs.srv = []; S.channels = []; S.members = []; S.srvDoc = null; }
+function openServer(id, chId) {
+  if (S.srvDoc && S.srvDoc.id === id) { if (!chId) S.chId = S.chId || null; else S.chId = chId; return; }
+  closeServerSubs(); S.srvId = id; S.chId = chId || null;
+  subs.srv.push(onSnapshot(doc(db, 'cc_servers', id), (s) => {
+    if (!s.exists()) { deleteDoc(doc(db, 'cc_users', me.uid, 'servers', id)).catch(() => {}); toast('That server is gone.'); go({ tab: 'dms' }); return; }
+    S.srvDoc = { id, ...s.data() }; paintCol();
+  }, () => { deleteDoc(doc(db, 'cc_users', me.uid, 'servers', id)).catch(() => {}); toast('You no longer have access to that server.'); go({ tab: 'dms' }); }));
+  subs.srv.push(onSnapshot(collection(db, 'cc_servers', id, 'channels'), (snap) => {
+    S.channels = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    if (!S.chId && S.tab === 'srv' && !matchMedia('(max-width:760px)').matches) S.chId = (S.channels.find((c) => c.id === 'general') || S.channels[0] || {}).id || null;
+    if (S.chId) S.pane = 'chat';
+    paint();
+  }, () => {}));
+  subs.srv.push(onSnapshot(collection(db, 'cc_servers', id, 'members'), (snap) => { S.members = snap.docs.map((d) => ({ uid: d.id, ...d.data() })); }, () => {}));
+}
+function modal(html, wire) {
+  const MR = $('MR'); MR.innerHTML = `<div class="mwrap" id="mbg"><div class="mc">${html}</div></div>`;
+  const close = () => { MR.innerHTML = ''; }; $('mbg').onclick = (e) => { if (e.target.id === 'mbg') close(); };
+  const x = MR.querySelector('[data-x]'); if (x) x.onclick = close; wire(close);
+}
+function modalGroup() {
+  let picked = [];
+  modal(`<div class="mhdr"><h3>New group chat</h3><button class="ib" data-x>✕</button></div><p class="sub">Up to 12 people. Add them by @handle. Only members can read the group.</p>
+    <input class="inp" id="gn" placeholder="Group name" maxlength="40">
+    <div class="chips" id="gc"></div>
+    <input class="inp" id="gs" placeholder="Add people by @handle…" autocapitalize="none" autocomplete="off"><div id="gr"></div><div class="err" id="e"></div><button class="btnP" id="go" style="flex:none">Create group</button>`, (close) => {
+    const chips = () => { $('gc').innerHTML = picked.map((u, i) => `<span class="chip">${esc(u.name)}<button data-i="${i}">✕</button></span>`).join(''); $('gc').querySelectorAll('button').forEach((b) => { b.onclick = () => { picked.splice(+b.dataset.i, 1); chips(); }; }); };
+    let tm = null;
+    $('gs').oninput = (e) => {
+      clearTimeout(tm); const v = e.target.value.trim().toLowerCase().replace(/^@/, ''); if (!v) { $('gr').innerHTML = ''; return; }
+      tm = setTimeout(async () => {
+        const res = (await findUsers(v)).filter((u) => !picked.find((p) => p.uid === u.uid));
+        $('gr').innerHTML = res.length ? `<div class="sres" style="margin:6px 0">${res.map((u) => `<div class="item" data-u="${esc(u.uid)}">${avatar(u, u.name, 'sm')}<div class="meta"><div class="nm">${esc(u.name)}</div><div class="ls">@${esc(u.handle)}</div></div></div>`).join('')}</div>` : '';
+        $('gr').querySelectorAll('.item').forEach((it) => { it.onclick = () => { if (picked.length >= 11) return; picked.push(res.find((u) => u.uid === it.dataset.u)); $('gs').value = ''; $('gr').innerHTML = ''; chips(); }; });
+      }, 300);
+    };
+    $('go').onclick = async () => {
+      const name = $('gn').value.trim(); if (!name) return ($('e').textContent = 'Give the group a name.'); if (!picked.length) return ($('e').textContent = 'Add at least one person.');
+      $('go').disabled = true;
+      try {
+        const ref = doc(collection(db, 'cc_groups'));
+        await setDoc(ref, { name, members: [me.uid, ...picked.map((u) => u.uid)], ownerId: me.uid, lastText: '', lastFrom: me.uid, lastAt: serverTimestamp(), createdAt: serverTimestamp() });
+        picked.forEach((u) => users.set(u.uid, Promise.resolve(u))); close(); go({ tab: 'dms', grpId: ref.id });
+      } catch (e) { $('go').disabled = false; $('e').textContent = 'Could not create it. Try again.'; console.warn(e); }
+    };
+  });
+}
+async function modalGroupInfo(gid) {
+  const g = S.groups.find((x) => x.id === gid); if (!g) return; const owner = g.ownerId === me.uid;
+  const ps = await Promise.all(g.members.map(getUser));
+  modal(`<div class="mhdr"><h3>${esc(g.name)}</h3><button class="ib" data-x>✕</button></div>
+    ${owner ? `<div class="row"><input class="inp" id="rn" value="${esc(g.name)}" maxlength="40"><button class="btnS" id="rs" style="flex:none;padding:11px 14px">Rename</button></div>` : ''}
+    <div class="slbl">Members (${ps.length})</div>${ps.map((p) => `<div class="mem">${avatar(p, p.name, 'sm')}<div class="nm">${esc(p.name)} <small>@${esc(p.handle)}${p.uid === g.ownerId ? ' · owner' : ''}</small></div>${owner && p.uid !== me.uid ? `<button class="danger" data-k="${esc(p.uid)}" style="padding:0">Remove</button>` : ''}</div>`).join('')}
+    ${owner && ps.length < 12 ? `<input class="inp" id="as" placeholder="Add someone by @handle…" autocapitalize="none" autocomplete="off"><div id="ar"></div>` : ''}
+    ${owner ? '<button class="danger" id="gd">Delete group</button>' : '<button class="danger" id="gl">Leave group</button>'}`, (close) => {
+    const upd = (data) => updateDoc(doc(db, 'cc_groups', gid), data);
+    if (owner) {
+      $('rs').onclick = async () => { const n = $('rn').value.trim(); if (!n) return; try { await upd({ name: n.slice(0, 40) }); close(); } catch (e) { fail(e); } };
+      document.querySelectorAll('[data-k]').forEach((b) => { b.onclick = async () => { if (!confirm('Remove this person from the group?')) return; try { await upd({ members: g.members.filter((u) => u !== b.dataset.k) }); close(); } catch (e) { fail(e); } }; });
+      if ($('as')) { let tm = null; $('as').oninput = (e) => { clearTimeout(tm); const v = e.target.value.trim().toLowerCase().replace(/^@/, ''); if (!v) { $('ar').innerHTML = ''; return; } tm = setTimeout(async () => {
+        const res = (await findUsers(v)).filter((u) => !g.members.includes(u.uid));
+        $('ar').innerHTML = res.length ? `<div class="sres" style="margin:6px 0">${res.map((u) => `<div class="item" data-u="${esc(u.uid)}">${avatar(u, u.name, 'sm')}<div class="meta"><div class="nm">${esc(u.name)}</div><div class="ls">@${esc(u.handle)}</div></div></div>`).join('')}</div>` : '';
+        $('ar').querySelectorAll('.item').forEach((it) => { it.onclick = async () => { try { await upd({ members: [...g.members, it.dataset.u] }); close(); } catch (e) { fail(e); } }; });
+      }, 300); }; }
+      $('gd').onclick = async () => { if (!confirm('Delete this group for everyone?')) return; try { await deleteDoc(doc(db, 'cc_groups', gid)); close(); go({ grpId: null }); } catch (e) { fail(e); } };
+    } else $('gl').onclick = async () => { if (!confirm('Leave this group?')) return; try { await upd({ members: g.members.filter((u) => u !== me.uid) }); close(); go({ grpId: null }); } catch (e) { fail(e); } };
+  });
+}
+function modalCreate() {
+  let logo = null;
+  modal(`<div class="mhdr"><h3>Create a server</h3><button class="ib" data-x>✕</button></div><p class="sub">A private space for your people. Only people with an invite code can join.</p>
+    <label style="align-self:center;cursor:pointer"><div class="av lg" id="lg" style="background:var(--c4)">＋</div><input type="file" accept="image/*" id="lf" hidden></label>
+    <input class="inp" id="sn" placeholder="Server name" maxlength="40"><div class="err" id="e"></div><button class="btnP" id="go" style="flex:none">Create</button>`, (close) => {
+    $('lf').onchange = async (e) => { if (e.target.files[0]) { logo = await resizeImg(e.target.files[0], 160).catch(() => null); if (logo) $('lg').innerHTML = `<img alt="" src="${logo}">`; } };
+    $('go').onclick = async () => {
+      const n = $('sn').value.trim(); if (!n) return; $('go').disabled = true;
+      try {
+        const sref = doc(collection(db, 'cc_servers')), b = writeBatch(db);
+        b.set(sref, { name: n, logo, ownerId: me.uid, createdAt: serverTimestamp() });
+        b.set(doc(sref, 'members', me.uid), { role: 'owner', joinedAt: serverTimestamp() });
+        b.set(doc(sref, 'channels', 'general'), { name: 'general', createdAt: serverTimestamp() });
+        b.set(doc(db, 'cc_users', me.uid, 'servers', sref.id), { name: n, logo, role: 'owner', notify: true, joinedAt: serverTimestamp() });
+        await b.commit(); close(); go({ tab: 'srv', srvId: sref.id, chId: 'general' });
+      } catch (e) { $('go').disabled = false; $('e').textContent = 'Could not create it. Try again.'; console.warn(e); }
+    };
+  });
+}
+function modalJoin(pre) {
+  modal(`<div class="mhdr"><h3>Join a server</h3><button class="ib" data-x>✕</button></div><p class="sub">Paste the 8-character invite code a friend sent you. Codes expire after 7 days.</p>
+    <input class="inp" id="ji" placeholder="Invite code" maxlength="8" autocapitalize="none" autocomplete="off" value="${esc(pre || '')}"><div class="err" id="e"></div><button class="btnP" id="go" style="flex:none">Join</button>`, (close) => {
+    $('go').onclick = async () => {
+      const code = $('ji').value.trim(); if (!/^[A-Za-z0-9]{8}$/.test(code)) return ($('e').textContent = 'Codes are 8 letters and numbers.');
+      $('go').disabled = true;
+      try {
+        const inv = await getDoc(doc(db, 'cc_invites', code)); if (!inv.exists()) throw new Error('nf');
+        const d = inv.data(), sref = doc(db, 'cc_servers', d.serverId), b = writeBatch(db);
+        b.set(doc(sref, 'members', me.uid), { role: 'member', joinedAt: serverTimestamp(), invite: code });
+        b.set(doc(db, 'cc_users', me.uid, 'servers', d.serverId), { name: String(d.serverName).slice(0, 40), logo: null, role: 'member', notify: true, joinedAt: serverTimestamp() });
+        await b.commit(); close(); go({ tab: 'srv', srvId: d.serverId, chId: 'general' });
+      } catch (e) { $('go').disabled = false; $('e').textContent = 'That code is invalid, expired, or you are already in.'; }
+    };
+  });
+}
+function modalServer() {
+  const s = S.srvDoc; if (!s) return; const owner = s.ownerId === me.uid, mine = S.servers.find((x) => x.id === s.id) || {};
+  modal(`<div class="mhdr"><h3>${esc(s.name)}</h3><button class="ib" data-x>✕</button></div>
+    <div class="tog"><span>Notify me about new messages</span><button class="swt ${mine.notify === false ? '' : 'on'}" id="nt"></button></div>
+    ${owner ? `<button class="btnS" id="inv" style="flex:none">Create invite code</button><div id="ic"></div><div class="slbl">Channels</div><div class="row"><input class="inp" id="nc" placeholder="new-channel" maxlength="30" autocapitalize="none"><button class="btnS" id="ac" style="flex:none">Add</button></div><div class="err" id="e"></div><button class="danger" id="del">Delete server</button>` : `<button class="danger" id="lv">Leave server</button>`}`, (close) => {
+    $('nt').onclick = async () => { const on = $('nt').classList.toggle('on'); await updateDoc(doc(db, 'cc_users', me.uid, 'servers', s.id), { notify: on }).catch(fail); };
+    if (owner) {
+      $('inv').onclick = async () => {
+        const a = crypto.getRandomValues(new Uint8Array(8)), code = Array.from(a, (n) => 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'[n % 55]).join('');
+        try { await setDoc(doc(db, 'cc_invites', code), { serverId: s.id, serverName: s.name, createdBy: me.uid, createdAt: serverTimestamp() }); $('ic').innerHTML = `<div class="code">${code}</div><p class="sub" style="text-align:center;margin-top:6px">Valid 7 days. Tap to select, then copy.</p>`; try { navigator.clipboard.writeText(code); } catch (e) {} } catch (e) { fail(e); }
+      };
+      $('ac').onclick = async () => { const n = $('nc').value.trim().toLowerCase().replace(/\s+/g, '-'); if (!/^[a-z0-9-]{1,30}$/.test(n)) return ($('e').textContent = 'Letters, numbers and dashes only.'); try { await setDoc(doc(db, 'cc_servers', s.id, 'channels', n), { name: n, createdAt: serverTimestamp() }); close(); } catch (e) { $('e').textContent = 'Could not add it (does it exist already?).'; } };
+      $('del').onclick = async () => { if (!confirm('Delete this server and everyone\'s access to it?')) return; try { await deleteDoc(doc(db, 'cc_servers', s.id)); close(); } catch (e) { fail(e); } };
+    } else $('lv').onclick = async () => { if (!confirm('Leave this server?')) return; try { const b = writeBatch(db); b.delete(doc(db, 'cc_servers', s.id, 'members', me.uid)); b.delete(doc(db, 'cc_users', me.uid, 'servers', s.id)); await b.commit(); close(); go({ tab: 'dms' }); } catch (e) { fail(e); } };
+  });
+}
+async function modalMembers() {
+  const s = S.srvDoc; if (!s) return; const owner = s.ownerId === me.uid;
+  const ps = await Promise.all(S.members.map((m) => getUser(m.uid)));
+  modal(`<div class="mhdr"><h3>Members (${ps.length})</h3><button class="ib" data-x>✕</button></div>${ps.map((p) => `<div class="mem">${avatar(p, p.name, 'sm')}<div class="nm">${esc(p.name)} <small>@${esc(p.handle)}${p.uid === s.ownerId ? ' · owner' : ''}</small></div>${p.uid !== me.uid ? `<button class="ib" data-dm="${esc(p.uid)}" title="Message">${ICON.dm}</button>` : ''}${owner && p.uid !== me.uid ? `<button class="danger" data-k="${esc(p.uid)}" style="padding:0">Kick</button>` : ''}</div>`).join('')}`, (close) => {
+    document.querySelectorAll('[data-dm]').forEach((b) => { b.onclick = () => { close(); go({ tab: 'dms', dmUid: b.dataset.dm }); }; });
+    document.querySelectorAll('[data-k]').forEach((b) => { b.onclick = async () => { if (!confirm('Remove this member?')) return; await deleteDoc(doc(db, 'cc_servers', s.id, 'members', b.dataset.k)).catch(fail); close(); }; });
+  });
+}
+function modalDm(o) {
+  const bl = !!S.blocks[o.uid];
+  modal(`<div class="mhdr"><h3>${esc(o.name)}</h3><button class="ib" data-x>✕</button></div><p class="sub">@${esc(o.handle)}</p>
+    <button class="btnS" id="bk2" style="flex:none">${bl ? 'Unblock' : 'Block'} ${esc(o.name)}</button><p class="sub">${bl ? 'They can message you again.' : 'Blocked people cannot message you. They are not told.'}</p>`, (close) => {
+    $('bk2').onclick = async () => { try { if (bl) await deleteDoc(doc(db, 'cc_users', me.uid, 'blocks', o.uid)); else await setDoc(doc(db, 'cc_users', me.uid, 'blocks', o.uid), { at: serverTimestamp() }); close(); } catch (e) { fail(e); } };
+  });
+}
+
+/* ---------------- profile + notifications ---------------- */
+const standalone = () => window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const VAPID_PUBLIC = 'BNSTM_f9eN9Nk_sb5zH6pNH6_tati9BY9MpTowE0Y5DJ0rLLAr2gir1P2JoXGvHxBmDxrA0H7o9aiYxa_sGiEZw';   // public half of the push key (the private half lives only in the Cloudflare Worker)
+const b64 = (s) => { const p = '='.repeat((4 - s.length % 4) % 4), r = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(r, (c) => c.charCodeAt(0)); };
+const sha = async (t) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t))), (x) => x.toString(16).padStart(2, '0')).join('').slice(0, 40);
+const alertsOn = () => localStorage.getItem('cc_alerts') !== 'off';
+async function pushState() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return 'unsupported';
+  if (Notification.permission === 'denied') return 'denied';
+  if (Notification.permission !== 'granted') return 'off';
+  try { const reg = await navigator.serviceWorker.getRegistration('/copperchat/'); return reg && 'pushManager' in reg && await reg.pushManager.getSubscription() ? 'on' : 'off'; } catch (e) { return 'off'; }
+}
+async function paintProfile(M) {
+  const st = await pushState(), ios = isIOS();
+  M.innerHTML = `<div class="chdr"><button class="ib back" id="bk">${ICON.back}</button><div class="t">You</div></div><div class="pr">
+    <div class="card hero"><label style="cursor:pointer;position:relative">${avatar(prof, prof.name, 'lg')}<input type="file" accept="image/*" id="pf" hidden></label><div><b>${esc(prof.name)}</b><small>@${esc(prof.handle)}</small><small>Tap your picture to change it</small><small style="user-select:all;word-break:break-all">ID: ${esc(me.uid)}</small></div></div>
+    <div class="card"><div class="slbl" style="margin-top:0">Display name</div><div class="row"><input class="inp" id="pn" value="${esc(prof.name)}" maxlength="32"><button class="btnS" id="ps" style="flex:none;padding:11px 16px">Save</button></div></div>
+    <div class="card"><div class="slbl" style="margin-top:0">Notifications</div>
+      ${st === 'unsupported' ? `<p class="sub">${ios && !standalone() ? 'On iPad/iPhone, alerts only work from the Home Screen app: tap Share, choose <b>Add to Home Screen</b>, and open CopperChat from that icon.' : 'This browser does not support notifications.'}</p>`
+        : st === 'denied' ? '<p class="sub">Notifications are blocked. Turn them on for CopperChat in your device Settings, then reload.</p>'
+        : ios && !standalone() ? '<p class="sub">To get alerts on iPad/iPhone: tap Share, choose <b>Add to Home Screen</b>, and open CopperChat from that icon. Then enable them here.</p>'
+        : st === 'on' ? `<div class="tog"><span>Banner alerts for new messages</span><button class="swt ${alertsOn() ? 'on' : ''}" id="pa"></button></div><p class="sub ok">Banners work even when CopperChat is closed (they can take up to about a minute).</p><button class="btnS" id="po" style="margin-top:8px;flex:none;width:100%">Turn off on this device</button>`
+        : '<button class="btnP" id="pe" style="width:100%;flex:none">Enable banner alerts</button>'}
+      <div class="err" id="pe2"></div></div>
+    <div class="card" id="mpcard"><div class="slbl" style="margin-top:0">Mineplacer account</div>
+      ${prof.mp ? `<p class="sub ok">Your Mineplacer account <b>${esc(prof.mp)}</b> signs in with CopperChat.</p><p class="sub" style="margin-top:6px">Open Mineplacer and choose <b>Sign in with CopperChat</b>, or use a classic username + password if you turn that on below.</p>
+        <div class="slbl">Classic username + password</div><p class="sub" id="cl-st">Checking...</p>
+        <input class="inp" id="cl-pw" type="password" placeholder="New Mineplacer password (6+ characters)" autocomplete="new-password" style="margin-top:8px"><button class="btnP" id="cl-go" style="width:100%;flex:none;margin-top:8px">Set Mineplacer password</button><button class="btnS" id="cl-off" style="width:100%;flex:none;margin-top:8px;display:none">Turn classic sign-in off</button>`
+      : `<p class="sub">Move your Mineplacer account to CopperChat sign-in for stronger security, password resets by email and CopperChat friends. In Mineplacer open <b>Settings > CopperChat link</b> to get a code. <b>After moving, the old Mineplacer password stops working</b> (you sign in with CopperChat instead).</p>
+        <input class="inp" id="ml-user" placeholder="Mineplacer username" autocapitalize="none" autocomplete="off" style="margin-top:10px"><input class="inp" id="ml-code" placeholder="Link code" maxlength="6" autocapitalize="characters" autocomplete="off" style="margin-top:8px"><button class="btnP" id="ml-go" style="width:100%;flex:none;margin-top:8px">Move my Mineplacer account</button>`}
+      <div class="err" id="ml-out"></div></div>
+    ${me.isAnonymous ? `<div class="card"><div class="slbl" style="margin-top:0">Guest account</div><p class="sub">You are signed in as a guest. If you sign out or clear this browser you will lose this account, your @handle and your servers. Pick a username and password to keep it (no email needed).</p>
+      <input class="inp" id="ue" type="text" placeholder="Username (or email)" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" style="margin-top:10px"><input class="inp" id="up" type="password" placeholder="Password (8+ characters)" autocomplete="new-password" style="margin-top:8px">
+      <div class="err" id="ue2"></div><button class="btnP" id="us" style="width:100%;flex:none">Save my account</button></div>` : ''}
+    <button class="danger" id="plo">Sign out</button></div>`;
+  $('bk').onclick = () => go({ tab: 'dms' });
+  $('plo').onclick = () => { if (me.isAnonymous && !confirm('You are a guest. Signing out will lose this account for good unless you save it with a username first. Sign out anyway?')) return; signOut(auth); };
+  if ($('us')) $('us').onclick = async () => {
+    let em = $('ue').value.trim(), pw = $('up').value; const err = (m) => { $('ue2').textContent = m; };
+    if (!em.includes('@')) { em = em.toLowerCase(); if (!/^[a-z0-9_]{3,20}$/.test(em)) return err('Username: 3-20 letters, numbers or _ (no spaces).'); em += '@herb.local'; }
+    if (!em || pw.length < 8) return err('Enter a username and a password of 8+ characters.');
+    try { await linkWithCredential(auth.currentUser, EmailAuthProvider.credential(em, pw)); me = auth.currentUser; toast('Account saved. You can sign in with it now.'); paintProfile($('main')); }
+    catch (e) { err(e.code === 'auth/email-already-in-use' ? 'That username is taken.' : e.code === 'auth/invalid-email' ? 'That email looks wrong.' : e.code === 'auth/weak-password' ? 'Password needs 8+ characters.' : 'Could not save it. Try again.'); }
+  };
+  $('pf').onchange = async (e) => { if (!e.target.files[0]) return; try { const photo = await resizeImg(e.target.files[0], 160); await updateDoc(doc(db, 'cc_users', me.uid), { photo }); users.delete(me.uid); toast('Picture updated.'); } catch (x) { fail(x); } };
+  $('ps').onclick = async () => { const n = $('pn').value.trim(); if (!n) return; try { await updateDoc(doc(db, 'cc_users', me.uid), { name: n.slice(0, 32) }); users.delete(me.uid); toast('Saved.'); } catch (x) { fail(x); } };
+  const mpOut = (m, good) => { const o = $('ml-out'); if (o) { o.textContent = m; o.className = 'err' + (good ? ' ok' : ''); } };
+  const mpDoc = async (name) => { await mpReady(); const ref = doc(mpDb, 'users2', name); const sn = await getDoc(ref); return { ref, d: sn.exists() ? sn.data() : null }; };
+  const clHash = async (name, pw) => { const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']); const b = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', iterations: 100000, salt: new TextEncoder().encode('mineplacer|' + name) }, k, 256); return Array.from(new Uint8Array(b), (x) => x.toString(16).padStart(2, '0')).join(''); };
+  if ($('cl-go')) {
+    const clShow = (on) => { $('cl-st').innerHTML = on ? 'Classic sign-in is <b>on</b>: you can sign in to Mineplacer with <b>' + esc(prof.mp) + '</b> + your Mineplacer password. Forgot it? Type a new one here: it replaces the old one and signs out any device using it.' : 'Off. Set a password to also sign in to Mineplacer with just your username and password.'; $('cl-go').textContent = on ? 'Reset Mineplacer password' : 'Turn on classic sign-in'; $('cl-off').style.display = on ? '' : 'none'; };
+    getDoc(doc(db, 'mp_classic', prof.mp)).then((x) => clShow(x.exists())).catch(() => { $('cl-st').textContent = 'Could not check (are the Mineplacer rules published?).'; });
+    $('cl-go').onclick = async () => { const pw = $('cl-pw').value; if (pw.length < 6) return mpOut('Password needs 6+ characters.'); try { await setDoc(doc(db, 'mp_classic', prof.mp), { uid: me.uid, h: await clHash(prof.mp, pw) }); $('cl-pw').value = ''; clShow(true); mpOut('Saved. Use it on the Mineplacer sign-in screen.', true); } catch (e) { mpOut('Could not save it.'); } };
+    $('cl-off').onclick = async () => { try { await deleteDoc(doc(db, 'mp_classic', prof.mp)); clShow(false); mpOut('Classic sign-in is off.', true); } catch (e) { mpOut('Could not turn it off.'); } };
+  }
+  if ($('ml-go')) $('ml-go').onclick = async () => {
+    const name = $('ml-user').value.trim().toLowerCase(), code = $('ml-code').value.trim().toUpperCase();
+    if (!/^[a-z0-9_]{3,16}$/.test(name) || code.length !== 6) return mpOut('Enter your Mineplacer username and the 6-character code.');
+    if (!confirm('Move "' + name + '" to CopperChat sign-in? The old Mineplacer password will stop working.')) return;
+    $('ml-go').disabled = true;
+    try {
+      const { ref, d } = await mpDoc(name), lc = d && d.linkCode;
+      if (!lc || lc.c !== code || !(lc.exp > Date.now())) { $('ml-go').disabled = false; return mpOut('That code is wrong or expired. Make a new one in Mineplacer > Settings.'); }
+      if (d.migratedTo) { $('ml-go').disabled = false; return mpOut('That account was already moved.'); }
+      if (d.banned) { $('ml-go').disabled = false; return mpOut('That account is banned and cannot be moved.'); }
+      const skip = ['password', 'linkCode', 'ccLink', 'cmds', 'friends', 'friendReqs', 'invites', 'fcode', 'lastSeen', 'banned', 'banReason', 'coAdmin', 'adminPerms', 'migratedTo'], acc = {};
+      for (const k of Object.keys(d)) if (!skip.includes(k) && d[k] !== undefined) acc[k] = d[k];
+      acc.username = name;
+      const b = writeBatch(db);
+      b.set(doc(db, 'mp_names', name), { uid: me.uid });
+      b.set(doc(db, 'mp_accounts', me.uid), acc);
+      b.set(doc(db, 'mp_profiles', me.uid), { username: name, displayName: String(d.displayName || '').slice(0, 16), highWave: +d.highWave || 0, mpHigh: +d.mpHigh || 0, crowns: +d.crowns || 0, look: d.look && typeof d.look === 'object' ? d.look : {}, skinsN: (d.skins || []).length, isBot: !!d.isBot, anon: !!(d.anon || d.anonForced), profVis: d.profVis === 'private' ? 'private' : 'friends', lastSeen: Date.now() });
+      await b.commit();
+      await updateDoc(ref, { migratedTo: me.uid, password: Array.from(crypto.getRandomValues(new Uint8Array(18)), (n) => 'abcdefghijklmnopqrstuvwxyz0123456789'[n % 36]).join(''), linkCode: deleteField(), ccLink: { uid: me.uid, handle: prof.handle, at: Date.now() } });
+      await updateDoc(doc(db, 'cc_users', me.uid), { mp: name }); users.delete(me.uid); toast('Moved! Sign in to Mineplacer with CopperChat.');
+    } catch (e) { $('ml-go').disabled = false; mpOut(e && e.code === 'permission-denied' ? 'The CopperChat rules for Mineplacer accounts are not published yet.' : 'Could not move it. Check your connection.'); console.warn(e); }
+  };
+  if ($('pe')) $('pe').onclick = enablePush;
+  if ($('po')) $('po').onclick = async () => { try { const reg = await navigator.serviceWorker.getRegistration('/copperchat/'); const sub = reg && await reg.pushManager.getSubscription(); if (sub) { await deleteDoc(doc(db, 'cc_push', me.uid, 'subs', await sha(sub.endpoint))).catch(() => {}); await sub.unsubscribe(); } paintProfile($('main')); } catch (e) { fail(e); } };
+  if ($('pa')) $('pa').onclick = () => { const on = $('pa').classList.toggle('on'); localStorage.setItem('cc_alerts', on ? 'on' : 'off'); };
+}
+async function enablePush() {
+  try {
+    const perm = await Notification.requestPermission();    // must run straight from the tap, iOS insists
+    if (perm !== 'granted') { $('pe2').textContent = 'Permission was not granted.'; return; }
+    localStorage.setItem('cc_alerts', 'on'); const reg = await navigator.serviceWorker.register('sw.js', { scope: '/copperchat/' }); await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(VAPID_PUBLIC) }), j = sub.toJSON();   // what lets the server reach this device even when the app is closed
+    await setDoc(doc(db, 'cc_push', me.uid, 'subs', await sha(j.endpoint)), { endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, ua: navigator.userAgent.slice(0, 120), at: serverTimestamp() });
+    toast('Banner alerts on.'); paintProfile($('main'));
+  } catch (e) { fail(e); }
+}
+// a banner for a message that arrived while the app is hidden (shown through the service worker, which is what iOS wants)
+async function bannerFor(title, body, tag, url) {
+  if (!document.hidden || !alertsOn() || !('Notification' in window) || Notification.permission !== 'granted') return;
+  try { const reg = await navigator.serviceWorker.getRegistration('/copperchat/'); if (reg) reg.showNotification(title, { body, tag, renotify: true, icon: 'icon-192.png', data: { url } }); } catch (e) {}
+}
+const lastAtSeen = new Map();
+function alertChats(list, kind) {
+  for (const d of list) {
+    const id = kind + d.id, t = ms(d.lastAt), prev = lastAtSeen.get(id);
+    if (prev !== undefined && t > prev && d.lastFrom !== me.uid && d.lastText) getUser(d.lastFrom).then((u) => (kind === 'g' ? bannerFor(d.name, `${u.name}: ${d.lastText}`, 'grp-' + d.id, location.origin + '/copperchat/#grp=' + d.id) : bannerFor(u.name, d.lastText, 'dm-' + d.lastFrom, location.origin + '/copperchat/#dm=' + d.lastFrom)));
+    lastAtSeen.set(id, t);
+  }
+}
+// every server I'm in is watched (just the channel list), so channels light up as unread and a banner can fire for a new server message
+async function alertChannel(sid, c) {
+  const srv = S.servers.find((x) => x.id === sid); if (!document.hidden || (srv && srv.notify === false)) return;
+  try {
+    const q = await getDocs(query(collection(db, 'cc_servers', sid, 'channels', c.id, 'messages'), orderBy('at', 'desc'), limit(1))); const m = q.docs[0] && q.docs[0].data(); if (!m || m.from === me.uid) return;
+    const u = await getUser(m.from); bannerFor(`${srv ? srv.name : 'Server'} · #${c.name}`, `${u.name}: ${m.text}`, `srv-${sid}-${c.id}`, `${location.origin}/copperchat/#srv=${sid}/${c.id}`);
+  } catch (e) {}
+}
+const chSeen = new Map();
+function watchServers() {
+  const want = new Set(S.servers.map((x) => x.id));
+  for (const sid of Object.keys(subs.sw)) if (!want.has(sid)) { subs.sw[sid](); delete subs.sw[sid]; delete S.srvChans[sid]; }
+  for (const sid of want) if (!subs.sw[sid]) subs.sw[sid] = onSnapshot(collection(db, 'cc_servers', sid, 'channels'), (snap) => {
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }));
+    for (const c of list) { const k = sid + '_' + c.id, t = ms(c.lastAt), prev = chSeen.get(k); if (prev !== undefined && t > prev && c.lastBy !== me.uid) alertChannel(sid, c); chSeen.set(k, t); }
+    S.srvChans[sid] = list; paintServers(); updateBadge();
+  }, () => {});
+}
+
+/* ---------------- boot ---------------- */
+function stopAll() { subs.top.forEach((u) => u()); subs.top = []; Object.values(subs.sw).forEach((u) => u()); subs.sw = {}; S.srvChans = {}; chSeen.clear(); closeChatSub(); closeServerSubs(); }
+async function sendDmTo(uid, text) {
+  const id = dmId(me.uid, uid), ref = doc(db, 'cc_dms', id);
+  if (!S.dms.find((d) => d.id === id)) { const s = await getDoc(ref); if (!s.exists()) await setDoc(ref, { members: [me.uid, uid].sort(), lastText: '', lastFrom: me.uid, lastAt: serverTimestamp() }); }
+  const b = writeBatch(db); b.set(doc(collection(db, 'cc_dms', id, 'messages')), { from: me.uid, text, at: serverTimestamp() });
+  b.update(ref, { lastText: text.slice(0, 120), lastFrom: me.uid, lastAt: serverTimestamp() }); await b.commit();
+}
+async function modalMpInvite(uid, code) {
+  if (uid === me.uid) return;
+  const o = await getUser(uid), text = `🎮 Join my Mineplacer party! Code: ${code}  (Mineplacer > Party up > Join)`;
+  modal(`<div class="mhdr"><h3>Send a Mineplacer invite?</h3><button class="ib" data-x>✕</button></div><p class="sub">This will message ${esc(o.name)} (@${esc(o.handle)}):</p><div class="card" style="margin:0">${esc(text)}</div><div class="err" id="e"></div><button class="btnP" id="go" style="flex:none">Send</button>`, (close) => {
+    $('go').onclick = async () => { $('go').disabled = true; try { await sendDmTo(uid, text); close(); go({ tab: 'dms', dmUid: uid, grpId: null }); } catch (e) { $('go').disabled = false; $('e').textContent = 'Could not send it.'; } };
+  });
+}
+function route() {
+  const h = location.hash.slice(1); if (!h || !prof) return;
+  const mi = /^mpinvite=([A-Za-z0-9]{20,40}):([A-Z0-9]{5})$/.exec(h);
+  if (mi) { go({ tab: 'dms' }); modalMpInvite(mi[1], mi[2]); }
+  else if (h === 'mpreset' || h === 'mplink') { mainKey = ''; go({ tab: 'me' }); }
+  const gm = /^grp=([A-Za-z0-9]+)$/.exec(h), m = /^dm=([A-Za-z0-9]+)$/.exec(h), s = /^srv=([A-Za-z0-9]+)\/([a-z0-9-]+)$/.exec(h);
+  if (gm) go({ tab: 'dms', grpId: gm[1] }); else if (m) go({ tab: 'dms', dmUid: m[1] }); else if (s) go({ tab: 'srv', srvId: s[1], chId: s[2] });
+  history.replaceState(null, '', location.pathname);
+}
+window.addEventListener('hashchange', route);
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js', { scope: '/copperchat/' }).catch(() => {});
+  navigator.serviceWorker.addEventListener('message', (e) => { if (e.data && e.data.type === 'open') { try { location.hash = new URL(e.data.url).hash; } catch (x) {} } });
+}
+onAuthStateChanged(auth, (u) => {
+  stopAll(); me = u; prof = null; S.dms = []; S.groups = []; S.friends = []; S.freqs = []; S.servers = []; S.reads = {}; S.blocks = {}; users.clear(); lastAtSeen.clear();
+  if (!u) { renderLogin(); return; }
+  subs.top.push(onSnapshot(doc(db, 'cc_users', u.uid), (s) => {
+    if (!s.exists()) { prof = null; renderOnboard(); return; }
+    const first = !prof; prof = { uid: u.uid, ...s.data() };
+    if (first) {
+      renderShell();
+      subs.top.push(onSnapshot(query(collection(db, 'cc_dms'), where('members', 'array-contains', u.uid)), (q) => { S.dms = q.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) })); alertChats(S.dms, 'd'); paint(); }, failAt('conversations')));
+      subs.top.push(onSnapshot(query(collection(db, 'cc_groups'), where('members', 'array-contains', u.uid)), (q) => { S.groups = q.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) })); if (S.grpId && !S.groups.find((g) => g.id === S.grpId)) { S.grpId = null; if (S.tab === 'dms') S.pane = 'list'; } alertChats(S.groups, 'g'); paint(); }, failAt('groups')));
+      subs.top.push(onSnapshot(collection(db, 'cc_friends', u.uid, 'list'), (q) => { S.friends = q.docs.map((d) => d.id); paint(); }, () => {}));
+      subs.top.push(onSnapshot(collection(db, 'cc_freq', u.uid, 'from'), (q) => { S.freqs = q.docs.map((d) => d.id); paint(); }, () => {}));
+      subs.top.push(onSnapshot(collection(db, 'cc_users', u.uid, 'servers'), (q) => { S.servers = q.docs.map((d) => ({ id: d.id, ...d.data() })); watchServers(); paintServers(); }, failAt('servers')));
+      subs.top.push(onSnapshot(collection(db, 'cc_users', u.uid, 'reads'), (q) => { S.reads = Object.fromEntries(q.docs.map((d) => [d.id, ms(d.data().at)])); paint(); }, () => {}));
+      subs.top.push(onSnapshot(collection(db, 'cc_users', u.uid, 'blocks'), (q) => { S.blocks = Object.fromEntries(q.docs.map((d) => [d.id, 1])); }, () => {}));
+      route();
+    } else if (S.tab === 'me') paintProfile($('main'));
+  }, failAt('profile')));
+});
+</script>
+</body>
+</html>
