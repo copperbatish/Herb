@@ -41,7 +41,7 @@
   var server = clean(ls(KEY)) || DEFAULT_SERVER_URL, bundle = clean(ls(BKEY)) || BUNDLE_URL || server, badge = document.getElementById('hboot');
   window.HERB_CONFIG = { serverUrl: server }; window.HERB_SINGLE_FILE = true;
   // Tries the pinned/@main jsDelivr address first, then other jsDelivr hosts, raw GitHub and the Wisp VM, so it still loads where one of them is blocked.
-  var MIRRORS = ['https://fastly.jsdelivr.net/gh/copperbatish/Herb@main', 'https://gcore.jsdelivr.net/gh/copperbatish/Herb@main', 'https://raw.githubusercontent.com/copperbatish/Herb/main', 'https://129-158-194-64.nip.io'];
+  var MIRRORS = ['https://fastly.jsdelivr.net/gh/copperbatish/Herb@main', 'https://gcore.jsdelivr.net/gh/copperbatish/Herb@main', 'https://raw.githubusercontent.com/copperbatish/Herb/main', 'https://129-158-194-64.nip.io', 'https://lightspeedspeed.duckdns.org', 'https://leweirdlink.twilightparadox.com'];
   function get(p) {
     return [bundle].concat(MIRRORS).reduce(function (q, b) {
       return q.catch(function () { return fetch(b + p + '?v=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); }); });

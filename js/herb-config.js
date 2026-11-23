@@ -12,6 +12,32 @@
   // GitHub-hosted data: the main repo holds the code bundles, shows.json, games.json and icons; games live in shard repos named in games.json.
   var CDN_BASE = 'https://cdn.jsdelivr.net/gh/copperbatish/Herb@main', RAW_BASE = 'https://raw.githubusercontent.com/copperbatish/Herb/main';
   var CDN_JSON = { '/games/games.json': '/games/games.json', '/apps/shows.json': '/shows.json' }, REPO_OF = {};
+  // Servers that serve the Herb pages with a service worker (the Wisp VM under each of its names). Every candidate is probed and the first one
+  // that really answers (in this order) is used, so the pages keep loading when one address is blocked or down. Settings gear override comes first.
+  var PAGE_HOSTS = ['https://129-158-194-64.nip.io', 'https://lightspeedspeed.duckdns.org', 'https://leweirdlink.twilightparadox.com'];
+  function pageHostList() {
+    var out = [], seen = {};
+    function add(u) { u = clean(u); if (u && !seen[u]) { seen[u] = 1; out.push(u); } }
+    add(ls(HKEY));
+    PAGE_HOSTS.forEach(add);
+    try { JSON.parse(ls('herb.wisp.custom') || '[]').forEach(function (w) { add(String(w).replace(/^ws/, 'http').replace(/\/wisp\/?$/, '')); }); } catch (e) {}   // servers you added yourself
+    add(ls('herb.tunnel'));
+    return out;
+  }
+  function probeHost(h) {
+    var c = typeof AbortController === 'function' ? new AbortController() : null, t = c && setTimeout(function () { c.abort(); }, 4500);
+    return fetch(h + '/uv/sw.js', { cache: 'no-store', signal: c ? c.signal : undefined }).then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (x) { return /importScripts/.test(x); }, function () { return false; }).then(function (ok) { if (t) clearTimeout(t); return ok; });
+  }
+  var hostPick = null;   // { h, t }
+  function pickHost() {
+    if (hostPick && Date.now() - hostPick.t < 180000) return Promise.resolve(hostPick.h);
+    var list = pageHostList();
+    return Promise.all(list.map(probeHost)).then(function (oks) {
+      for (var i = 0; i < list.length; i++) if (oks[i]) { hostPick = { h: list[i], t: Date.now() }; return list[i]; }
+      return list[0];   // none answered: try the first anyway so the browser shows its own error
+    });
+  }
   var SW_APPS = ['/apps/browser.html', '/apps/vm.html', '/apps/movies.html', '/apps/cloud.html', '/apps/fox.html'], HKEY = 'herb.hostUrl';
   function rootFix(h) { return h.replace(/(\s(?:src|href|action|poster)=["'])\/(?!\/)/gi, '$1' + server() + '/'); }
   function cdnOn() { return window.HERB_CDN !== false; }   // games, icons and catalogs always come from GitHub; set window.HERB_CDN = false to use this server's own copies
@@ -93,6 +119,7 @@
         frame.src = URL.createObjectURL(new Blob([rootFix(h)], { type: 'text/html' }));
       }).catch(function () { frame.srcdoc = '<body style="margin:0;background:#0b1c15;color:#fca5a5;font:14px system-ui;display:flex;align-items:center;justify-content:center;height:100vh">Couldn\u2019t load this app from GitHub.</body>'; });
     },
+    pageHost: pickHost, pageHosts: pageHostList,
     cdn: cdnOn,
     asset: function (path) { return cdnOn() ? CDN_BASE + path : path; },
     // jsDelivr serves .html as text/plain, so a game is downloaded as text and opened from a blob: URL.
@@ -115,9 +142,8 @@
         var pre = (window.HERB_SHIM ? '<script>' + window.HERB_SHIM + '<\/script>' : '') + '<script>window.HERB_QS=' + JSON.stringify(qs) + ';window.HERB_SINGLE_FILE=true;window.HERB_CONFIG={serverUrl:' + JSON.stringify(server()) + '}<\/script>';
         frame.srcdoc = rootFix(apps[path]).replace(/<head[^>]*>/i, function (m) { return m + '<base href="' + server() + '/">' + pre; });
       } else if (SW_APPS.indexOf(path) >= 0) {   // proxy apps need a real origin for their service worker; a CDN can't give them one
-        var host = clean(ls(HKEY)) || DEFAULT_API_URL;
-        if (host) { frame.src = host + src; openChip(frame, host + src); }
-        else frame.srcdoc = '<body style="margin:0;background:#0b1c15;color:#cde7dc;font:15px/1.5 system-ui;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;padding:24px"><div><b>This app needs a proxy host</b><br>It uses a service worker, which GitHub/jsDelivr can\u2019t provide.<br>Click the gear in the taskbar and enter the address of a host that serves Herb.</div></body>';
+        frame.srcdoc = '<body style="margin:0;background:#0b1c15;color:#cde7dc;font:14px system-ui;display:flex;align-items:center;justify-content:center;height:100vh">Finding a server\u2026</body>';
+        pickHost().then(function (host) { frame.removeAttribute('srcdoc'); frame.src = host + src; openChip(frame, host + src); });
       } else if (/cdn\.jsdelivr\.net/.test(server())) { C.htmlFrame(frame, server() + path + qs); }
       else { frame.src = server() + src; checkVersion(); openChip(frame, server() + src); }
     },
@@ -133,7 +159,7 @@
     var b = document.createElement('button'); b.className = 'tray'; b.id = 'srvgear'; b.title = 'Proxy host for browser/movies/VM';
     b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>';
     b.onclick = function () {
-      var v = prompt('Proxy host for the browser, movies, VM and Firefox apps (default: the Wisp VM).\nLeave empty to use the default.', ls(HKEY) || '');
+      var v = prompt('Preferred server for the browser, movies, VM and Firefox apps. It is tried first; the others are used if it is down.\nLeave empty to let Herb choose.', ls(HKEY) || '');
       if (v === null) return;
       if (v.trim() && !clean(v)) { alert('That doesn\u2019t look like a web address. Use something like https://example.com'); return; }
       ls(HKEY, clean(v) || null); location.reload();
