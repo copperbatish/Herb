@@ -16,12 +16,28 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000
 <body>
 <div id="bar"><span class="t" id="title">Cloud Games</span><span id="pv" style="font-size:11px;opacity:.6"></span><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
 <div id="note"></div>
+<div id="diag" style="display:none;position:fixed;left:0;right:0;top:40px;bottom:0;z-index:20;background:rgba(6,12,9,.97);color:#cde7dc;font:12px/1.45 ui-monospace,Menlo,monospace;padding:10px 12px;overflow:auto;-webkit-user-select:text;user-select:text">
+ <div style="display:flex;gap:8px;margin-bottom:8px;position:sticky;top:0;background:rgba(6,12,9,.97);padding-bottom:6px"><button id="dcopy">Copy</button><button id="dclear">Clear</button><button id="dclose">Close</button><span style="opacity:.6;align-self:center">Proxy diagnostics (send this to the developer)</span></div>
+ <pre id="dlog" style="white-space:pre-wrap;word-break:break-all;margin:0"></pre></div>
 <div id="stage"><div id="msg">Starting the proxy…</div></div>
 <script src="/js/herb-settings.js"></script><script src="/js/icons.js"></script>
 <script src="/uv/uv.bundle.js"></script><script src="/uv/uv.config.js"></script><script src="/baremux/index.js"></script>
 <script src="/js/wisp-config.js"></script><script src="/js/proxy-init.js"></script>
 <script>
 // Cloud gaming sites that can be launched. Add more here.
+// ---- diagnostics: tap the "proxy ..." label ----
+var DLOG=[],dstart=Date.now();
+function dline(k,m,u){var t=((Date.now()-dstart)/1000).toFixed(1);DLOG.push('+'+t+'s '+k+': '+m+(u?'  ['+String(u).replace(/^https?:\/\//,'').slice(0,60)+']':''));if(DLOG.length>400)DLOG.shift();var p=document.getElementById('dlog');if(p&&document.getElementById('diag').style.display!=='none')p.textContent=DLOG.join('\n')}
+function denv(){var st=false;try{st=navigator.standalone===true||matchMedia('(display-mode: standalone)').matches}catch(e){}
+ var top3=true;try{void parent.location.href;top3=false}catch(e){}
+ return ['page: '+location.origin,'standalone app: '+st,'third-party frame: '+top3,'userAgent: '+navigator.userAgent,'service worker: '+('serviceWorker' in navigator),'storage API: '+(typeof document.hasStorageAccess)].join('\n')}
+try{var dbc=new BroadcastChannel('herb-diag');dbc.onmessage=function(e){var d=e.data||{};dline(d.k,d.m,d.u)}}catch(e){dline('diag','BroadcastChannel unavailable','')}
+document.addEventListener('DOMContentLoaded',function(){
+ $('pv').style.cssText+=';cursor:pointer;text-decoration:underline;padding:6px';
+ $('pv').onclick=function(){var d=$('diag');d.style.display=d.style.display==='none'?'block':'none';$('dlog').textContent=denv()+'\n----\n'+DLOG.join('\n')};
+ $('dclose').onclick=function(){$('diag').style.display='none'};
+ $('dclear').onclick=function(){DLOG.length=0;$('dlog').textContent=denv()};
+ $('dcopy').onclick=function(){var t=$('dlog').textContent;try{navigator.clipboard.writeText(t).then(function(){$('dcopy').textContent='Copied'},function(){throw 0})}catch(e){var r=document.createRange();r.selectNodeContents($('dlog'));var s=getSelection();s.removeAllRanges();s.addRange(r);$('dcopy').textContent='Selected - tap Copy in the menu'}}});
 var SITES={geforcenow:{name:'GeForce NOW',url:'https://play.geforcenow.com/'}};
 var $=function(i){return document.getElementById(i)};
 var key=new URLSearchParams(location.search).get('site')||'geforcenow', site=SITES[key]||SITES.geforcenow, frame=null;

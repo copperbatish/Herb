@@ -103,8 +103,33 @@ function herbSameWindowLogin() {
 
 function herbNoPasskeys() { try { Object.defineProperty(window, 'PublicKeyCredential', { value: undefined, configurable: true, writable: true }); } catch (e) {} }
 
+// Diagnostics: an iPad has no developer tools, so every proxied page reports script errors, failed files and console errors to the Cloud app
+// (tap the "proxy ..." label there). Same-origin BroadcastChannel, nothing leaves the browser.
+function herbDiagReporter() {
+    try {
+        if (window.__herbDiag || typeof BroadcastChannel !== 'function') return; window.__herbDiag = 1;
+        var bc = new BroadcastChannel('herb-diag');
+        var send = function (k, m) { try { bc.postMessage({ k: k, m: String(m).slice(0, 260), u: String(location.href).slice(0, 110), t: Date.now() }); } catch (e) {} };
+        send('start', 'page starting, ' + (typeof document.hasStorageAccess === 'function' ? 'storageAPI' : 'no-storageAPI'));
+        window.addEventListener('error', function (e) {
+            var t = e.target;
+            if (t && t !== window && (t.src || t.href)) send('file-failed', t.tagName + ' ' + String(t.src || t.href).slice(0, 150));
+            else send('js-error', (e.message || '?') + ' @' + String(e.filename || '').slice(-50) + ':' + e.lineno);
+        }, true);
+        window.addEventListener('unhandledrejection', function (e) { var r = e.reason; send('rejection', r && (r.message || r.name) || r); });
+        window.addEventListener('securitypolicyviolation', function (e) { send('csp', e.violatedDirective + ' ' + e.blockedURI); });
+        ['error', 'warn'].forEach(function (k) {
+            var o = console[k]; if (typeof o !== 'function') return;
+            console[k] = function () { try { send('console.' + k, Array.prototype.map.call(arguments, function (a) { return a && a.message ? a.message : String(a); }).join(' ')); } catch (e) {} return o.apply(this, arguments); };
+        });
+        window.addEventListener('load', function () { send('loaded', document.title + ' | ' + document.getElementsByTagName('*').length + ' nodes | ' + (document.body ? document.body.innerText.replace(/\s+/g, ' ').slice(0, 60) : 'no body')); });
+        window.addEventListener('pagehide', function () { send('leaving', 'navigating away'); });
+    } catch (e) {}
+}
+
 var __herbInject = [
     { host: '.*', injectTo: 'head', html: '<script>(' + herbUrlPartsShim.toString() + ')();</script>' },
+    { host: '.*', injectTo: 'head', html: '<script>(' + herbDiagReporter.toString() + ')();</script>' },
     { host: '(^|\\.)(nvidia\\.com|geforcenow\\.com)$', injectTo: 'head', html: '<script>(' + herbNoPasskeys.toString() + ')();(' + herbSameWindowLogin.toString() + ')();</script>' },
 ];
 if (TURN.api.length) {
