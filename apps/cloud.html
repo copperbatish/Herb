@@ -28,6 +28,10 @@ var key=new URLSearchParams(location.search).get('site')||'geforcenow', site=SIT
 $('title').textContent=site.name+' · cloud gaming';
 function launch(){
   $('msg').textContent='Connecting…';
+  // Safari/iPadOS treat this app as a third-party frame when Herb was opened from a different address, and then block the storage a sign-in needs.
+  try{void parent.location.href}catch(e){
+    if(window.top!==window){$('note').style.display='block';$('note').innerHTML='<b>Sign-in may not work here.</b> Herb was opened from a different address than this app, and Safari blocks sign-ins in that case. Open Herb from <a href="'+location.origin+'/" target="_blank" rel="noopener" style="color:inherit">'+location.origin+'/</a> instead (and add that address to your Home Screen).'}
+  }
   HerbProxy.init().then(function(){
     return HerbProxy.workerVersion().then(function(v){
       var ok=v===HerbProxy.version;$('pv').textContent='proxy '+(v||'?')+(ok?'':' (old)');

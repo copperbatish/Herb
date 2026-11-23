@@ -21,6 +21,9 @@
     var out = [], seen = {};
     function add(u) { u = clean(u); if (u && !seen[u]) { seen[u] = 1; out.push(u); } }
     add(ls(HKEY));
+    // Safari/iPadOS block storage and cookies in a frame from a different address than the page around it, which breaks sign-ins (GeForce NOW).
+    // So when this page is itself served by one of Herb's servers, frame its apps from that same address first.
+    if (PAGE_HOSTS.indexOf(location.origin) >= 0) add(location.origin);
     PAGE_HOSTS.forEach(add);
     try { JSON.parse(ls('herb.wisp.custom') || '[]').forEach(function (w) { add(String(w).replace(/^ws/, 'http').replace(/\/wisp\/?$/, '')); }); } catch (e) {}   // servers you added yourself
     add(ls('herb.tunnel'));
