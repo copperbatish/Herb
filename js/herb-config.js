@@ -11,10 +11,12 @@
   var KEY = 'herb.serverUrl';
   // GitHub-hosted data: the main repo holds the code bundles, shows.json, games.json and icons; games live in shard repos named in games.json.
   var CDN_BASE = 'https://cdn.jsdelivr.net/gh/copperbatish/Herb@main', RAW_BASE = 'https://raw.githubusercontent.com/copperbatish/Herb/main';
+  var CF_HOST = 'https://herb.copperbat3.workers.dev';   // Cloudflare Worker: the site + games as real pages (see scripts/build-cloudflare.js)
+  var VM_HOST_RE = /(^|\.)(nip\.io|duckdns\.org|twilightparadox\.com)$/;   // hosts that serve this site AND /api/herb-ai
   var CDN_JSON = { '/games/games.json': '/games/games.json', '/apps/shows.json': '/shows.json' }, REPO_OF = {};
   // Servers that serve the Herb pages with a service worker (the Wisp VM under each of its names). Every candidate is probed and the first one
   // that really answers (in this order) is used, so the pages keep loading when one address is blocked or down. Settings gear override comes first.
-  var PAGE_HOSTS = ['https://129-158-194-64.nip.io', 'https://lightspeedspeed.duckdns.org', 'https://leweirdlink.twilightparadox.com'];
+  var PAGE_HOSTS = [CF_HOST, 'https://129-158-194-64.nip.io', 'https://lightspeedspeed.duckdns.org', 'https://leweirdlink.twilightparadox.com'];
   function pageHostList() {
     var out = [], seen = {};
     function add(u) { u = clean(u); if (u && !seen[u]) { seen[u] = 1; out.push(u); } }
@@ -40,7 +42,7 @@
   }
   var SW_APPS = ['/apps/browser.html', '/apps/vm.html', '/apps/movies.html', '/apps/cloud.html', '/apps/fox.html'], HKEY = 'herb.hostUrl';
   function rootFix(h) { return h.replace(/(\s(?:src|href|action|poster)=["'])\/(?!\/)/gi, '$1' + server() + '/'); }
-  function cdnOn() { return window.HERB_CDN !== false; }   // games, icons and catalogs always come from GitHub; set window.HERB_CDN = false to use this server's own copies
+  function cdnOn() { return window.HERB_CDN !== false && location.origin !== CF_HOST; }   // games, icons and catalogs always come from GitHub; set window.HERB_CDN = false to use this server's own copies
   var single = window.HERB_SINGLE_FILE === true || location.protocol === 'file:' || !!(window.HERB_CONFIG && window.HERB_CONFIG.serverUrl);
   function ready(fn) { if (document.readyState === 'loading') addEventListener('DOMContentLoaded', fn); else fn(); }
   function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} return null; }
@@ -97,10 +99,15 @@
     setServer: function (u) { var c = clean(u); ls(KEY, c || null); return server(); },
     // hosted: '/api/herb-ai' stays relative; single file: becomes <server>/api/herb-ai
     url: function (path) { return single ? server() + path : path; },
-    apiBase: function () { return !single ? '' : (clean(window.HERB_CONFIG && window.HERB_CONFIG.serverUrl) || clean(ls(KEY)) || DEFAULT_API_URL); },
+    // Herb AI and Wisp live on the VM. A page served by the VM uses its own address; every other host (jsDelivr loader, Cloudflare, a local file) uses the VM.
+    apiBase: function () {
+      if (!single && VM_HOST_RE.test(location.hostname)) return '';
+      var o = clean(ls(KEY)); if (o && !/cdn\.jsdelivr\.net/.test(o)) return o;
+      return DEFAULT_API_URL;
+    },
     api: function () { return C.apiBase() + '/api/herb-ai'; },
     // Wisp: hosted uses this page's own host, single file uses the configured server
-    wisp: function () { var b = single ? C.apiBase() : location.origin; return b.replace(/^http/, 'ws') + '/wisp/'; },
+    wisp: function () { var b = C.apiBase() || location.origin; return b.replace(/^http/, 'ws') + '/wisp/'; },
     // JSON catalogs: the single-file build embeds shows.json; otherwise fetch it (cross-origin works because the server sends CORS headers)
     json: function (path) {
       var d = (window.HERB_DATA || top() || {})[path], urls = [];
@@ -124,6 +131,13 @@
     asset: function (path) { return cdnOn() ? CDN_BASE + path : path; },
     // jsDelivr serves .html as text/plain, so a game is downloaded as text and opened from a blob: URL.
     gameFrame: function (frame, file) {
+      var enc0 = encodeURIComponent(file);
+      probeHost(CF_HOST).then(function (ok) {
+        if (ok) { frame.removeAttribute('srcdoc'); frame.src = CF_HOST + '/games/' + enc0; return; }   // real page, real address
+        C.gameFromGitHub(frame, file);
+      });
+    },
+    gameFromGitHub: function (frame, file) {
       frame.srcdoc = '<body style="margin:0;background:#0b1c15;color:#cde7dc;font:14px system-ui;display:flex;align-items:center;justify-content:center;height:100vh">Loading game\u2026</body>';
       C.json('/games/games.json').catch(function () {}).then(function () {
         var repo = REPO_OF[file] || 'copperbatish/Herb', enc = encodeURIComponent(file);

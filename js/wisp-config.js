@@ -8,6 +8,7 @@
       'wss://drew-prude-scoop.ngrok-free.dev/wisp/',
       'wss://leweirdlink.twilightparadox.com/wisp/',
       'wss://lightspeedspeed.duckdns.org/wisp/',
+      'wss://herb.copperbat3.workers.dev/wisp/',   // Cloudflare Worker -> the VM's Wisp (stable address)
     ],
   };
   var TUNNEL_DB = 'https://copperchat-4cb91-default-rtdb.firebaseio.com/herb/tunnel/url.json', K_TUNNEL = 'herb.tunnel';
