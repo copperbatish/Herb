@@ -1,9 +1,18 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" href="/images/logo/herb.svg" type="image/svg+xml"><title>Cloud Games</title>
+<script>
+// Installable web app: "Add to Home Screen" gives a full-screen GeForce NOW / Xbox app, like the real ones.
+(function(){var k=new URLSearchParams(location.search).get('site')==='xbox'?'xbox':'geforcenow',n=k==='xbox'?'Xbox':'GeForce NOW',ic=k==='xbox'?'xbox':'gfn',h=document.head;
+ function add(t,a){var e=document.createElement(t);for(var x in a)e.setAttribute(x,a[x]);h.appendChild(e)}
+ add('link',{rel:'manifest',href:'/apps/cloud-'+k+'.json'});add('link',{rel:'apple-touch-icon',href:'/images/cloud/'+ic+'-180.png'});
+ add('meta',{name:'apple-mobile-web-app-capable',content:'yes'});add('meta',{name:'mobile-web-app-capable',content:'yes'});
+ add('meta',{name:'apple-mobile-web-app-title',content:n});add('meta',{name:'apple-mobile-web-app-status-bar-style',content:'black-translucent'});
+ add('meta',{name:'theme-color',content:'#000000'});document.title=n;})();
+</script>
 <link rel="stylesheet" href="/css/herb.css"><link rel="stylesheet" href="/css/app.css">
 <style>
-body{margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;background:#000}
+body{margin:0;height:100vh;height:100dvh;overflow:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);box-sizing:border-box;display:flex;flex-direction:column;background:#000}
 body:not(.dbg) #bar{display:none}
 #bar{flex:none;display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface-2);border-bottom:1px solid var(--border);font-size:13px;color:var(--muted)}
 #bar .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -38,7 +47,7 @@ var SITES={
 };
 var key=new URLSearchParams(location.search).get('site')||'geforcenow', site=SITES[key]||SITES.geforcenow, frame=null;
 if(!SITES[key])key='geforcenow';
-$('title').textContent=site.name+' · cloud gaming';
+$('title').textContent=site.name+' · cloud gaming';document.title=site.name;
 Object.keys(SITES).forEach(function(k){var b=$('s-'+k);b.classList.toggle('on',k===key);b.onclick=function(){if(k!==key)location.search='?site='+k+(document.body.className==='dbg'?'&debug=1':'')}});
 
 // ---- diagnostics: tap the "proxy" label ----

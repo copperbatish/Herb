@@ -1,0 +1,32 @@
+{
+  "name": "Xbox Cloud Gaming",
+  "short_name": "Xbox",
+  "description": "Xbox Cloud Gaming through Herb",
+  "id": "/apps/cloud.html?site=xbox",
+  "start_url": "/apps/cloud.html?site=xbox",
+  "scope": "/apps/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#000000",
+  "theme_color": "#107c10",
+  "icons": [
+    {
+      "src": "/images/cloud/xbox-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/cloud/xbox-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/cloud/xbox-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
