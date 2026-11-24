@@ -12,21 +12,21 @@
 var TURN = {
     // No password lives in this file. The Wisp VM mints short-lived TURN credentials (coturn "REST API" auth: username = expiry
     // timestamp, credential = HMAC of it with a secret that only the VM knows) and the service worker fetches them from here.
-    api: [((self.location && self.location.origin) || '') + '/api/turn', 'https://herb.copperbat3.workers.dev/api/turn', 'https://129-158-194-64.nip.io/api/turn', 'https://lightspeedspeed.duckdns.org/api/turn', 'https://leweirdlink.twilightparadox.com/api/turn'],   // tried in order
+    api: [],   // TURN is removed: cloud-gaming video always goes direct
     hosts: '(^|\\.)(geforcenow\\.com|nvidiagrid\\.net)$',   // regex of proxied site hostnames that get the wrapper
 };
 var __turnCreds = null, __turnAt = 0;
 // Video route: 'direct' (default: media goes straight to NVIDIA, the relay is only a fallback) or 'relay' (all media through the VM's TURN, so it
 // comes from the same address as the proxied session calls). The Cloud app's "Video" button switches it; stored in the Cache API, shared via BroadcastChannel.
-var __rtcMode = 'direct';
+var __rtcMode = 'direct';   // always direct
 // Cloudflare TURN servers for an admin-approved user ({ servers: [...iceServers], exp: ms }), pushed in by the Cloud app; never contains an API key.
 var __cloudIce = null;
-function __setIce(v) { __cloudIce = v && v.servers && v.servers.length && v.exp > Date.now() ? v : null; }
+function __setIce(v) { __cloudIce = null; }   // relay removed
 if (typeof ServiceWorkerGlobalScope !== 'undefined') {
     try {
-        caches.open('herb-cfg').then(function (c) { return c.match('/mode'); }).then(function (r) { return r && r.text(); }).then(function (t) { if (t === 'relay' || t === 'direct') __rtcMode = t; }).catch(function () {});
+        caches.open('herb-cfg').then(function (c) { return c.match('/mode'); }).then(function (r) { return r && r.text(); }).then(function (t) {  }).catch(function () {});
         caches.open('herb-cfg').then(function (c) { return c.match('/ice'); }).then(function (r) { return r && r.json(); }).then(function (v) { __setIce(v); }).catch(function () {});
-        var __cfgBc = new BroadcastChannel('herb-cfg'); __cfgBc.onmessage = function (e) { var d = e.data || {}; if (d.mode === 'relay' || d.mode === 'direct') __rtcMode = d.mode; if ('ice' in d) __setIce(d.ice); };
+        var __cfgBc = new BroadcastChannel('herb-cfg'); __cfgBc.onmessage = function (e) { var d = e.data || {};  if ('ice' in d) __setIce(d.ice); };
     } catch (e) {}
 }
 function herbRefreshTurn() {   // service worker only; credentials last 1 hour on the server, refreshed every 30 minutes
@@ -248,7 +248,7 @@ if (TURN.api.length) {
     });
 }
 
-__herbInject.push({ host: '(^|\\.)(geforcenow\\.com|nvidiagrid\\.net|nvidia\\.com)$', injectTo: 'head', html: '<script>(' + herbRtcDiag.toString() + ')();</script>' });
+__herbInject.push({ host: '(^|\\.)(geforcenow\\.com|nvidiagrid\\.net|nvidia\\.com|xbox\\.com|xboxlive\\.com|microsoft\\.com)$', injectTo: 'head', html: '<script>(' + herbRtcDiag.toString() + ')();</script>' });
 
 self.__uv$config = {
     prefix: '/uv/service/',

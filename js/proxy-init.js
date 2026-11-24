@@ -4,7 +4,7 @@
 (function () {
   // Bump this whenever uv/ files change: a new script address makes every browser (iOS home-screen apps especially, which keep an old
   // service worker for a long time) install the new proxy straight away instead of waiting for its own update check.
-  var SW_VERSION = '20261123l';
+  var SW_VERSION = '20261124a';
   var connection = null;
 
   async function registerSW() {
@@ -62,6 +62,11 @@
     });
   }
 
+  var SJ_PREFIX = '/sj/~/', sjLoad = null;
+  function loadSj() {
+    if (!sjLoad) sjLoad = new Promise(function (ok, no) { var sc = document.createElement('script'); sc.src = '/sj/boot.js'; sc.onload = ok; sc.onerror = function () { sjLoad = null; no(new Error('Scramjet files missing')); }; document.head.appendChild(sc); });
+    return sjLoad;
+  }
   var ready = null;
   window.HerbProxy = {
     version: SW_VERSION,
@@ -74,6 +79,43 @@
     init: function () {
       if (!ready) ready = Promise.all([registerSW(), applyTransport()]).then(function (r) { return warm().then(function () { return r; }); });
       return ready;
+    },
+    // ---- Engines: Scramjet ('sj', default) or Ultraviolet ('uv'). Settings > Proxy changes it; a failed Scramjet start falls back to Ultraviolet for this session. ----
+    engine: function () {
+      try { if (sessionStorage.getItem('herb.engine.fallback') === 'uv') return 'uv'; } catch (e) {}
+      try { return localStorage.getItem('herb.proxyEngine') === 'uv' ? 'uv' : 'sj'; } catch (e) { return 'sj'; }
+    },
+    setEngine: function (e) { try { localStorage.setItem('herb.proxyEngine', e === 'uv' ? 'uv' : 'sj'); sessionStorage.removeItem('herb.engine.fallback'); } catch (x) {} },
+    // Load a page (a plain https:// URL) into an iframe with whichever engine is active. Resolves with the engine that was used.
+    open: function (iframe, url) {
+      var uv = function () { return HerbProxy.init().then(function () { iframe.src = __uv$config.prefix + __uv$config.encodeUrl(url); return 'uv'; }); };
+      if (HerbProxy.engine() !== 'sj') return uv();
+      return loadSj().then(function () { return window.HerbScramjet.start(iframe, url); }).then(function () { return 'sj'; }, function (e) {
+        try { sessionStorage.setItem('herb.engine.fallback', 'uv'); } catch (x) {}
+        console.warn('Scramjet failed, using Ultraviolet:', e && e.message);
+        return uv();
+      });
+    },
+    // The real address a proxied iframe is showing (either engine), or null.
+    currentUrl: function (frame) {
+      var l; try { l = frame.contentWindow.location; } catch (e) { return null; }
+      if (l.pathname.indexOf(SJ_PREFIX) === 0) { var m = l.pathname.slice(SJ_PREFIX.length).split('/'); return m.length >= 3 ? decodeURIComponent(m.slice(2).join('/')) : null; }
+      if (l.pathname.indexOf(__uv$config.prefix) === 0) return HerbProxy.decode(l.pathname + l.search + l.hash);
+      return l.href === 'about:blank' ? '' : l.href;
+    },
+    // Turn what the user typed into a plain URL (https://… or a search).
+    toUrl: function (input) {
+      input = (input || '').trim();
+      if (!input) return null;
+      var url;
+      if (/^[a-z][a-z0-9+.-]*:\/\//i.test(input)) url = input;
+      else if (/^[^\s]+\.[^\s]{2,}$/.test(input) && !/\s/.test(input)) url = 'https://' + input;
+      else {
+        var eng = 'https://duckduckgo.com/?q=';
+        try { var k = JSON.parse(localStorage.getItem('herb.settings') || '{}').search; if (window.HerbSettings && HerbSettings.ENGINES[k]) eng = HerbSettings.ENGINES[k][1]; } catch (e) {}
+        url = eng + encodeURIComponent(input);
+      }
+      return url;
     },
     // Turn what the user typed into a proxied URL.
     resolve: function (input) {

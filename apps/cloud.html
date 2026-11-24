@@ -7,146 +7,89 @@ body{margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;ba
 #bar{flex:none;display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface-2);border-bottom:1px solid var(--border);font-size:13px;color:var(--muted)}
 #bar .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #bar button{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12.5px}
-#bar button:hover{border-color:var(--accent)}
+#bar button:hover,#bar button.on{border-color:var(--accent)}
 #note{flex:none;display:none;background:#2d2410;color:#fcd34d;border-bottom:1px solid #78570b;padding:8px 14px;font-size:12.5px;line-height:1.5}
 #stage{flex:1;position:relative;min-height:0}
 iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
 #msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:20px}
+#diag button{background:#16241d;color:#cde7dc;border:1px solid #2c4639;border-radius:6px;padding:5px 10px;font-size:12px}
 </style></head>
 <body>
-<div id="bar"><span class="t" id="title">Cloud Games</span><span id="crl" style="font-size:11px;opacity:.8;margin-right:8px"></span><button id="crq" style="display:none">Request relay access</button><span id="pv" style="font-size:11px;opacity:.6"></span><button id="eng" title="Switch the web-proxy engine (Ultraviolet or Scramjet)">Engine</button><button id="vroute" title="How game video travels: Direct = straight to NVIDIA; Relay = through the VM">Video: …</button><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
+<div id="bar"><span class="t" id="title">Cloud Games</span>
+ <button id="s-geforcenow" data-site="geforcenow">GeForce NOW</button><button id="s-xbox" data-site="xbox">Xbox</button>
+ <span id="pv" style="font-size:11px;opacity:.6">proxy</span>
+ <button id="eng" title="Switch the web-proxy engine (Scramjet or Ultraviolet)">Engine</button><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
 <div id="note"></div>
 <div id="diag" style="display:none;position:fixed;left:0;right:0;top:40px;bottom:0;z-index:20;background:rgba(6,12,9,.97);color:#cde7dc;font:12px/1.45 ui-monospace,Menlo,monospace;padding:10px 12px;overflow:auto;-webkit-user-select:text;user-select:text">
- <div style="display:flex;gap:8px;margin-bottom:8px;position:sticky;top:0;background:rgba(6,12,9,.97);padding-bottom:6px"><button id="dcopy">Copy</button><button id="dclear">Clear</button><button id="dclose">Close</button><button id="dnet">Network check</button><span style="opacity:.6;align-self:center">Proxy diagnostics (send this to the developer)</span></div>
+ <div style="display:flex;gap:8px;margin-bottom:8px;position:sticky;top:0;background:rgba(6,12,9,.97);padding-bottom:6px"><button id="dcopy">Copy</button><button id="dclear">Clear</button><button id="dnet">Network check</button><button id="dclose">Close</button></div>
  <pre id="dlog" style="white-space:pre-wrap;word-break:break-all;margin:0"></pre></div>
 <div id="stage"><div id="msg">Starting the proxy…</div></div>
 <script src="/js/herb-settings.js"></script><script src="/js/herb-config.js"></script><script src="/js/icons.js"></script>
-<script src="/js/vendor/firebase-app-compat.js"></script><script src="/js/vendor/firebase-auth-compat.js"></script><script src="/js/vendor/firebase-database-compat.js"></script><script src="/js/auth.js"></script>
 <script src="/uv/uv.bundle.js"></script><script src="/uv/uv.config.js"></script><script src="/baremux/index.js"></script>
 <script src="/js/wisp-config.js"></script><script src="/js/proxy-init.js"></script>
 <script>
+var $=function(i){return document.getElementById(i)};
 // Cloud gaming sites that can be launched. Add more here.
-// ---- diagnostics: tap the "proxy ..." label ----
+var SITES={
+  geforcenow:{name:'GeForce NOW',url:'https://play.geforcenow.com/'},
+  xbox:{name:'Xbox Cloud Gaming',url:'https://www.xbox.com/play'}
+};
+var key=new URLSearchParams(location.search).get('site')||'geforcenow', site=SITES[key]||SITES.geforcenow, frame=null;
+if(!SITES[key])key='geforcenow';
+$('title').textContent=site.name+' · cloud gaming';
+Object.keys(SITES).forEach(function(k){var b=$('s-'+k);b.classList.toggle('on',k===key);b.onclick=function(){if(k!==key)location.search='?site='+k}});
+
+// ---- diagnostics: tap the "proxy" label ----
 var DLOG=[],dstart=Date.now();
-function dline(k,m,u){var t=((Date.now()-dstart)/1000).toFixed(1);DLOG.push('+'+t+'s '+k+': '+m+(u?'  ['+String(u).replace(/^https?:\/\//,'').slice(0,60)+']':''));if(DLOG.length>400)DLOG.shift();var p=document.getElementById('dlog');if(p&&document.getElementById('diag').style.display!=='none')p.textContent=DLOG.join('\n')}
+function dline(k,m,u){var t=((Date.now()-dstart)/1000).toFixed(1);DLOG.push('+'+t+'s '+k+': '+m+(u?'  ['+String(u).replace(/^https?:\/\//,'').slice(0,60)+']':''));if(DLOG.length>400)DLOG.shift();var p=$('dlog');if(p&&$('diag').style.display!=='none')p.textContent=denv()+'\n----\n'+DLOG.join('\n')}
 function denv(){var st=false;try{st=navigator.standalone===true||matchMedia('(display-mode: standalone)').matches}catch(e){}
  var top3=true;try{void parent.location.href;top3=false}catch(e){}
- return ['page: '+location.origin,'standalone app: '+st,'third-party frame: '+top3,'userAgent: '+navigator.userAgent,'service worker: '+('serviceWorker' in navigator),'storage API: '+(typeof document.hasStorageAccess)].join('\n')}
+ return ['page: '+location.origin,'engine: '+HerbProxy.engine(),'standalone app: '+st,'third-party frame: '+top3,'userAgent: '+navigator.userAgent,'service worker: '+('serviceWorker' in navigator)].join('\n')}
 try{var dbc=new BroadcastChannel('herb-diag');dbc.onmessage=function(e){var d=e.data||{};dline(d.k,d.m,d.u)}}catch(e){dline('diag','BroadcastChannel unavailable','')}
-document.addEventListener('DOMContentLoaded',function(){
- $('pv').style.cssText+=';cursor:pointer;text-decoration:underline;padding:6px';
- $('pv').onclick=function(){var d=$('diag');d.style.display=d.style.display==='none'?'block':'none';$('dlog').textContent=denv()+'\n----\n'+DLOG.join('\n')};
- $('dclose').onclick=function(){$('diag').style.display='none'};
- $('dnet').onclick=function(){$('dlog').textContent=denv()+'\n----\n'+DLOG.join('\n');netcheck()};
- $('dclear').onclick=function(){DLOG.length=0;$('dlog').textContent=denv()};
- $('dcopy').onclick=function(){var t=$('dlog').textContent;try{navigator.clipboard.writeText(t).then(function(){$('dcopy').textContent='Copied'},function(){throw 0})}catch(e){var r=document.createRange();r.selectNodeContents($('dlog'));var s=getSelection();s.removeAllRanges();s.addRange(r);$('dcopy').textContent='Selected - tap Copy in the menu'}}});
-// ---- Network check: what can THIS network reach? (fetch for web addresses, WebRTC STUN for video-relay style UDP) ----
+$('pv').style.cssText+=';cursor:pointer;text-decoration:underline;padding:6px';
+$('pv').onclick=function(){var d=$('diag');d.style.display=d.style.display==='none'?'block':'none';$('dlog').textContent=denv()+'\n----\n'+DLOG.join('\n')};
+$('dclose').onclick=function(){$('diag').style.display='none'};
+$('dnet').onclick=function(){$('dlog').textContent=denv()+'\n----\n'+DLOG.join('\n');netcheck()};
+$('dclear').onclick=function(){DLOG.length=0;$('dlog').textContent=denv()};
+$('dcopy').onclick=function(){var t=$('dlog').textContent;try{navigator.clipboard.writeText(t).then(function(){$('dcopy').textContent='Copied'},function(){throw 0})}catch(e){var r=document.createRange();r.selectNodeContents($('dlog'));var s=getSelection();s.removeAllRanges();s.addRange(r);$('dcopy').textContent='Selected - copy it'}};
+// ---- Network check: what can THIS network reach? ----
 function netcheck(){
-  var web=[['Herb on workers.dev','https://herb.copperbat3.workers.dev/'],['VM (nip.io)','https://129-158-194-64.nip.io/'],['VM (duckdns)','https://lightspeedspeed.duckdns.org/'],['VM (twilightparadox)','https://leweirdlink.twilightparadox.com/'],
-    ['this page ('+location.hostname.slice(0,28)+')',location.origin+'/'],['jsDelivr','https://cdn.jsdelivr.net/'],['raw.githubusercontent','https://raw.githubusercontent.com/'],['github.io','https://github.io/'],['pages.dev','https://pages.dev/'],
-    ['cloudflare.com','https://www.cloudflare.com/'],['turn.cloudflare.com (TURN, not a web server)','https://turn.cloudflare.com/'],['trycloudflare.com','https://trycloudflare.com/'],['firebaseio.com (Herb database)','https://copperchat-4cb91-default-rtdb.firebaseio.com/.json?shallow=true'],
-    ['NVIDIA login','https://login.nvidia.com/'],['GeForce NOW','https://play.geforcenow.com/'],['nvidiagrid.net (game servers)','https://img.nvidiagrid.net/'],['google.com','https://www.google.com/']];
-  var stun=[['STUN Cloudflare udp 3478','stun:stun.cloudflare.com:3478'],['STUN Cloudflare udp 53','stun:stun.cloudflare.com:53'],['STUN Google udp 19302','stun:stun.l.google.com:19302']];
-  dline('netcheck','starting ('+web.length+' web addresses, '+stun.length+' UDP checks, 4 relay tests, one after another) - takes about 15-60 seconds','');
-  // video-relay test by hostname (each of the VM's names): does a relay allocate? uses short-lived credentials from this page's own address
-  fetch('/api/turn',{cache:'no-store'}).then(function(r){return r.json()}).then(function(c){
-    // one at a time: browsers handle several simultaneous relay allocations unreliably, which would show false "blocked" results
-    var tests=[['TURN nip.io, UDP 3478','turn:129-158-194-64.nip.io:3478?transport=udp'],['TURN nip.io, TCP 3478','turn:129-158-194-64.nip.io:3478?transport=tcp'],['TURN duckdns, TCP 3478','turn:lightspeedspeed.duckdns.org:3478?transport=tcp'],['TURN twilightparadox, TCP 3478','turn:leweirdlink.twilightparadox.com:3478?transport=tcp']];
-    // a browser can fail the test right after another one for no network reason, so each is tried up to twice before it is called blocked
-    (function next(i){if(i>=tests.length){dline('netcheck','finished','');return}var t=tests[i];
-      function attempt(n){var done=false,pc;
-        function end(ok){if(done)return;done=true;try{pc.close()}catch(x){}
-          if(!ok&&n<2){setTimeout(function(){attempt(n+1)},1500);return}
-          dline(ok?'net-OK':'net-BLOCKED',t[0]+(ok?'  (relay allocated - usable!)':'  (no relay after 2 tries)'),'');setTimeout(function(){next(i+1)},800)}
-        try{pc=new RTCPeerConnection({iceServers:[{urls:t[1],username:c.username,credential:c.credential}],iceTransportPolicy:'relay'});pc.createDataChannel('x');
-          pc.onicecandidate=function(e){if(e.candidate&&/ typ relay /.test(e.candidate.candidate))end(true)};
-          pc.onicegatheringstatechange=function(){if(pc.iceGatheringState==='complete')setTimeout(function(){end(false)},200)};
-          pc.createOffer().then(function(o){return pc.setLocalDescription(o)});setTimeout(function(){end(false)},7000)}catch(e){end(false)}}
-      attempt(1)})(0);
-  }).catch(function(e){dline('net-BLOCKED','could not get relay credentials from this page ('+e.message+')','')});
+  var web=[['this page ('+location.hostname.slice(0,28)+')',location.origin+'/'],['jsDelivr','https://cdn.jsdelivr.net/'],['raw.githubusercontent','https://raw.githubusercontent.com/'],
+    ['trycloudflare.com','https://trycloudflare.com/'],['NVIDIA login','https://login.nvidia.com/'],['GeForce NOW','https://play.geforcenow.com/'],['nvidiagrid.net (game servers)','https://img.nvidiagrid.net/'],
+    ['Xbox Cloud Gaming','https://www.xbox.com/play'],['Microsoft login','https://login.live.com/'],['Xbox game servers (xboxlive.com)','https://xboxlive.com/'],['google.com','https://www.google.com/']];
+  var stun=[['STUN Cloudflare udp 3478','stun:stun.cloudflare.com:3478'],['STUN Google udp 19302','stun:stun.l.google.com:19302']];
+  dline('netcheck','starting ('+web.length+' web addresses, '+stun.length+' UDP checks)','');
   web.forEach(function(w){var t0=Date.now(),c=typeof AbortController==='function'?new AbortController():null,tm=setTimeout(function(){c&&c.abort()},7000);
-    fetch(w[1],{mode:'no-cors',cache:'no-store',signal:c?c.signal:undefined}).then(function(){dline('net-OK',w[0]+'  '+(Date.now()-t0)+'ms','')},function(e){dline('net-BLOCKED',w[0]+'  '+((Date.now()-t0)>6500?'(timed out)':'(failed fast)'),'')}).then(function(){clearTimeout(tm)})});
+    fetch(w[1],{mode:'no-cors',cache:'no-store',signal:c?c.signal:undefined}).then(function(){dline('net-OK',w[0]+'  '+(Date.now()-t0)+'ms','')},function(e){dline('net-BLOCKED',w[0]+'  '+((Date.now()-t0)>6500?'(timed out)':'(failed)'),'')}).then(function(){clearTimeout(tm)})});
   stun.forEach(function(sv){try{var pc=new RTCPeerConnection({iceServers:[{urls:sv[1]}]}),got=false;pc.createDataChannel('x');
     pc.onicecandidate=function(e){if(e.candidate&&/ typ srflx /.test(e.candidate.candidate)&&!got){got=true;dline('net-OK',sv[0]+'  (UDP reaches it)','');try{pc.close()}catch(x){}}};
     pc.createOffer().then(function(o){return pc.setLocalDescription(o)});
     setTimeout(function(){if(!got){dline('net-BLOCKED',sv[0]+'  (no reply in 8s)','');try{pc.close()}catch(x){}}},8000)}catch(e){dline('net-BLOCKED',sv[0]+' ('+e.message+')','')}});
 }
-// ---- Cloudflare relay: admin approval, daily limit, monthly cutoff. Credentials come from the server; the Cloudflare key never reaches this page ----
-var CAPI=(window.HerbConfig&&HerbConfig.apiBase?HerbConfig.apiBase():'')+'/api/cloud/',leaseT=null,beatT=null,usage={},lastTot=0,relayOn=false;
-var CREASON={master_off:'switched off by the admin',monthly_cutoff:'the monthly allowance is used up',daily_cap:'your daily time is used up',not_approved:'needs admin approval'};
-function csay(t,warn){$('crl').textContent=t;$('crl').style.color=warn?'#fcd34d':''}
-function ccall(path,body){return HerbAuth.token().then(function(tok){if(!tok)throw{code:401};return fetch(CAPI+path,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:body===undefined?undefined:JSON.stringify(body)})}).then(function(r){return r.json().then(function(j){j._code=r.status;return j})})}
-function pushIce(v){try{caches.open('herb-cfg').then(function(c){return c.put('/ice',new Response(JSON.stringify(v||{})))})}catch(e){}
-  try{var b=new BroadcastChannel('herb-cfg');b.postMessage({ice:v});setTimeout(function(){b.close()},500)}catch(e){}}
-function stopRelay(msg){relayOn=false;clearTimeout(leaseT);clearInterval(beatT);pushIce(null);csay('Cloud relay: '+msg,true)}
-function waitAuth(ms){return new Promise(function(res){var t0=Date.now();(function p(){var s=window.HerbAuth&&HerbAuth.state&&HerbAuth.state();if(s&&s.ready||Date.now()-t0>ms)res(s||{});else setTimeout(p,250)})()})}
-try{var ubc=new BroadcastChannel('herb-usage');ubc.onmessage=function(e){var d=e.data||{};if(d.id)usage[d.id]={c:!!d.connected,b:d.bytes||0}}}catch(e){}
-function beat(){var tot=0,playing=false;for(var k in usage){tot+=usage[k].b;if(usage[k].c)playing=true}
-  var delta=Math.max(0,tot-lastTot);lastTot=tot;if(!playing&&!delta)return;
-  ccall('beat',{playing:playing,bytes:delta}).then(function(j){
-    if(j.stop){stopRelay((CREASON[j.reason]||'stopped'));if(frame)frame.src=frame.src}else if(j.remainingSec!=null)csay('Cloud relay: on  |  '+Math.round(j.remainingSec/60)+' min left today')},function(){})}
-function lease(){return ccall('turn',{}).then(function(j){
-  if(j._code===200){var chosen=null;try{chosen=localStorage.getItem('herb.vroute.user')}catch(e){}if(!chosen&&!/Relay/.test($('vroute').textContent))setVroute('relay',false);
-    pushIce({servers:j.iceServers,exp:Date.now()+(j.ttl-30)*1000});relayOn=true;csay('Cloud relay: on  |  '+Math.round((j.remainingSec||0)/60)+' min left today');
-    clearTimeout(leaseT);leaseT=setTimeout(function(){lease().catch(function(){})},Math.max(60,j.ttl-300)*1000);if(!beatT)beatT=setInterval(beat,30000);return}
-  if(j.error==='turn_not_configured'){csay('Cloud relay: not set up on the server yet',true);return}
-  stopRelay(CREASON[j.error]||j.error||'unavailable')})}
-function cloudRelay(){return waitAuth(8000).then(function(st){
-  if(!st.user){csay('Cloud relay: sign in to Herb to use it',true);return}
-  return ccall('me').then(function(me){
-    if(me.status==='approved')return lease();
-    if(me.status==='pending'){csay('Cloud relay: waiting for admin approval',true);return}
-    if(me.status==='revoked'){csay('Cloud relay: access was revoked',true);return}
-    csay('Cloud relay: needs admin approval',true);$('crq').style.display='';$('crq').onclick=function(){$('crq').disabled=true;ccall('request',{}).then(function(){$('crq').style.display='none';csay('Cloud relay: request sent, waiting for approval',true)})}
-  })}).catch(function(){csay('Cloud relay: could not reach the server',true)})}
-var SITES={geforcenow:{name:'GeForce NOW',url:'https://play.geforcenow.com/'}};
-var $=function(i){return document.getElementById(i)};
-var key=new URLSearchParams(location.search).get('site')||'geforcenow', site=SITES[key]||SITES.geforcenow, frame=null;
-$('title').textContent=site.name+' · cloud gaming';
+
+// ---- Engine: Scramjet (default) or Ultraviolet ----
+function setEngLabel(){$('eng').textContent='Engine: '+(HerbProxy.engine()==='uv'?'Ultraviolet':'Scramjet')}
+$('eng').onclick=function(){HerbProxy.setEngine(HerbProxy.engine()==='uv'?'sj':'uv');setEngLabel();launch()};
+
 function launch(){
-  $('msg').textContent='Connecting…';
+  setEngLabel();$('msg')&&($('msg').textContent='Connecting…');
   // Safari/iPadOS treat this app as a third-party frame when Herb was opened from a different address, and then block the storage a sign-in needs.
   try{void parent.location.href}catch(e){
-    if(window.top!==window){$('note').style.display='block';$('note').innerHTML='<b>Sign-in may not work here.</b> Herb was opened from a different address than this app, and Safari blocks sign-ins in that case. Open Herb from <a href="'+location.origin+'/" target="_blank" rel="noopener" style="color:inherit">'+location.origin+'/</a> instead (and add that address to your Home Screen).'}
+    if(window.top!==window){$('note').style.display='block';$('note').innerHTML='<b>Sign-in may not work here.</b> Herb was opened from a different address than this app, and Safari blocks sign-ins in that case. Open Herb from <a href="'+location.origin+'/" target="_blank" style="color:#fde68a">'+location.origin+'</a> instead.'}
   }
-  HerbProxy.init().then(function(){
-    return HerbProxy.workerVersion().then(function(v){
-      var ok=v===HerbProxy.version;$('pv').textContent='proxy '+(v||'?')+(ok?'':' (old)');
-      if(ok){try{sessionStorage.removeItem('herb.swfix')}catch(e){}}
-      if(!ok){   // an old proxy worker is still running (common in the iPad home-screen app): remove it and reload once
-        var done=false;try{done=sessionStorage.getItem('herb.swfix')}catch(e){}
-        if(!done){try{sessionStorage.setItem('herb.swfix','1')}catch(e){}
-          return navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.filter(function(r){return r.scope.indexOf(__uv$config.prefix)>=0}).map(function(r){return r.unregister()}))}).then(function(){location.reload();return new Promise(function(){})});}
-      }
-    });
-  }).then(function(){return Promise.race([cloudRelay(),new Promise(function(r){setTimeout(r,6000)})])}).then(function(){
+  var eng=HerbProxy.engine();
+  Promise.race([HerbProxy.init(),new Promise(function(_,no){setTimeout(function(){no(new Error('proxy start timed out'))},20000)})]).catch(function(e){dline('proxy','init: '+e.message,'')}).then(function(){
     frame=document.createElement('iframe');
-    frame.setAttribute('allow','fullscreen; gamepad; autoplay; clipboard-read; clipboard-write; pointer-lock'); frame.allowFullscreen=true;
-    $('stage').innerHTML=''; $('stage').appendChild(frame);
-    if(engine()==='scramjet'){
-      var sjFail=function(why){dline('engine','scramjet failed – using Ultraviolet',why);try{localStorage.setItem('herb.engine','uv')}catch(x){}setEngLabel();frame.src=__uv$config.prefix+__uv$config.encodeUrl(site.url)};
-      var f0=frame;setTimeout(function(){if(frame!==f0||engine()!=='scramjet')return;var n=-1;try{n=f0.contentDocument.getElementsByTagName('*').length}catch(x){}
-        if(n<8)sjFail('page stayed empty ('+n+' elements) after 20s')},20000);
-      return loadSj().then(function(){return HerbScramjet.start(frame,site.url)}).then(function(){dline('engine','scramjet','')},function(e){
-        dline('engine','scramjet failed – using Ultraviolet',String(e&&e.message||e));try{localStorage.setItem('herb.engine','uv')}catch(x){}setEngLabel();frame.src=__uv$config.prefix+__uv$config.encodeUrl(site.url)});
-    }
-    frame.src=__uv$config.prefix+__uv$config.encodeUrl(site.url);
-    // Video streams use WebRTC, which the proxy can't carry. Without a TURN relay it may stay black if UDP is blocked.
-    if(!(__uv$config.inject&&__uv$config.inject.length)){$('note').style.display='block';$('note').innerHTML='<b>Video relay not set up.</b> Cloud gaming streams over WebRTC (UDP), which a web proxy can’t carry. If the picture stays black or never connects, your network is probably blocking UDP – a TURN relay needs to be configured in <code>uv/uv.config.js</code>.'}
-  }).catch(function(e){$('msg').textContent='Couldn’t start the proxy: '+e.message});
+    frame.setAttribute('allow','fullscreen; gamepad; autoplay; clipboard-read; clipboard-write; pointer-lock; microphone; camera'); frame.allowFullscreen=true;
+    $('stage').innerHTML='';$('stage').appendChild(frame);
+    var f0=frame;
+    // A Scramjet page that is still empty after 25s is treated as failed: switch to Ultraviolet for this session and reload.
+    if(eng==='sj')setTimeout(function(){if(frame!==f0||HerbProxy.engine()!=='sj')return;var n=-1;try{n=f0.contentDocument.getElementsByTagName('*').length}catch(x){}
+      if(n<8){dline('engine','Scramjet page stayed empty ('+n+' elements) - using Ultraviolet','');try{sessionStorage.setItem('herb.engine.fallback','uv')}catch(x){}setEngLabel();HerbProxy.open(f0,site.url)}},25000);
+    return HerbProxy.open(frame,site.url).then(function(used){dline('engine',used==='sj'?'Scramjet':'Ultraviolet','');setEngLabel()});
+  }).catch(function(e){$('stage').innerHTML='<div id="msg">Couldn’t start the proxy: '+String(e.message).replace(/</g,'&lt;')+'</div>'});
 }
-// ---- Video route: Direct (default) or Relay. Shared with the proxy worker through the Cache API + BroadcastChannel ----
-function setVroute(m,reload){try{caches.open('herb-cfg').then(function(c){return c.put('/mode',new Response(m))})}catch(e){}
-  try{var b=new BroadcastChannel('herb-cfg');b.postMessage({mode:m});setTimeout(function(){b.close()},500)}catch(e){}
-  $('vroute').textContent='Video: '+(m==='relay'?'Relay':'Direct');dline('video-route',m,'');if(reload&&frame)setTimeout(function(){frame.src=frame.src},700)}
-try{caches.open('herb-cfg').then(function(c){return c.match('/mode')}).then(function(r){return r&&r.text()}).then(function(t){$('vroute').textContent='Video: '+(t==='relay'?'Relay':'Direct')},function(){$('vroute').textContent='Video: Direct'})}catch(e){$('vroute').textContent='Video: Direct'}
-$('vroute').onclick=function(){try{localStorage.setItem('herb.vroute.user','1')}catch(e){}var cur=/Relay/.test($('vroute').textContent)?'relay':'direct';setVroute(cur==='relay'?'direct':'relay',true)};
-$('reload').onclick=function(){if(frame)frame.src=frame.src};
+$('reload').onclick=function(){if(frame)HerbProxy.open(frame,site.url)};
 $('full').onclick=function(){if(frame&&frame.requestFullscreen)frame.requestFullscreen()};
-function engine(){try{return localStorage.getItem('herb.engine')||'uv'}catch(e){return 'uv'}}
-function loadSj(){return new Promise(function(ok,no){var s=document.createElement('script');s.src='/sj/boot.js';s.onload=ok;s.onerror=function(){no(new Error('Scramjet files missing'))};document.head.appendChild(s)})}
-function setEngLabel(){$('eng').textContent='Engine: '+(engine()==='scramjet'?'Scramjet':'Ultraviolet')}
-$('eng').onclick=function(){try{localStorage.setItem('herb.engine',engine()==='scramjet'?'uv':'scramjet')}catch(e){}setEngLabel();if(frame){try{frame.src='about:blank'}catch(e){}launch()}};
-setEngLabel();
 launch();
 </script></body></html>

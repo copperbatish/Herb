@@ -33,9 +33,7 @@
     return t.last || 'Loading…';
   }
   function currentUrl(t) {
-    try { var l = t.frame.contentWindow.location;
-      if (l.pathname.indexOf(__uv$config.prefix) === 0) return HerbProxy.decode(l.pathname + l.search + l.hash);
-      return l.href === 'about:blank' ? '' : l.href; } catch (e) { return null; }
+    return HerbProxy.currentUrl(t.frame);
   }
   function render() {
     tabs.forEach(function (t) { t.label.textContent = tabTitle(t); t.el.classList.toggle('active', t === active); t.frame.classList.toggle('on', t === active && t.loaded); });
@@ -68,10 +66,12 @@
   }
   async function go(input) {
     input = (input || '').trim(); if (!input) return; if (!active) newTab(); banner.classList.remove('on');
-    var dest = HerbProxy.resolve(input);
+    var dest = HerbProxy.toUrl(input);
     try { await HerbProxy.init(); } catch (e) { warn('Proxy failed to start: ' + e.message, true); return; }
     var st = HerbWisp.status(); if (st && !st.best) { warn('No proxy server is reachable right now.', true); return; }
-    active.loaded = true; active.frame.src = dest; $('q').value = ''; render(); retryWasm(active.frame, 0);
+    var fr = active.frame; active.loaded = true; $('q').value = ''; render();
+    var used = await HerbProxy.open(fr, dest);
+    if (used === 'uv') retryWasm(fr, 0);
   }
   $('newtab').onclick = newTab;
   $('home').onclick = function () { if (active) { active.loaded = false; active.frame.src = 'about:blank'; banner.classList.remove('on'); render(); } };

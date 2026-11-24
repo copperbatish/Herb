@@ -80,6 +80,7 @@ section{display:none;max-width:620px}section.on{display:block}
   <div class="card"><div id="servers"></div>
    <div class="row"><div><div class="t" id="using">Checking…</div><div class="d" id="pmsg">Rechecks automatically every minute.</div></div><button class="btn" id="check">Check now</button></div>
    <div class="row"><div><div class="t">Reset proxy</div><div class="d" id="rstmsg">If a site or the GeForce NOW sign-in looks broken after an update (common in the iPad home-screen app), this clears the proxy&rsquo;s saved background worker and reloads Herb. Your accounts and settings are kept.</div></div><button class="btn" id="resetproxy">Reset</button></div></div>
+  <div class="card"><div class="row"><div><div class="t">Proxy engine</div><div class="d" id="pengmsg">Scramjet is the default for the Web Browser, Movies and Cloud Games. Ultraviolet is the older engine, handy if a site doesn’t work with Scramjet. Applies the next time a page opens.</div></div><div class="ctl"><select id="peng-sel"><option value="sj">Scramjet (default)</option><option value="uv">Ultraviolet</option></select></div></div></div>
   <div class="card"><div class="row"><div><div class="t">Connection engine</div><div class="d" id="engmsg">libcurl is best for live sites (WebSockets, cloud games). Epoxy is the older fallback. Applies after you reload the browser app.</div></div><div class="ctl"><select id="engine-sel"><option value="libcurl">libcurl (recommended)</option><option value="epoxy">Epoxy (fallback)</option></select></div></div></div>
   <div class="card"><div class="add" style="padding:12px 0"><input type="password" id="custom" placeholder="Server address, with its password if it has one" autocomplete="off" autocapitalize="none" spellcheck="false"><button class="btn ghost" id="eye" type="button" title="Show or hide" style="padding:6px 10px">&#128065;</button><button class="btn primary" id="add">Add</button></div></div>
  </section>
@@ -173,6 +174,8 @@ $('add').onclick=function(){
   if(p)save(p);else $('pmsg').textContent='Not added – this server needs a password.';
  });
 };
+try{$('peng-sel').value=localStorage.getItem('herb.proxyEngine')==='uv'?'uv':'sj'}catch(e){}
+$('peng-sel').onchange=function(){try{localStorage.setItem('herb.proxyEngine',this.value);sessionStorage.removeItem('herb.engine.fallback');$('pengmsg').textContent='Saved – '+(this.value==='uv'?'Ultraviolet':'Scramjet')+' will be used the next time a page opens (reload open windows).'}catch(e){}};
 try{$('engine-sel').value=localStorage.getItem('herb.transport')||'libcurl'}catch(e){}
 $('engine-sel').onchange=function(){try{localStorage.setItem('herb.transport',this.value);$('engmsg').textContent='Saved – reload the Web Browser window to use '+this.value+'.'}catch(e){}};
 var sec=new URLSearchParams(location.search).get('section')||'interface';show(sec);

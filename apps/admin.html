@@ -29,7 +29,7 @@ textarea{min-height:84px;resize:vertical}input:focus,textarea:focus{border-color
 <body>
 <div id="gate">Loading…</div>
 <div id="app">
-  <nav id="nav"><button data-t="over" class="on">Overview</button><button data-t="req">Requests</button><button data-t="adm">Admins</button><button data-t="cloud">Cloud gaming</button><button data-t="store">Store queue</button><button data-t="site">Site</button></nav>
+  <nav id="nav"><button data-t="over" class="on">Overview</button><button data-t="req">Requests</button><button data-t="adm">Admins</button><button data-t="store">Store queue</button><button data-t="site">Site</button></nav>
   <main>
     <section class="tab on" id="t-over">
       <div class="stats">
@@ -52,24 +52,6 @@ textarea{min-height:84px;resize:vertical}input:focus,textarea:focus{border-color
       <h2>Admins</h2><div class="card" id="ad-list"></div>
       <div id="ad-add"><h2>Add an admin</h2><div class="card"><div class="addrow"><input id="ad-u" placeholder="Their username" autocapitalize="none" maxlength="20"><button class="btn" id="ad-go">Make admin</button></div>
         <div class="err" id="ad-e"></div><p class="meta" style="margin:14px 0 0">They need to have created an account first. Only the owner can add or remove admins.</p></div></div>
-    </section>
-    <section class="tab" id="t-cloud">
-      <div class="card">
-        <div class="row" style="padding-top:0"><div class="g"><b>Cloud gaming relay (Cloudflare TURN)</b><div class="meta" id="cg-sub">Loading…</div></div><button class="btn" id="cg-master">…</button></div>
-        <div style="height:12px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:14px 0 8px"><i id="cg-bar" style="display:block;height:100%;width:0;background:var(--accent);transition:width .3s"></i></div>
-        <div class="meta" id="cg-use"></div>
-        <div class="err" id="cg-err"></div>
-      </div>
-      <h2>Limits</h2>
-      <div class="card"><div class="row" style="flex-wrap:wrap;gap:10px">
-        <label class="meta">Monthly cutoff (GB)<br><input id="cg-gb" type="number" min="1" max="1000" style="width:110px"></label>
-        <label class="meta">Daily hours per user<br><input id="cg-dh" type="number" min="0" max="24" step="0.25" style="width:110px"></label>
-        <label class="meta">Est. stream Mbps<br><input id="cg-mb" type="number" min="1" max="200" style="width:110px"></label>
-        <label class="meta">Lease (seconds)<br><input id="cg-ttl" type="number" min="600" max="3600" step="60" style="width:110px"></label>
-        <button class="btn sm" id="cg-save">Save limits</button></div>
-        <div class="row" style="flex-wrap:wrap;gap:10px"><label class="meta">Match Cloudflare's dashboard: GB used this month<br><input id="cg-set" type="number" min="0" step="0.1" style="width:130px"></label><button class="btn sm ghost" id="cg-setb">Set used GB</button>
-        <span class="meta">Usage here is an estimate (play time x Mbps, or the bytes the app reports, whichever is higher). Match it to Cloudflare now and then.</span></div></div>
-      <h2>Users</h2><div class="card" id="cg-users"><div class="empty">No one has asked for access yet.</div></div>
     </section>
     <section class="tab" id="t-store">
       <h2>Waiting for review</h2><div class="card" id="sq-pend"></div>
@@ -189,35 +171,4 @@ textarea{min-height:84px;resize:vertical}input:focus,textarea:focus{border-color
   if (!HerbAuth.available()) $('gate').textContent = 'Nothing here.';
 })();
 </script>
-<script>
-// ---- Cloud gaming tab: master switch, monthly usage vs cutoff, limits, per-user approval ----
-(function(){
-  var $=function(i){return document.getElementById(i)},API=(window.HerbConfig&&HerbConfig.apiBase?HerbConfig.apiBase():'')+'/api/cloud/admin/',timer=null;
-  function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-  function hm(sec){sec=Math.round(sec);var h=Math.floor(sec/3600),m=Math.round(sec%3600/60);return h?h+'h '+m+'m':m+'m'}
-  function call(path,body){return HerbAuth.token().then(function(t){if(!t)throw new Error('Sign in again.');return fetch(API+path,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:body===undefined?undefined:JSON.stringify(body)})}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error==='admins_only'?'Admins only.':(j.error||'Error '+r.status));return j})})}
-  function paint(d){
-    var pct=Math.min(100,d.usedGB/d.monthlyGB*100);
-    $('cg-sub').textContent=(d.master?'ON: approved users can get relay credentials.':'OFF: nobody can get relay credentials.')+(d.configured?'':'  Cloudflare key not set up yet (run set-cloud-turn-key.sh on the VM).')+(d.cutoff?'  Monthly cutoff reached.':'');
-    $('cg-master').textContent=d.master?'Turn OFF':'Turn ON';$('cg-master').className='btn'+(d.master?' red':'');
-    var b=$('cg-bar');b.style.width=pct+'%';b.style.background=pct>=100?'#f87171':pct>=80?'#fbbf24':'var(--accent)';
-    $('cg-use').textContent=d.usedGB+' GB used of '+d.monthlyGB+' GB in '+d.month+'  |  '+d.remainingGB+' GB left  |  day and month roll over at midnight '+d.tz;
-    ['gb:monthlyGB','dh:dailyHours','mb:estMbps','ttl:ttl'].forEach(function(p){var k=p.split(':');if(document.activeElement!==$('cg-'+k[0]))$('cg-'+k[0]).value=d[k[1]]});
-    $('cg-err').textContent='';
-    var box=$('cg-users');if(!d.users.length){box.innerHTML='<div class="empty">No one has asked for access yet.</div>';return}
-    box.innerHTML=d.users.map(function(u){
-      var pill=u.status==='approved'?'<span class="pill" style="background:rgba(52,211,153,.18);color:#34d399">approved</span>':u.status==='pending'?'<span class="pill open">pending</span>':'<span class="pill">'+esc(u.status)+'</span>';
-      return '<div class="row" data-uid="'+esc(u.uid)+'"><div class="g"><b>'+esc(u.name)+'</b> '+pill+'<div class="meta">today '+hm(u.todaySec)+' of '+hm(u.capSec)+'  |  this month '+hm(u.monthSec)+' ('+u.monthGB+' GB)'+(u.leaseUntil?'  |  relay active':'')+'</div></div>'+
-        '<input data-cap title="Daily hours override (empty = default)" placeholder="h/day" value="'+(u.capHours==null?'':u.capHours)+'" style="width:64px">'+
-        (u.status==='approved'?'<button class="btn sm red" data-st="revoked">Revoke</button>':'<button class="btn sm" data-st="approved">Approve</button>')+'</div>'}).join('');
-  }
-  function load(){return call('state').then(paint,function(e){$('cg-err').textContent=e.message})}
-  function act(path,body){return call(path,body).then(paint,function(e){$('cg-err').textContent=e.message})}
-  $('cg-master').onclick=function(){var on=/ON$/.test($('cg-master').textContent);if(!on||confirm('Turn cloud gaming relay OFF now? Live sessions stop at their next check.'))act('master',{on:on})};
-  $('cg-save').onclick=function(){act('limits',{monthlyGB:$('cg-gb').value,dailyHours:$('cg-dh').value,estMbps:$('cg-mb').value,ttl:$('cg-ttl').value})};
-  $('cg-setb').onclick=function(){act('usage',{gb:$('cg-set').value});$('cg-set').value=''};
-  $('cg-users').onclick=function(e){var b=e.target.closest('button[data-st]');if(!b)return;act('user',{uid:b.closest('.row').dataset.uid,status:b.dataset.st})};
-  $('cg-users').onchange=function(e){if(e.target.matches('input[data-cap]'))act('user',{uid:e.target.closest('.row').dataset.uid,capHours:e.target.value.trim()===''?null:e.target.value})};
-  document.getElementById('nav').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;clearInterval(timer);if(b.dataset.t==='cloud'){load();timer=setInterval(load,20000)}});
-})();
-</script></body></html>
+</body></html>

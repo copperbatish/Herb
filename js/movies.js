@@ -61,6 +61,14 @@
     }
     // { id: 'my-source', label: 'My Source', build: function (movie) { return 'https://example.com/embed/' + movie.id; } },
   ];
+  // Load an embed page into an iframe: direct, or through the active proxy engine (Scramjet by default).
+  function embedLoad(frame, url) {
+    if (mode() === 'direct') { frame.setAttribute('credentialless', ''); frame.src = url; return Promise.resolve(); }
+    return ensureProxy().then(function (ok) {
+      if (!ok || !window.HerbProxy || !HerbProxy.open) { frame.setAttribute('credentialless', ''); frame.src = url; return; }
+      return HerbProxy.open(frame, url);
+    });
+  }
   function embedSrc(url) {
     // proxy the iframe when the proxy is active (or forced); otherwise fall back to the direct URL
     if (mode() === 'direct') return Promise.resolve(url);
@@ -134,15 +142,14 @@
         mark('trailer');
         if (!avail.length) { player.innerHTML = '<div class="pm">No trailer is available for this movie.</div>'; return; }
         player.innerHTML = '<div class="pm">Loading player…</div>';
-        embedSrc(avail[0].url).then(function (src) {
+        ensureProxy().then(function () {
           if (sheet.dataset.id != tok) return;
           player.innerHTML = '';
           var f = document.createElement('iframe');
           f.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
           f.allowFullscreen = true;
-          if (src === avail[0].url) f.setAttribute('credentialless', ''); /* only direct embeds; proxied ones are same-origin and need the service worker */
-          f.src = src;
           player.appendChild(f);
+          return embedLoad(f, avail[0].url);   // only direct embeds get `credentialless`; proxied ones are same-origin
         });
       }
       function playMovie() {
@@ -175,9 +182,9 @@
             showUnavailable(d.imdb_id ? 'Please try again later.' : 'No IMDb ID found for this title.');
             return;
           }
-          embedSrc(candidates[idx]).then(function (src) {
+          Promise.resolve().then(function () {
             if (sheet.dataset.id != tok || !ov.classList.contains('on')) return;
-            frame.src = src;
+            return embedLoad(frame, candidates[idx]);
           }).catch(function () {
             if (sheet.dataset.id != tok || !ov.classList.contains('on')) return;
             tryAt(idx + 1);

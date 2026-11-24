@@ -1,10 +1,11 @@
 // Starts Scramjet inside an iframe. window.HerbScramjet.start(iframe, url) -> Promise
 (function () {
-  var ctl = null;
+  var ctl = null, frames = new WeakMap(), initP = null;
   function load(src) { return new Promise(function (ok, no) { var s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = function () { no(new Error('could not load ' + src)); }; document.head.appendChild(s); }); }
   function step(n) { window.__sjStep = n; }
   function tmo(p, ms, n) { return Promise.race([p, new Promise(function (_, no) { setTimeout(function () { no(new Error('Scramjet timed out at: ' + n)); }, ms); })]); }
-  async function init() {
+  function init() { if (!initP) initP = init1().catch(function (e) { initP = null; throw e; }); return initP; }
+  async function init1() {
     if (ctl) return ctl;
     await load('/sj/scramjet/scramjet.js');
     await load('/sj/controller/controller.api.js');
@@ -27,6 +28,6 @@
     return ctl;
   }
   window.HerbScramjet = {
-    start: async function (iframe, url) { var c = await init(); var f = c.createFrame(iframe); f.go(url); return f; },
+    start: async function (iframe, url) { var c = await init(); var f = frames.get(iframe); if (!f) { f = c.createFrame(iframe); frames.set(iframe, f); } f.go(url); return f; },
   };
 })();
