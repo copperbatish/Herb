@@ -86,11 +86,12 @@ function beat(){var tot=0,playing=false;for(var k in usage){tot+=usage[k].b;if(u
   ccall('beat',{playing:playing,bytes:delta}).then(function(j){
     if(j.stop){stopRelay((CREASON[j.reason]||'stopped'));if(frame)frame.src=frame.src}else if(j.remainingSec!=null)csay('Cloud relay: on  |  '+Math.round(j.remainingSec/60)+' min left today')},function(){})}
 function lease(){return ccall('turn',{}).then(function(j){
-  if(j._code===200){pushIce({servers:j.iceServers,exp:Date.now()+(j.ttl-30)*1000});relayOn=true;csay('Cloud relay: on  |  '+Math.round((j.remainingSec||0)/60)+' min left today');
+  if(j._code===200){var chosen=null;try{chosen=localStorage.getItem('herb.vroute.user')}catch(e){}if(!chosen&&!/Relay/.test($('vroute').textContent))setVroute('relay',false);
+    pushIce({servers:j.iceServers,exp:Date.now()+(j.ttl-30)*1000});relayOn=true;csay('Cloud relay: on  |  '+Math.round((j.remainingSec||0)/60)+' min left today');
     clearTimeout(leaseT);leaseT=setTimeout(function(){lease().catch(function(){})},Math.max(60,j.ttl-300)*1000);if(!beatT)beatT=setInterval(beat,30000);return}
   if(j.error==='turn_not_configured'){csay('Cloud relay: not set up on the server yet',true);return}
   stopRelay(CREASON[j.error]||j.error||'unavailable')})}
-function cloudRelay(){waitAuth(8000).then(function(st){
+function cloudRelay(){return waitAuth(8000).then(function(st){
   if(!st.user){csay('Cloud relay: sign in to Herb to use it',true);return}
   return ccall('me').then(function(me){
     if(me.status==='approved')return lease();
@@ -118,12 +119,11 @@ function launch(){
           return navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.filter(function(r){return r.scope.indexOf(__uv$config.prefix)>=0}).map(function(r){return r.unregister()}))}).then(function(){location.reload();return new Promise(function(){})});}
       }
     });
-  }).then(function(){
+  }).then(function(){return Promise.race([cloudRelay(),new Promise(function(r){setTimeout(r,6000)})])}).then(function(){
     frame=document.createElement('iframe');
     frame.setAttribute('allow','fullscreen; gamepad; autoplay; clipboard-read; clipboard-write; pointer-lock'); frame.allowFullscreen=true;
     frame.src=__uv$config.prefix+__uv$config.encodeUrl(site.url);
     $('stage').innerHTML=''; $('stage').appendChild(frame);
-    cloudRelay();
     // Video streams use WebRTC, which the proxy can't carry. Without a TURN relay it may stay black if UDP is blocked.
     if(!(__uv$config.inject&&__uv$config.inject.length)){$('note').style.display='block';$('note').innerHTML='<b>Video relay not set up.</b> Cloud gaming streams over WebRTC (UDP), which a web proxy can’t carry. If the picture stays black or never connects, your network is probably blocking UDP – a TURN relay needs to be configured in <code>uv/uv.config.js</code>.'}
   }).catch(function(e){$('msg').textContent='Couldn’t start the proxy: '+e.message});
@@ -133,7 +133,7 @@ function setVroute(m,reload){try{caches.open('herb-cfg').then(function(c){return
   try{var b=new BroadcastChannel('herb-cfg');b.postMessage({mode:m});setTimeout(function(){b.close()},500)}catch(e){}
   $('vroute').textContent='Video: '+(m==='relay'?'Relay':'Direct');dline('video-route',m,'');if(reload&&frame)setTimeout(function(){frame.src=frame.src},700)}
 try{caches.open('herb-cfg').then(function(c){return c.match('/mode')}).then(function(r){return r&&r.text()}).then(function(t){$('vroute').textContent='Video: '+(t==='relay'?'Relay':'Direct')},function(){$('vroute').textContent='Video: Direct'})}catch(e){$('vroute').textContent='Video: Direct'}
-$('vroute').onclick=function(){var cur=/Relay/.test($('vroute').textContent)?'relay':'direct';setVroute(cur==='relay'?'direct':'relay',true)};
+$('vroute').onclick=function(){try{localStorage.setItem('herb.vroute.user','1')}catch(e){}var cur=/Relay/.test($('vroute').textContent)?'relay':'direct';setVroute(cur==='relay'?'direct':'relay',true)};
 $('reload').onclick=function(){if(frame)frame.src=frame.src};
 $('full').onclick=function(){if(frame&&frame.requestFullscreen)frame.requestFullscreen()};
 launch();
