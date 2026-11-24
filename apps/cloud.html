@@ -124,6 +124,9 @@ function launch(){
     frame.setAttribute('allow','fullscreen; gamepad; autoplay; clipboard-read; clipboard-write; pointer-lock'); frame.allowFullscreen=true;
     $('stage').innerHTML=''; $('stage').appendChild(frame);
     if(engine()==='scramjet'){
+      var sjFail=function(why){dline('engine','scramjet failed – using Ultraviolet',why);try{localStorage.setItem('herb.engine','uv')}catch(x){}setEngLabel();frame.src=__uv$config.prefix+__uv$config.encodeUrl(site.url)};
+      var f0=frame;setTimeout(function(){if(frame!==f0||engine()!=='scramjet')return;var n=-1;try{n=f0.contentDocument.getElementsByTagName('*').length}catch(x){}
+        if(n<8)sjFail('page stayed empty ('+n+' elements) after 20s')},20000);
       return loadSj().then(function(){return HerbScramjet.start(frame,site.url)}).then(function(){dline('engine','scramjet','')},function(e){
         dline('engine','scramjet failed – using Ultraviolet',String(e&&e.message||e));try{localStorage.setItem('herb.engine','uv')}catch(x){}setEngLabel();frame.src=__uv$config.prefix+__uv$config.encodeUrl(site.url)});
     }
