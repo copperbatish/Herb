@@ -46,16 +46,22 @@ function netcheck(){
     ['cloudflare.com','https://www.cloudflare.com/'],['turn.cloudflare.com (TURN, not a web server)','https://turn.cloudflare.com/'],['trycloudflare.com','https://trycloudflare.com/'],['firebaseio.com (Herb database)','https://copperchat-4cb91-default-rtdb.firebaseio.com/.json?shallow=true'],
     ['NVIDIA login','https://login.nvidia.com/'],['GeForce NOW','https://play.geforcenow.com/'],['nvidiagrid.net (game servers)','https://img.nvidiagrid.net/'],['google.com','https://www.google.com/']];
   var stun=[['STUN Cloudflare udp 3478','stun:stun.cloudflare.com:3478'],['STUN Cloudflare udp 53','stun:stun.cloudflare.com:53'],['STUN Google udp 19302','stun:stun.l.google.com:19302']];
-  dline('netcheck','starting ('+web.length+' web addresses, '+stun.length+' UDP checks, 4 relay tests, one after another) - takes about 15-35 seconds','');
+  dline('netcheck','starting ('+web.length+' web addresses, '+stun.length+' UDP checks, 4 relay tests, one after another) - takes about 15-60 seconds','');
   // video-relay test by hostname (each of the VM's names): does a relay allocate? uses short-lived credentials from this page's own address
   fetch('/api/turn',{cache:'no-store'}).then(function(r){return r.json()}).then(function(c){
     // one at a time: browsers handle several simultaneous relay allocations unreliably, which would show false "blocked" results
     var tests=[['TURN nip.io, UDP 3478','turn:129-158-194-64.nip.io:3478?transport=udp'],['TURN nip.io, TCP 3478','turn:129-158-194-64.nip.io:3478?transport=tcp'],['TURN duckdns, TCP 3478','turn:lightspeedspeed.duckdns.org:3478?transport=tcp'],['TURN twilightparadox, TCP 3478','turn:leweirdlink.twilightparadox.com:3478?transport=tcp']];
-    (function next(i){if(i>=tests.length){dline('netcheck','finished','');return}var t=tests[i],done=false;
-      function end(ok,pc){if(done)return;done=true;dline(ok?'net-OK':'net-BLOCKED',t[0]+(ok?'  (relay allocated - usable!)':'  (no relay in 7s)'),'');try{pc.close()}catch(x){}setTimeout(function(){next(i+1)},300)}
-      try{var pc=new RTCPeerConnection({iceServers:[{urls:t[1],username:c.username,credential:c.credential}],iceTransportPolicy:'relay'});pc.createDataChannel('x');
-        pc.onicecandidate=function(e){if(e.candidate&&/ typ relay /.test(e.candidate.candidate))end(true,pc)};
-        pc.createOffer().then(function(o){return pc.setLocalDescription(o)});setTimeout(function(){end(false,pc)},7000)}catch(e){dline('net-BLOCKED',t[0]+' ('+e.message+')','');next(i+1)}})(0);
+    // a browser can fail the test right after another one for no network reason, so each is tried up to twice before it is called blocked
+    (function next(i){if(i>=tests.length){dline('netcheck','finished','');return}var t=tests[i];
+      function attempt(n){var done=false,pc;
+        function end(ok){if(done)return;done=true;try{pc.close()}catch(x){}
+          if(!ok&&n<2){setTimeout(function(){attempt(n+1)},1500);return}
+          dline(ok?'net-OK':'net-BLOCKED',t[0]+(ok?'  (relay allocated - usable!)':'  (no relay after 2 tries)'),'');setTimeout(function(){next(i+1)},800)}
+        try{pc=new RTCPeerConnection({iceServers:[{urls:t[1],username:c.username,credential:c.credential}],iceTransportPolicy:'relay'});pc.createDataChannel('x');
+          pc.onicecandidate=function(e){if(e.candidate&&/ typ relay /.test(e.candidate.candidate))end(true)};
+          pc.onicegatheringstatechange=function(){if(pc.iceGatheringState==='complete')setTimeout(function(){end(false)},200)};
+          pc.createOffer().then(function(o){return pc.setLocalDescription(o)});setTimeout(function(){end(false)},7000)}catch(e){end(false)}}
+      attempt(1)})(0);
   }).catch(function(e){dline('net-BLOCKED','could not get relay credentials from this page ('+e.message+')','')});
   web.forEach(function(w){var t0=Date.now(),c=typeof AbortController==='function'?new AbortController():null,tm=setTimeout(function(){c&&c.abort()},7000);
     fetch(w[1],{mode:'no-cors',cache:'no-store',signal:c?c.signal:undefined}).then(function(){dline('net-OK',w[0]+'  '+(Date.now()-t0)+'ms','')},function(e){dline('net-BLOCKED',w[0]+'  '+((Date.now()-t0)>6500?'(timed out)':'(failed fast)'),'')}).then(function(){clearTimeout(tm)})});
