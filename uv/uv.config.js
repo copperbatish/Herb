@@ -7,12 +7,12 @@
 // ───────────────────────────── WebRTC TURN relay (optional) ─────────────────────────────
 // Service workers can't see WebRTC media (UDP), so a proxied page's video would otherwise try to go straight out from the
 // browser. When TURN.urls is filled in, every proxied page on a matching host gets RTCPeerConnection wrapped so that it
-// (a) adds YOUR TURN server first and (b) uses iceTransportPolicy "relay", sending all media through that server.
+// adds YOUR TURN server as a fallback (media goes direct when it can, through the relay when it can't).
 // Leave TURN.urls empty to disable it completely (nothing is injected).
 var TURN = {
     // No password lives in this file. The Wisp VM mints short-lived TURN credentials (coturn "REST API" auth: username = expiry
     // timestamp, credential = HMAC of it with a secret that only the VM knows) and the service worker fetches them from here.
-    api: ['https://herb.copperbat3.workers.dev/api/turn', 'https://129-158-194-64.nip.io/api/turn', 'https://lightspeedspeed.duckdns.org/api/turn', 'https://leweirdlink.twilightparadox.com/api/turn'],   // tried in order
+    api: [((self.location && self.location.origin) || '') + '/api/turn', 'https://herb.copperbat3.workers.dev/api/turn', 'https://129-158-194-64.nip.io/api/turn', 'https://lightspeedspeed.duckdns.org/api/turn', 'https://leweirdlink.twilightparadox.com/api/turn'],   // tried in order
     hosts: '(^|\\.)(geforcenow\\.com|nvidiagrid\\.net)$',   // regex of proxied site hostnames that get the wrapper
 };
 var __turnCreds = null, __turnAt = 0;
@@ -35,7 +35,7 @@ function herbTurnInjection(cfg) {
             c = Object.assign({}, c || {});
             var servers = Array.isArray(c.iceServers) ? c.iceServers.slice() : [];
             servers.unshift({ urls: cfg.urls, username: cfg.username, credential: cfg.credential });
-            c.iceServers = servers; c.iceTransportPolicy = 'relay';
+            c.iceServers = servers;   // direct connection first; the relay is only used if direct fails (the page's own transport policy is left alone)
             return c;
         }
         ['RTCPeerConnection', 'webkitRTCPeerConnection'].forEach(function (name) {
