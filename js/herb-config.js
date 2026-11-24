@@ -12,7 +12,7 @@
   // GitHub-hosted data: the main repo holds the code bundles, shows.json, games.json and icons; games live in shard repos named in games.json.
   var CDN_BASE = 'https://cdn.jsdelivr.net/gh/copperbatish/Herb@main', RAW_BASE = 'https://raw.githubusercontent.com/copperbatish/Herb/main';
   var CF_HOST = 'https://herb.copperbat3.workers.dev';   // Cloudflare Worker: the site + games as real pages (see scripts/build-cloudflare.js)
-  var VM_HOST_RE = /(^|\.)(nip\.io|duckdns\.org|twilightparadox\.com)$/;   // hosts that serve this site AND /api/herb-ai
+  var VM_HOST_RE = /(^|\.)(nip\.io|duckdns\.org|twilightparadox\.com|trycloudflare\.com|workers\.dev)$/;   // hosts that serve this site AND /api/herb-ai
   var CDN_JSON = { '/games/games.json': '/games/games.json', '/apps/shows.json': '/shows.json' }, REPO_OF = {};
   // Servers that serve the Herb pages with a service worker (the Wisp VM under each of its names). Every candidate is probed and the first one
   // that really answers (in this order) is used, so the pages keep loading when one address is blocked or down. Settings gear override comes first.

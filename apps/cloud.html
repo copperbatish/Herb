@@ -14,13 +14,14 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000
 #msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:20px}
 </style></head>
 <body>
-<div id="bar"><span class="t" id="title">Cloud Games</span><span id="pv" style="font-size:11px;opacity:.6"></span><button id="vroute" title="How game video travels: Direct = straight to NVIDIA; Relay = through the VM">Video: …</button><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
+<div id="bar"><span class="t" id="title">Cloud Games</span><span id="crl" style="font-size:11px;opacity:.8;margin-right:8px"></span><button id="crq" style="display:none">Request relay access</button><span id="pv" style="font-size:11px;opacity:.6"></span><button id="vroute" title="How game video travels: Direct = straight to NVIDIA; Relay = through the VM">Video: …</button><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
 <div id="note"></div>
 <div id="diag" style="display:none;position:fixed;left:0;right:0;top:40px;bottom:0;z-index:20;background:rgba(6,12,9,.97);color:#cde7dc;font:12px/1.45 ui-monospace,Menlo,monospace;padding:10px 12px;overflow:auto;-webkit-user-select:text;user-select:text">
  <div style="display:flex;gap:8px;margin-bottom:8px;position:sticky;top:0;background:rgba(6,12,9,.97);padding-bottom:6px"><button id="dcopy">Copy</button><button id="dclear">Clear</button><button id="dclose">Close</button><button id="dnet">Network check</button><span style="opacity:.6;align-self:center">Proxy diagnostics (send this to the developer)</span></div>
  <pre id="dlog" style="white-space:pre-wrap;word-break:break-all;margin:0"></pre></div>
 <div id="stage"><div id="msg">Starting the proxy…</div></div>
-<script src="/js/herb-settings.js"></script><script src="/js/icons.js"></script>
+<script src="/js/herb-settings.js"></script><script src="/js/herb-config.js"></script><script src="/js/icons.js"></script>
+<script src="/js/vendor/firebase-app-compat.js"></script><script src="/js/vendor/firebase-auth-compat.js"></script><script src="/js/vendor/firebase-database-compat.js"></script><script src="/js/auth.js"></script>
 <script src="/uv/uv.bundle.js"></script><script src="/uv/uv.config.js"></script><script src="/baremux/index.js"></script>
 <script src="/js/wisp-config.js"></script><script src="/js/proxy-init.js"></script>
 <script>
@@ -70,6 +71,33 @@ function netcheck(){
     pc.createOffer().then(function(o){return pc.setLocalDescription(o)});
     setTimeout(function(){if(!got){dline('net-BLOCKED',sv[0]+'  (no reply in 8s)','');try{pc.close()}catch(x){}}},8000)}catch(e){dline('net-BLOCKED',sv[0]+' ('+e.message+')','')}});
 }
+// ---- Cloudflare relay: admin approval, daily limit, monthly cutoff. Credentials come from the server; the Cloudflare key never reaches this page ----
+var CAPI=(window.HerbConfig&&HerbConfig.apiBase?HerbConfig.apiBase():'')+'/api/cloud/',leaseT=null,beatT=null,usage={},lastTot=0,relayOn=false;
+var CREASON={master_off:'switched off by the admin',monthly_cutoff:'the monthly allowance is used up',daily_cap:'your daily time is used up',not_approved:'needs admin approval'};
+function csay(t,warn){$('crl').textContent=t;$('crl').style.color=warn?'#fcd34d':''}
+function ccall(path,body){return HerbAuth.token().then(function(tok){if(!tok)throw{code:401};return fetch(CAPI+path,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:body===undefined?undefined:JSON.stringify(body)})}).then(function(r){return r.json().then(function(j){j._code=r.status;return j})})}
+function pushIce(v){try{caches.open('herb-cfg').then(function(c){return c.put('/ice',new Response(JSON.stringify(v||{})))})}catch(e){}
+  try{var b=new BroadcastChannel('herb-cfg');b.postMessage({ice:v});setTimeout(function(){b.close()},500)}catch(e){}}
+function stopRelay(msg){relayOn=false;clearTimeout(leaseT);clearInterval(beatT);pushIce(null);csay('Cloud relay: '+msg,true)}
+function waitAuth(ms){return new Promise(function(res){var t0=Date.now();(function p(){var s=window.HerbAuth&&HerbAuth.state&&HerbAuth.state();if(s&&s.ready||Date.now()-t0>ms)res(s||{});else setTimeout(p,250)})()})}
+try{var ubc=new BroadcastChannel('herb-usage');ubc.onmessage=function(e){var d=e.data||{};if(d.id)usage[d.id]={c:!!d.connected,b:d.bytes||0}}}catch(e){}
+function beat(){var tot=0,playing=false;for(var k in usage){tot+=usage[k].b;if(usage[k].c)playing=true}
+  var delta=Math.max(0,tot-lastTot);lastTot=tot;if(!playing&&!delta)return;
+  ccall('beat',{playing:playing,bytes:delta}).then(function(j){
+    if(j.stop){stopRelay((CREASON[j.reason]||'stopped'));if(frame)frame.src=frame.src}else if(j.remainingSec!=null)csay('Cloud relay: on  |  '+Math.round(j.remainingSec/60)+' min left today')},function(){})}
+function lease(){return ccall('turn',{}).then(function(j){
+  if(j._code===200){pushIce({servers:j.iceServers,exp:Date.now()+(j.ttl-30)*1000});relayOn=true;csay('Cloud relay: on  |  '+Math.round((j.remainingSec||0)/60)+' min left today');
+    clearTimeout(leaseT);leaseT=setTimeout(function(){lease().catch(function(){})},Math.max(60,j.ttl-300)*1000);if(!beatT)beatT=setInterval(beat,30000);return}
+  if(j.error==='turn_not_configured'){csay('Cloud relay: not set up on the server yet',true);return}
+  stopRelay(CREASON[j.error]||j.error||'unavailable')})}
+function cloudRelay(){waitAuth(8000).then(function(st){
+  if(!st.user){csay('Cloud relay: sign in to Herb to use it',true);return}
+  return ccall('me').then(function(me){
+    if(me.status==='approved')return lease();
+    if(me.status==='pending'){csay('Cloud relay: waiting for admin approval',true);return}
+    if(me.status==='revoked'){csay('Cloud relay: access was revoked',true);return}
+    csay('Cloud relay: needs admin approval',true);$('crq').style.display='';$('crq').onclick=function(){$('crq').disabled=true;ccall('request',{}).then(function(){$('crq').style.display='none';csay('Cloud relay: request sent, waiting for approval',true)})}
+  })}).catch(function(){csay('Cloud relay: could not reach the server',true)})}
 var SITES={geforcenow:{name:'GeForce NOW',url:'https://play.geforcenow.com/'}};
 var $=function(i){return document.getElementById(i)};
 var key=new URLSearchParams(location.search).get('site')||'geforcenow', site=SITES[key]||SITES.geforcenow, frame=null;
@@ -95,6 +123,7 @@ function launch(){
     frame.setAttribute('allow','fullscreen; gamepad; autoplay; clipboard-read; clipboard-write; pointer-lock'); frame.allowFullscreen=true;
     frame.src=__uv$config.prefix+__uv$config.encodeUrl(site.url);
     $('stage').innerHTML=''; $('stage').appendChild(frame);
+    cloudRelay();
     // Video streams use WebRTC, which the proxy can't carry. Without a TURN relay it may stay black if UDP is blocked.
     if(!(__uv$config.inject&&__uv$config.inject.length)){$('note').style.display='block';$('note').innerHTML='<b>Video relay not set up.</b> Cloud gaming streams over WebRTC (UDP), which a web proxy can’t carry. If the picture stays black or never connects, your network is probably blocking UDP – a TURN relay needs to be configured in <code>uv/uv.config.js</code>.'}
   }).catch(function(e){$('msg').textContent='Couldn’t start the proxy: '+e.message});

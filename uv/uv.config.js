@@ -19,10 +19,14 @@ var __turnCreds = null, __turnAt = 0;
 // Video route: 'direct' (default: media goes straight to NVIDIA, the relay is only a fallback) or 'relay' (all media through the VM's TURN, so it
 // comes from the same address as the proxied session calls). The Cloud app's "Video" button switches it; stored in the Cache API, shared via BroadcastChannel.
 var __rtcMode = 'direct';
+// Cloudflare TURN servers for an admin-approved user ({ servers: [...iceServers], exp: ms }), pushed in by the Cloud app; never contains an API key.
+var __cloudIce = null;
+function __setIce(v) { __cloudIce = v && v.servers && v.servers.length && v.exp > Date.now() ? v : null; }
 if (typeof ServiceWorkerGlobalScope !== 'undefined') {
     try {
         caches.open('herb-cfg').then(function (c) { return c.match('/mode'); }).then(function (r) { return r && r.text(); }).then(function (t) { if (t === 'relay' || t === 'direct') __rtcMode = t; }).catch(function () {});
-        var __cfgBc = new BroadcastChannel('herb-cfg'); __cfgBc.onmessage = function (e) { if (e.data && (e.data.mode === 'relay' || e.data.mode === 'direct')) __rtcMode = e.data.mode; };
+        caches.open('herb-cfg').then(function (c) { return c.match('/ice'); }).then(function (r) { return r && r.json(); }).then(function (v) { __setIce(v); }).catch(function () {});
+        var __cfgBc = new BroadcastChannel('herb-cfg'); __cfgBc.onmessage = function (e) { var d = e.data || {}; if (d.mode === 'relay' || d.mode === 'direct') __rtcMode = d.mode; if ('ice' in d) __setIce(d.ice); };
     } catch (e) {}
 }
 function herbRefreshTurn() {   // service worker only; credentials last 1 hour on the server, refreshed every 30 minutes
@@ -43,7 +47,8 @@ function herbTurnInjection(cfg) {
         function patchConfig(c) {
             c = Object.assign({}, c || {});
             var servers = Array.isArray(c.iceServers) ? c.iceServers.slice() : [];
-            servers.unshift({ urls: cfg.urls, username: cfg.username, credential: cfg.credential });
+            if (cfg.urls) servers.unshift({ urls: cfg.urls, username: cfg.username, credential: cfg.credential });   // the VM's relay (fallback)
+            (cfg.ice || []).slice().reverse().forEach(function (x) { servers.unshift(x); });                           // Cloudflare relay first, if this user is approved
             c.iceServers = servers;   // direct mode: media goes direct, the relay is only a fallback (the page's own transport policy is left alone)
             if (cfg.mode === 'relay') c.iceTransportPolicy = 'relay';   // relay mode: everything through the VM
             return c;
@@ -129,6 +134,18 @@ function herbRtcDiag() {
                     try {
                         pc.addEventListener('iceconnectionstatechange', function () { send('rtc-ice', pc.iceConnectionState); });
                         pc.addEventListener('connectionstatechange', function () { send('rtc-conn', pc.connectionState); });
+                        (function () {
+                            var id = Math.random().toString(36).slice(2, 8), ubc = new BroadcastChannel('herb-usage');
+                            var tick = setInterval(function () {
+                                if (pc.connectionState === 'closed') { clearInterval(tick); ubc.postMessage({ id: id, connected: false, bytes: 0 }); return; }
+                                pc.getStats().then(function (st) {
+                                    var b = 0; st.forEach(function (r) {
+                                        if (r.type === 'candidate-pair' && r.nominated && r.state === 'succeeded') { var lc = st.get(r.localCandidateId); if (lc && lc.candidateType === 'relay' && (!lc.url || /cloudflare/.test(lc.url))) b += (r.bytesSent || 0) + (r.bytesReceived || 0); }
+                                    });
+                                    ubc.postMessage({ id: id, connected: pc.connectionState === 'connected', bytes: b });
+                                }).catch(function () {});
+                            }, 15000);
+                        })();
                         pc.addEventListener('icegatheringstatechange', function () { send('rtc-gather', pc.iceGatheringState + ' (relay ' + counts.relay + ', srflx ' + counts.srflx + ', host ' + counts.host + ')'); });
                         pc.addEventListener('icecandidate', function (e) { if (e.candidate) { var m = / typ (\w+)/.exec(e.candidate.candidate); counts[m && counts[m[1]] !== undefined ? m[1] : 'other']++; } });
                         pc.addEventListener('icecandidateerror', function (e) { send('rtc-ice-error', e.errorCode + ' ' + (e.errorText || '') + ' ' + String(e.url || '').replace(/turns?:/, '').slice(0, 50)); });
@@ -224,7 +241,9 @@ if (TURN.api.length) {
         host: TURN.hosts, injectTo: 'head',
         get html() {
             herbRefreshTurn();
-            return __turnCreds ? '<script>(' + herbTurnInjection.toString() + ')(' + JSON.stringify(Object.assign({}, __turnCreds, { mode: __rtcMode })) + ');</script>' : '';
+            var ice = __cloudIce && __cloudIce.exp > Date.now() ? __cloudIce.servers : null;
+            if (!__turnCreds && !ice) return '';
+            return '<script>(' + herbTurnInjection.toString() + ')(' + JSON.stringify(Object.assign({}, __turnCreds || {}, { mode: __rtcMode, ice: ice })) + ');</script>';
         },
     });
 }
