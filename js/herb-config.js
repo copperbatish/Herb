@@ -95,6 +95,17 @@
       body.appendChild(a);
     } catch (e) {}
   }
+  // Which of Herb's addresses answer from this network? Remembered in localStorage so apiBase() can stay synchronous.
+  function probeApi() {
+    var c = [], seen = {}; function add(u) { u = clean(u); if (u && !seen[u]) { seen[u] = 1; c.push(u); } }
+    try { if (VM_HOST_RE.test(window.top.location.hostname)) add(window.top.location.origin); } catch (e) {}
+    try { if (VM_HOST_RE.test(location.hostname)) add(location.origin); } catch (e) {}
+    add(ls('herb.tunnel')); PAGE_HOSTS.forEach(add); add(DEFAULT_API_URL);
+    return Promise.all(c.map(function (h) {
+      var ac = typeof AbortController === 'function' ? new AbortController() : null, t = ac && setTimeout(function () { ac.abort(); }, 4500);
+      return fetch(h + '/api/cloud/me', { cache: 'no-store', signal: ac ? ac.signal : undefined }).then(function () { return true; }, function () { return false; }).then(function (ok) { if (t) clearTimeout(t); return ok; });
+    })).then(function (oks) { for (var i = 0; i < c.length; i++) if (oks[i]) { ls('herb.apibase', c[i]); return c[i]; } return ''; });
+  }
   var C = window.HerbConfig = {
     checkVersion: checkVersion,
     single: single, DEFAULT_SERVER_URL: DEFAULT_SERVER_URL,
@@ -103,11 +114,15 @@
     // hosted: '/api/herb-ai' stays relative; single file: becomes <server>/api/herb-ai
     url: function (path) { return single ? server() + path : path; },
     // Herb AI and Wisp live on the VM. A page served by the VM uses its own address; every other host (jsDelivr loader, Cloudflare, a local file) uses the VM.
+    // Herb AI, Wisp and the cloud-gaming API live on Herb's own servers. Use, in order: an address you set; the address of the page Herb is running in
+    // (same-origin, always reachable if the page loaded); the last address that answered a probe; the built-in default.
     apiBase: function () {
-      if (!single && VM_HOST_RE.test(location.hostname)) return '';
       var o = clean(ls(KEY)); if (o && !/cdn\.jsdelivr\.net/.test(o)) return o;
-      return DEFAULT_API_URL;
+      if (!single && VM_HOST_RE.test(location.hostname)) return '';
+      try { if (VM_HOST_RE.test(window.top.location.hostname)) return window.top.location.origin; } catch (e) {}   // apps inlined into the loader page
+      return clean(ls('herb.apibase')) || DEFAULT_API_URL;
     },
+    probeApi: probeApi,
     api: function () { return C.apiBase() + '/api/herb-ai'; },
     // Wisp: hosted uses this page's own host, single file uses the configured server
     wisp: function () { var b = C.apiBase() || location.origin; return b.replace(/^http/, 'ws') + '/wisp/'; },
@@ -170,6 +185,7 @@
     try { var bs = document.createElement('base'); bs.href = server() + '/'; (document.head || document.documentElement).insertBefore(bs, (document.head || document.documentElement).firstChild); } catch (e) {}
   }
   if (single && window === window.top && window.HERB_BUILD) ready(function () { setTimeout(checkVersion, 2500); });
+  ready(function () { setTimeout(probeApi, 1500); });   // learn which of Herb's addresses this network can reach
   // settings gear (shell only, single-file mode)
   if (single) ready(function () {   // only the shell has #tbtray, so app frames skip this
     var tray = document.getElementById('tbtray'); if (!tray) return;
