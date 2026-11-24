@@ -6,6 +6,7 @@
  * However, if a user changes the location of uv.bundle.js/uv.config.js or sw.js is not relative to them, they will need to modify this script locally.
  */
 importScripts('uv.bundle.js');
+importScripts('/sj/hls.js');   // Herb: HLS playlist rewriting (shared with Scramjet)
 importScripts('uv.config.js');
 importScripts(__uv$config.sw || 'uv.sw.js');
 
@@ -32,7 +33,11 @@ async function handleRequest(event) {
                 herbDiag.postMessage({ k: 'proxy-' + res.status, m: event.request.method + ' ' + u.replace(/^https?:\/\//, '').slice(0, 90) + ' -> ' + ((m && m[1]) || t).replace(/\s+/g, ' ').slice(0, 200), u: 'service worker', t: Date.now() });
             } catch (e) {}
         }
-        return res;
+        // Herb: rewrite HLS playlists so native playback (Safari/iPad) keeps its segments inside the proxy
+        try {
+            let u = event.request.url; const real = String(__uv$config.decodeUrl(u.slice(u.indexOf(__uv$config.prefix) + __uv$config.prefix.length)));
+            return await self.herbHls(res, real, (abs) => __uv$config.prefix + __uv$config.encodeUrl(abs));
+        } catch (e) { return res; }
     }
     
     return await fetch(event.request)
