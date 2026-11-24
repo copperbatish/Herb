@@ -122,6 +122,25 @@ function herbDiagReporter() {
             var o = console[k]; if (typeof o !== 'function') return;
             console[k] = function () { try { send('console.' + k, Array.prototype.map.call(arguments, function (a) { return a && a.message ? a.message : String(a); }).join(' ')); } catch (e) {} return o.apply(this, arguments); };
         });
+        // failed network requests (status, real address, start of the reply): what NVIDIA's sign-in code trips over when a call fails
+        var dec = function (u) { try { u = String(u); var p = (window.__uv$config && __uv$config.prefix) || '/uv/service/'; var i = u.indexOf(p); return i >= 0 ? String(__uv$config.decodeUrl(u.slice(i + p.length))).replace(/^https?:\/\//, '').slice(0, 130) : u.slice(0, 130); } catch (e) { return String(u).slice(0, 130); } };
+        try {
+            var XO = XMLHttpRequest.prototype.open, XS = XMLHttpRequest.prototype.send;
+            XMLHttpRequest.prototype.open = function (m, u) { try { this.__hd = { m: m, u: u }; } catch (e) {} return XO.apply(this, arguments); };
+            XMLHttpRequest.prototype.send = function () {
+                var x = this; try { x.addEventListener('loadend', function () {
+                    if (x.status >= 400 || x.status === 0) { var b = ''; try { b = typeof x.responseText === 'string' ? x.responseText.replace(/\s+/g, ' ').slice(0, 90) : ''; } catch (e) {} send('xhr-fail', x.status + ' ' + (x.__hd ? x.__hd.m + ' ' + dec(x.__hd.u) : '?') + (b ? ' | ' + b : '')); }
+                }); } catch (e) {}
+                return XS.apply(this, arguments);
+            };
+        } catch (e) {}
+        try {
+            var F = window.fetch;
+            if (typeof F === 'function') window.fetch = function (i, o) {
+                var u = i && i.url || i;
+                return F.apply(this, arguments).then(function (r) { if (!r.ok) send('fetch-fail', r.status + ' ' + dec(u)); return r; }, function (e) { send('fetch-error', (e && e.message) + ' ' + dec(u)); throw e; });
+            };
+        } catch (e) {}
         window.addEventListener('load', function () { send('loaded', document.title + ' | ' + document.getElementsByTagName('*').length + ' nodes | ' + (document.body ? document.body.innerText.replace(/\s+/g, ' ').slice(0, 60) : 'no body')); });
         window.addEventListener('pagehide', function () { send('leaving', 'navigating away'); });
     } catch (e) {}
