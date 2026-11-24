@@ -12,7 +12,7 @@
 var TURN = {
     // No password lives in this file. The Wisp VM mints short-lived TURN credentials (coturn "REST API" auth: username = expiry
     // timestamp, credential = HMAC of it with a secret that only the VM knows) and the service worker fetches them from here.
-    api: ['https://129-158-194-64.nip.io/api/turn', 'https://lightspeedspeed.duckdns.org/api/turn', 'https://leweirdlink.twilightparadox.com/api/turn'],   // tried in order
+    api: ['https://herb.copperbat3.workers.dev/api/turn', 'https://129-158-194-64.nip.io/api/turn', 'https://lightspeedspeed.duckdns.org/api/turn', 'https://leweirdlink.twilightparadox.com/api/turn'],   // tried in order
     hosts: '(^|\\.)(geforcenow\\.com|nvidiagrid\\.net)$',   // regex of proxied site hostnames that get the wrapper
 };
 var __turnCreds = null, __turnAt = 0;
@@ -101,6 +101,37 @@ function herbSameWindowLogin() {
     window.addEventListener('load', install);   // after Ultraviolet's own window.open wrapper is in place
 }
 
+// Streaming diagnostics (GeForce NOW pages): what the video connection does, and whether the page was paused/hidden (iPads suspend pages).
+function herbRtcDiag() {
+    try {
+        var bc = new BroadcastChannel('herb-diag');
+        var send = function (k, m) { try { bc.postMessage({ k: k, m: String(m).slice(0, 260), u: String(location.href).slice(0, 110), t: Date.now() }); } catch (e) {} };
+        document.addEventListener('visibilitychange', function () { send('page-' + document.visibilityState, ''); });
+        document.addEventListener('freeze', function () { send('page-frozen', 'the browser paused this page'); });
+        document.addEventListener('resume', function () { send('page-resumed', ''); });
+        ['RTCPeerConnection', 'webkitRTCPeerConnection'].forEach(function (name) {
+            var O = window[name]; if (!O || O.__herbRtcDiag) return;
+            var P = new Proxy(O, {
+                construct: function (target, args, newTarget) {
+                    var cfg = args[0] || {}, counts = { relay: 0, srflx: 0, host: 0, other: 0 };
+                    try { send('rtc-new', 'policy=' + (cfg.iceTransportPolicy || 'all') + ' servers=' + (cfg.iceServers || []).map(function (s) { return [].concat(s.urls).join(',').replace(/turns?:/g, '').slice(0, 44); }).join(' ; ').slice(0, 170)); } catch (e) {}
+                    var pc = Reflect.construct(target, args, newTarget === P ? target : newTarget);
+                    try {
+                        pc.addEventListener('iceconnectionstatechange', function () { send('rtc-ice', pc.iceConnectionState); });
+                        pc.addEventListener('connectionstatechange', function () { send('rtc-conn', pc.connectionState); });
+                        pc.addEventListener('icegatheringstatechange', function () { send('rtc-gather', pc.iceGatheringState + ' (relay ' + counts.relay + ', srflx ' + counts.srflx + ', host ' + counts.host + ')'); });
+                        pc.addEventListener('icecandidate', function (e) { if (e.candidate) { var m = / typ (\w+)/.exec(e.candidate.candidate); counts[m && counts[m[1]] !== undefined ? m[1] : 'other']++; } });
+                        pc.addEventListener('icecandidateerror', function (e) { send('rtc-ice-error', e.errorCode + ' ' + (e.errorText || '') + ' ' + String(e.url || '').replace(/turns?:/, '').slice(0, 50)); });
+                    } catch (e) {}
+                    return pc;
+                },
+                get: function (target, prop) { if (prop === '__herbRtcDiag') return true; var v = Reflect.get(target, prop, target); return (typeof v === 'function' && prop !== 'prototype' && prop !== 'constructor') ? v.bind(target) : v; },
+            });
+            try { window[name] = P; } catch (e) {}
+        });
+    } catch (e) {}
+}
+
 function herbNoPasskeys() { try { Object.defineProperty(window, 'PublicKeyCredential', { value: undefined, configurable: true, writable: true }); } catch (e) {} }
 
 // Diagnostics: an iPad has no developer tools, so every proxied page reports script errors, failed files and console errors to the Cloud app
@@ -149,6 +180,7 @@ function herbDiagReporter() {
 var __herbInject = [
     { host: '.*', injectTo: 'head', html: '<script>(' + herbUrlPartsShim.toString() + ')();</script>' },
     { host: '.*', injectTo: 'head', html: '<script>(' + herbDiagReporter.toString() + ')();</script>' },
+    { host: '(^|\\.)(geforcenow\\.com|nvidiagrid\\.net|nvidia\\.com)$', injectTo: 'head', html: '<script>(' + herbRtcDiag.toString() + ')();</script>' },
     { host: '(^|\\.)(nvidia\\.com|geforcenow\\.com)$', injectTo: 'head', html: '<script>(' + herbNoPasskeys.toString() + ')();(' + herbSameWindowLogin.toString() + ')();</script>' },
 ];
 if (TURN.api.length) {
