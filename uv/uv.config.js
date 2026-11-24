@@ -180,7 +180,6 @@ function herbDiagReporter() {
 var __herbInject = [
     { host: '.*', injectTo: 'head', html: '<script>(' + herbUrlPartsShim.toString() + ')();</script>' },
     { host: '.*', injectTo: 'head', html: '<script>(' + herbDiagReporter.toString() + ')();</script>' },
-    { host: '(^|\\.)(geforcenow\\.com|nvidiagrid\\.net|nvidia\\.com)$', injectTo: 'head', html: '<script>(' + herbRtcDiag.toString() + ')();</script>' },
     { host: '(^|\\.)(nvidia\\.com|geforcenow\\.com)$', injectTo: 'head', html: '<script>(' + herbNoPasskeys.toString() + ')();(' + herbSameWindowLogin.toString() + ')();</script>' },
 ];
 if (TURN.api.length) {
@@ -194,6 +193,8 @@ if (TURN.api.length) {
         },
     });
 }
+
+__herbInject.push({ host: '(^|\\.)(geforcenow\\.com|nvidiagrid\\.net|nvidia\\.com)$', injectTo: 'head', html: '<script>(' + herbRtcDiag.toString() + ')();</script>' });
 
 self.__uv$config = {
     prefix: '/uv/service/',
