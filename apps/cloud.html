@@ -3,7 +3,7 @@
 <link rel="icon" href="/images/logo/herb.svg" type="image/svg+xml"><title>Cloud Games</title>
 <script>
 // Installable web app: "Add to Home Screen" gives a full-screen GeForce NOW / Xbox app, like the real ones.
-(function(){var k=new URLSearchParams(location.search).get('site')==='xbox'?'xbox':'geforcenow',n=k==='xbox'?'Xbox':'GeForce NOW',ic=k==='xbox'?'xbox':'gfn',h=document.head;
+(function(){var M={geforcenow:['GeForce NOW','gfn'],xbox:['Xbox','xbox'],netflix:['Netflix','netflix'],hulu:['Hulu','hulu']},k=new URLSearchParams(location.search).get('site');if(!M[k])k='geforcenow';var n=M[k][0],ic=M[k][1],h=document.head;
  function add(t,a){var e=document.createElement(t);for(var x in a)e.setAttribute(x,a[x]);h.appendChild(e)}
  add('link',{rel:'manifest',href:'/apps/cloud-'+k+'.json'});add('link',{rel:'apple-touch-icon',href:'/images/cloud/'+ic+'-180.png'});
  add('meta',{name:'apple-mobile-web-app-capable',content:'yes'});add('meta',{name:'mobile-web-app-capable',content:'yes'});
@@ -27,7 +27,7 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000
 <body>
 <script>if(/[?&]debug=1/.test(location.search))document.body.className='dbg'</script>
 <div id="bar"><span class="t" id="title">Cloud Games</span>
- <button id="s-geforcenow" data-site="geforcenow">GeForce NOW</button><button id="s-xbox" data-site="xbox">Xbox</button>
+ <button id="s-geforcenow" data-site="geforcenow">GeForce NOW</button><button id="s-xbox" data-site="xbox">Xbox</button><button id="s-netflix" data-site="netflix">Netflix</button><button id="s-hulu" data-site="hulu">Hulu</button>
  <span id="pv" style="font-size:11px;opacity:.6">proxy</span>
  <button id="eng" title="Switch the web-proxy engine (Scramjet or Ultraviolet)">Engine</button><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
 <div id="note"></div>
@@ -43,11 +43,13 @@ var $=function(i){return document.getElementById(i)};
 // Cloud gaming sites that can be launched. Add more here.
 var SITES={
   geforcenow:{name:'GeForce NOW',url:'https://play.geforcenow.com/'},
-  xbox:{name:'Xbox Cloud Gaming',url:'https://play.xbox.com/'}
+  xbox:{name:'Xbox Cloud Gaming',url:'https://play.xbox.com/'},
+  netflix:{name:'Netflix',url:'https://www.netflix.com/'},
+  hulu:{name:'Hulu',url:'https://www.hulu.com/'}
 };
 var key=new URLSearchParams(location.search).get('site')||'geforcenow', site=SITES[key]||SITES.geforcenow, frame=null;
 if(!SITES[key])key='geforcenow';
-$('title').textContent=site.name+' · cloud gaming';document.title=site.name;
+$('title').textContent=site.name+' · Herb';document.title=site.name;
 Object.keys(SITES).forEach(function(k){var b=$('s-'+k);b.classList.toggle('on',k===key);b.onclick=function(){if(k!==key)location.search='?site='+k+(document.body.className==='dbg'?'&debug=1':'')}});
 
 // ---- diagnostics: tap the "proxy" label ----
