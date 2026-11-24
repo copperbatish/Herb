@@ -46,10 +46,10 @@ function netcheck(){
     ['cloudflare.com','https://www.cloudflare.com/'],['turn.cloudflare.com (TURN, not a web server)','https://turn.cloudflare.com/'],['trycloudflare.com','https://trycloudflare.com/'],['firebaseio.com (Herb database)','https://copperchat-4cb91-default-rtdb.firebaseio.com/.json?shallow=true'],
     ['NVIDIA login','https://login.nvidia.com/'],['GeForce NOW','https://play.geforcenow.com/'],['nvidiagrid.net (game servers)','https://img.nvidiagrid.net/'],['google.com','https://www.google.com/']];
   var stun=[['STUN Cloudflare udp 3478','stun:stun.cloudflare.com:3478'],['STUN Cloudflare udp 53','stun:stun.cloudflare.com:53'],['STUN Google udp 19302','stun:stun.l.google.com:19302']];
-  dline('netcheck','starting ('+web.length+' web addresses, '+stun.length+' UDP checks, 2 relay tests) - takes about 12 seconds','');
-  // video-relay test against the VM's raw IP (no domain name involved): does a relay allocate? uses short-lived credentials from this page's own address
+  dline('netcheck','starting ('+web.length+' web addresses, '+stun.length+' UDP checks, 4 relay tests) - takes about 12 seconds','');
+  // video-relay test by hostname (each of the VM's names): does a relay allocate? uses short-lived credentials from this page's own address
   fetch('/api/turn',{cache:'no-store'}).then(function(r){return r.json()}).then(function(c){
-    [['TURN on VM IP, UDP 3478','turn:129.158.194.64:3478?transport=udp'],['TURN on VM IP, TCP 3478','turn:129.158.194.64:3478?transport=tcp']].forEach(function(t){
+    [['TURN nip.io, UDP 3478','turn:129-158-194-64.nip.io:3478?transport=udp'],['TURN nip.io, TCP 3478','turn:129-158-194-64.nip.io:3478?transport=tcp'],['TURN duckdns, TCP 3478','turn:lightspeedspeed.duckdns.org:3478?transport=tcp'],['TURN twilightparadox, TCP 3478','turn:leweirdlink.twilightparadox.com:3478?transport=tcp']].forEach(function(t){
       try{var pc=new RTCPeerConnection({iceServers:[{urls:t[1],username:c.username,credential:c.credential}],iceTransportPolicy:'relay'}),got=false;pc.createDataChannel('x');
         pc.onicecandidate=function(e){if(e.candidate&&/ typ relay /.test(e.candidate.candidate)&&!got){got=true;dline('net-OK',t[0]+'  (relay allocated - usable!)','');try{pc.close()}catch(x){}}};
         pc.createOffer().then(function(o){return pc.setLocalDescription(o)});
