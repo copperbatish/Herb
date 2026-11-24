@@ -87,10 +87,12 @@
     },
     setEngine: function (e) { try { localStorage.setItem('herb.proxyEngine', e === 'uv' ? 'uv' : 'sj'); sessionStorage.removeItem('herb.engine.fallback'); } catch (x) {} },
     // Load a page (a plain https:// URL) into an iframe with whichever engine is active. Resolves with the engine that was used.
-    open: function (iframe, url) {
+    open: function (iframe, url, opts) {
+      var force = opts && opts.engine === 'sj';   // force Scramjet: no fallback to Ultraviolet
       var uv = function () { return HerbProxy.init().then(function () { iframe.src = __uv$config.prefix + __uv$config.encodeUrl(url); return 'uv'; }); };
-      if (HerbProxy.engine() !== 'sj') return uv();
+      if (!force && HerbProxy.engine() !== 'sj') return uv();
       return loadSj().then(function () { return window.HerbScramjet.start(iframe, url); }).then(function () { return 'sj'; }, function (e) {
+        if (force) throw e;
         try { sessionStorage.setItem('herb.engine.fallback', 'uv'); } catch (x) {}
         console.warn('Scramjet failed, using Ultraviolet:', e && e.message);
         return uv();

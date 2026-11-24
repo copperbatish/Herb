@@ -4,6 +4,7 @@
 <link rel="stylesheet" href="/css/herb.css"><link rel="stylesheet" href="/css/app.css">
 <style>
 body{margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;background:#000}
+body:not(.dbg) #bar{display:none}
 #bar{flex:none;display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface-2);border-bottom:1px solid var(--border);font-size:13px;color:var(--muted)}
 #bar .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #bar button{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12.5px}
@@ -15,12 +16,13 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000
 #diag button{background:#16241d;color:#cde7dc;border:1px solid #2c4639;border-radius:6px;padding:5px 10px;font-size:12px}
 </style></head>
 <body>
+<script>if(/[?&]debug=1/.test(location.search))document.body.className='dbg'</script>
 <div id="bar"><span class="t" id="title">Cloud Games</span>
  <button id="s-geforcenow" data-site="geforcenow">GeForce NOW</button><button id="s-xbox" data-site="xbox">Xbox</button>
  <span id="pv" style="font-size:11px;opacity:.6">proxy</span>
  <button id="eng" title="Switch the web-proxy engine (Scramjet or Ultraviolet)">Engine</button><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
 <div id="note"></div>
-<div id="diag" style="display:none;position:fixed;left:0;right:0;top:40px;bottom:0;z-index:20;background:rgba(6,12,9,.97);color:#cde7dc;font:12px/1.45 ui-monospace,Menlo,monospace;padding:10px 12px;overflow:auto;-webkit-user-select:text;user-select:text">
+<div id="diag" style="display:none;position:fixed;left:0;right:0;top:0;bottom:0;z-index:20;background:rgba(6,12,9,.97);color:#cde7dc;font:12px/1.45 ui-monospace,Menlo,monospace;padding:10px 12px;overflow:auto;-webkit-user-select:text;user-select:text">
  <div style="display:flex;gap:8px;margin-bottom:8px;position:sticky;top:0;background:rgba(6,12,9,.97);padding-bottom:6px"><button id="dcopy">Copy</button><button id="dclear">Clear</button><button id="dnet">Network check</button><button id="dclose">Close</button></div>
  <pre id="dlog" style="white-space:pre-wrap;word-break:break-all;margin:0"></pre></div>
 <div id="stage"><div id="msg">Starting the proxy…</div></div>
@@ -32,12 +34,12 @@ var $=function(i){return document.getElementById(i)};
 // Cloud gaming sites that can be launched. Add more here.
 var SITES={
   geforcenow:{name:'GeForce NOW',url:'https://play.geforcenow.com/'},
-  xbox:{name:'Xbox Cloud Gaming',url:'https://www.xbox.com/play'}
+  xbox:{name:'Xbox Cloud Gaming',url:'https://play.xbox.com/'}
 };
 var key=new URLSearchParams(location.search).get('site')||'geforcenow', site=SITES[key]||SITES.geforcenow, frame=null;
 if(!SITES[key])key='geforcenow';
 $('title').textContent=site.name+' · cloud gaming';
-Object.keys(SITES).forEach(function(k){var b=$('s-'+k);b.classList.toggle('on',k===key);b.onclick=function(){if(k!==key)location.search='?site='+k}});
+Object.keys(SITES).forEach(function(k){var b=$('s-'+k);b.classList.toggle('on',k===key);b.onclick=function(){if(k!==key)location.search='?site='+k+(document.body.className==='dbg'?'&debug=1':'')}});
 
 // ---- diagnostics: tap the "proxy" label ----
 var DLOG=[],dstart=Date.now();
@@ -56,7 +58,7 @@ $('dcopy').onclick=function(){var t=$('dlog').textContent;try{navigator.clipboar
 function netcheck(){
   var web=[['this page ('+location.hostname.slice(0,28)+')',location.origin+'/'],['jsDelivr','https://cdn.jsdelivr.net/'],['raw.githubusercontent','https://raw.githubusercontent.com/'],
     ['trycloudflare.com','https://trycloudflare.com/'],['NVIDIA login','https://login.nvidia.com/'],['GeForce NOW','https://play.geforcenow.com/'],['nvidiagrid.net (game servers)','https://img.nvidiagrid.net/'],
-    ['Xbox Cloud Gaming','https://www.xbox.com/play'],['Microsoft login','https://login.live.com/'],['Xbox game servers (xboxlive.com)','https://xboxlive.com/'],['google.com','https://www.google.com/']];
+    ['Xbox Cloud Gaming','https://play.xbox.com/'],['Microsoft login','https://login.live.com/'],['Xbox game servers (xboxlive.com)','https://xboxlive.com/'],['google.com','https://www.google.com/']];
   var stun=[['STUN Cloudflare udp 3478','stun:stun.cloudflare.com:3478'],['STUN Google udp 19302','stun:stun.l.google.com:19302']];
   dline('netcheck','starting ('+web.length+' web addresses, '+stun.length+' UDP checks)','');
   web.forEach(function(w){var t0=Date.now(),c=typeof AbortController==='function'?new AbortController():null,tm=setTimeout(function(){c&&c.abort()},7000);
@@ -68,8 +70,8 @@ function netcheck(){
 }
 
 // ---- Engine: Scramjet (default) or Ultraviolet ----
-function setEngLabel(){$('eng').textContent='Engine: '+(HerbProxy.engine()==='uv'?'Ultraviolet':'Scramjet')}
-$('eng').onclick=function(){HerbProxy.setEngine(HerbProxy.engine()==='uv'?'sj':'uv');setEngLabel();launch()};
+function setEngLabel(){$('eng').textContent='Engine: Scramjet'}
+$('eng').style.display='none';   // Cloud games always use Scramjet
 
 function launch(){
   setEngLabel();$('msg')&&($('msg').textContent='Connecting…');
@@ -77,19 +79,16 @@ function launch(){
   try{void parent.location.href}catch(e){
     if(window.top!==window){$('note').style.display='block';$('note').innerHTML='<b>Sign-in may not work here.</b> Herb was opened from a different address than this app, and Safari blocks sign-ins in that case. Open Herb from <a href="'+location.origin+'/" target="_blank" style="color:#fde68a">'+location.origin+'</a> instead.'}
   }
-  var eng=HerbProxy.engine();
+  var eng='sj';
   Promise.race([HerbProxy.init(),new Promise(function(_,no){setTimeout(function(){no(new Error('proxy start timed out'))},20000)})]).catch(function(e){dline('proxy','init: '+e.message,'')}).then(function(){
     frame=document.createElement('iframe');
     frame.setAttribute('allow','fullscreen; gamepad; autoplay; clipboard-read; clipboard-write; pointer-lock; microphone; camera'); frame.allowFullscreen=true;
     $('stage').innerHTML='';$('stage').appendChild(frame);
     var f0=frame;
-    // A Scramjet page that is still empty after 25s is treated as failed: switch to Ultraviolet for this session and reload.
-    if(eng==='sj')setTimeout(function(){if(frame!==f0||HerbProxy.engine()!=='sj')return;var n=-1;try{n=f0.contentDocument.getElementsByTagName('*').length}catch(x){}
-      if(n<8){dline('engine','Scramjet page stayed empty ('+n+' elements) - using Ultraviolet','');try{sessionStorage.setItem('herb.engine.fallback','uv')}catch(x){}setEngLabel();HerbProxy.open(f0,site.url)}},25000);
-    return HerbProxy.open(frame,site.url).then(function(used){dline('engine',used==='sj'?'Scramjet':'Ultraviolet','');setEngLabel()});
-  }).catch(function(e){$('stage').innerHTML='<div id="msg">Couldn’t start the proxy: '+String(e.message).replace(/</g,'&lt;')+'</div>'});
+    return HerbProxy.open(frame,site.url,{engine:'sj'}).then(function(){dline('engine','Scramjet','')});
+  }).catch(function(e){$('stage').innerHTML='<div id="msg"><div>Couldn’t start Scramjet: '+String(e.message).replace(/</g,'&lt;')+'<br><br><button onclick="location.reload()" style="padding:8px 16px;border-radius:8px">Try again</button></div></div>'});
 }
-$('reload').onclick=function(){if(frame)HerbProxy.open(frame,site.url)};
+$('reload').onclick=function(){if(frame)HerbProxy.open(frame,site.url,{engine:'sj'})};
 $('full').onclick=function(){if(frame&&frame.requestFullscreen)frame.requestFullscreen()};
 launch();
 </script></body></html>
