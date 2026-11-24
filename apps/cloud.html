@@ -14,7 +14,7 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000
 #msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:20px}
 </style></head>
 <body>
-<div id="bar"><span class="t" id="title">Cloud Games</span><span id="crl" style="font-size:11px;opacity:.8;margin-right:8px"></span><button id="crq" style="display:none">Request relay access</button><span id="pv" style="font-size:11px;opacity:.6"></span><button id="vroute" title="How game video travels: Direct = straight to NVIDIA; Relay = through the VM">Video: …</button><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
+<div id="bar"><span class="t" id="title">Cloud Games</span><span id="crl" style="font-size:11px;opacity:.8;margin-right:8px"></span><button id="crq" style="display:none">Request relay access</button><span id="pv" style="font-size:11px;opacity:.6"></span><button id="eng" title="Switch the web-proxy engine (Ultraviolet or Scramjet)">Engine</button><button id="vroute" title="How game video travels: Direct = straight to NVIDIA; Relay = through the VM">Video: …</button><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
 <div id="note"></div>
 <div id="diag" style="display:none;position:fixed;left:0;right:0;top:40px;bottom:0;z-index:20;background:rgba(6,12,9,.97);color:#cde7dc;font:12px/1.45 ui-monospace,Menlo,monospace;padding:10px 12px;overflow:auto;-webkit-user-select:text;user-select:text">
  <div style="display:flex;gap:8px;margin-bottom:8px;position:sticky;top:0;background:rgba(6,12,9,.97);padding-bottom:6px"><button id="dcopy">Copy</button><button id="dclear">Clear</button><button id="dclose">Close</button><button id="dnet">Network check</button><span style="opacity:.6;align-self:center">Proxy diagnostics (send this to the developer)</span></div>
@@ -122,8 +122,12 @@ function launch(){
   }).then(function(){return Promise.race([cloudRelay(),new Promise(function(r){setTimeout(r,6000)})])}).then(function(){
     frame=document.createElement('iframe');
     frame.setAttribute('allow','fullscreen; gamepad; autoplay; clipboard-read; clipboard-write; pointer-lock'); frame.allowFullscreen=true;
-    frame.src=__uv$config.prefix+__uv$config.encodeUrl(site.url);
     $('stage').innerHTML=''; $('stage').appendChild(frame);
+    if(engine()==='scramjet'){
+      return loadSj().then(function(){return HerbScramjet.start(frame,site.url)}).then(function(){dline('engine','scramjet','')},function(e){
+        dline('engine','scramjet failed – using Ultraviolet',String(e&&e.message||e));try{localStorage.setItem('herb.engine','uv')}catch(x){}setEngLabel();frame.src=__uv$config.prefix+__uv$config.encodeUrl(site.url)});
+    }
+    frame.src=__uv$config.prefix+__uv$config.encodeUrl(site.url);
     // Video streams use WebRTC, which the proxy can't carry. Without a TURN relay it may stay black if UDP is blocked.
     if(!(__uv$config.inject&&__uv$config.inject.length)){$('note').style.display='block';$('note').innerHTML='<b>Video relay not set up.</b> Cloud gaming streams over WebRTC (UDP), which a web proxy can’t carry. If the picture stays black or never connects, your network is probably blocking UDP – a TURN relay needs to be configured in <code>uv/uv.config.js</code>.'}
   }).catch(function(e){$('msg').textContent='Couldn’t start the proxy: '+e.message});
@@ -136,5 +140,10 @@ try{caches.open('herb-cfg').then(function(c){return c.match('/mode')}).then(func
 $('vroute').onclick=function(){try{localStorage.setItem('herb.vroute.user','1')}catch(e){}var cur=/Relay/.test($('vroute').textContent)?'relay':'direct';setVroute(cur==='relay'?'direct':'relay',true)};
 $('reload').onclick=function(){if(frame)frame.src=frame.src};
 $('full').onclick=function(){if(frame&&frame.requestFullscreen)frame.requestFullscreen()};
+function engine(){try{return localStorage.getItem('herb.engine')||'uv'}catch(e){return 'uv'}}
+function loadSj(){return new Promise(function(ok,no){var s=document.createElement('script');s.src='/sj/boot.js';s.onload=ok;s.onerror=function(){no(new Error('Scramjet files missing'))};document.head.appendChild(s)})}
+function setEngLabel(){$('eng').textContent='Engine: '+(engine()==='scramjet'?'Scramjet':'Ultraviolet')}
+$('eng').onclick=function(){try{localStorage.setItem('herb.engine',engine()==='scramjet'?'uv':'scramjet')}catch(e){}setEngLabel();if(frame){try{frame.src='about:blank'}catch(e){}launch()}};
+setEngLabel();
 launch();
 </script></body></html>
