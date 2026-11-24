@@ -14,7 +14,7 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000
 #msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:20px}
 </style></head>
 <body>
-<div id="bar"><span class="t" id="title">Cloud Games</span><span id="pv" style="font-size:11px;opacity:.6"></span><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
+<div id="bar"><span class="t" id="title">Cloud Games</span><span id="pv" style="font-size:11px;opacity:.6"></span><button id="vroute" title="How game video travels: Direct = straight to NVIDIA; Relay = through the VM">Video: …</button><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
 <div id="note"></div>
 <div id="diag" style="display:none;position:fixed;left:0;right:0;top:40px;bottom:0;z-index:20;background:rgba(6,12,9,.97);color:#cde7dc;font:12px/1.45 ui-monospace,Menlo,monospace;padding:10px 12px;overflow:auto;-webkit-user-select:text;user-select:text">
  <div style="display:flex;gap:8px;margin-bottom:8px;position:sticky;top:0;background:rgba(6,12,9,.97);padding-bottom:6px"><button id="dcopy">Copy</button><button id="dclear">Clear</button><button id="dclose">Close</button><button id="dnet">Network check</button><span style="opacity:.6;align-self:center">Proxy diagnostics (send this to the developer)</span></div>
@@ -99,6 +99,12 @@ function launch(){
     if(!(__uv$config.inject&&__uv$config.inject.length)){$('note').style.display='block';$('note').innerHTML='<b>Video relay not set up.</b> Cloud gaming streams over WebRTC (UDP), which a web proxy can’t carry. If the picture stays black or never connects, your network is probably blocking UDP – a TURN relay needs to be configured in <code>uv/uv.config.js</code>.'}
   }).catch(function(e){$('msg').textContent='Couldn’t start the proxy: '+e.message});
 }
+// ---- Video route: Direct (default) or Relay. Shared with the proxy worker through the Cache API + BroadcastChannel ----
+function setVroute(m,reload){try{caches.open('herb-cfg').then(function(c){return c.put('/mode',new Response(m))})}catch(e){}
+  try{var b=new BroadcastChannel('herb-cfg');b.postMessage({mode:m});setTimeout(function(){b.close()},500)}catch(e){}
+  $('vroute').textContent='Video: '+(m==='relay'?'Relay':'Direct');dline('video-route',m,'');if(reload&&frame)setTimeout(function(){frame.src=frame.src},700)}
+try{caches.open('herb-cfg').then(function(c){return c.match('/mode')}).then(function(r){return r&&r.text()}).then(function(t){$('vroute').textContent='Video: '+(t==='relay'?'Relay':'Direct')},function(){$('vroute').textContent='Video: Direct'})}catch(e){$('vroute').textContent='Video: Direct'}
+$('vroute').onclick=function(){var cur=/Relay/.test($('vroute').textContent)?'relay':'direct';setVroute(cur==='relay'?'direct':'relay',true)};
 $('reload').onclick=function(){if(frame)frame.src=frame.src};
 $('full').onclick=function(){if(frame&&frame.requestFullscreen)frame.requestFullscreen()};
 launch();

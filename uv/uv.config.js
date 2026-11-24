@@ -16,6 +16,15 @@ var TURN = {
     hosts: '(^|\\.)(geforcenow\\.com|nvidiagrid\\.net)$',   // regex of proxied site hostnames that get the wrapper
 };
 var __turnCreds = null, __turnAt = 0;
+// Video route: 'direct' (default: media goes straight to NVIDIA, the relay is only a fallback) or 'relay' (all media through the VM's TURN, so it
+// comes from the same address as the proxied session calls). The Cloud app's "Video" button switches it; stored in the Cache API, shared via BroadcastChannel.
+var __rtcMode = 'direct';
+if (typeof ServiceWorkerGlobalScope !== 'undefined') {
+    try {
+        caches.open('herb-cfg').then(function (c) { return c.match('/mode'); }).then(function (r) { return r && r.text(); }).then(function (t) { if (t === 'relay' || t === 'direct') __rtcMode = t; }).catch(function () {});
+        var __cfgBc = new BroadcastChannel('herb-cfg'); __cfgBc.onmessage = function (e) { if (e.data && (e.data.mode === 'relay' || e.data.mode === 'direct')) __rtcMode = e.data.mode; };
+    } catch (e) {}
+}
 function herbRefreshTurn() {   // service worker only; credentials last 1 hour on the server, refreshed every 30 minutes
     if (typeof ServiceWorkerGlobalScope === 'undefined' || !TURN.api.length || Date.now() - __turnAt < 30 * 60 * 1000) return;
     __turnAt = Date.now();
@@ -35,7 +44,8 @@ function herbTurnInjection(cfg) {
             c = Object.assign({}, c || {});
             var servers = Array.isArray(c.iceServers) ? c.iceServers.slice() : [];
             servers.unshift({ urls: cfg.urls, username: cfg.username, credential: cfg.credential });
-            c.iceServers = servers;   // direct connection first; the relay is only used if direct fails (the page's own transport policy is left alone)
+            c.iceServers = servers;   // direct mode: media goes direct, the relay is only a fallback (the page's own transport policy is left alone)
+            if (cfg.mode === 'relay') c.iceTransportPolicy = 'relay';   // relay mode: everything through the VM
             return c;
         }
         ['RTCPeerConnection', 'webkitRTCPeerConnection'].forEach(function (name) {
@@ -172,6 +182,31 @@ function herbDiagReporter() {
                 return F.apply(this, arguments).then(function (r) { if (!r.ok) send('fetch-fail', r.status + ' ' + dec(u)); return r; }, function (e) { send('fetch-error', (e && e.message) + ' ' + dec(u)); throw e; });
             };
         } catch (e) {}
+        // GeForce NOW / NVIDIA hosts only: log the session/launch API calls (status + start of the reply) and WebSocket open/close
+        var gfnPage = /(^|\.)(geforcenow\.com|nvidiagrid\.net|nvidia\.com)$/.test(location.hostname);
+        if (gfnPage) {
+            var mask = function (t) { return String(t).replace(/[A-Za-z0-9_\-\.]{40,}/g, '<token>').replace(/\s+/g, ' ').slice(0, 150); };
+            var interesting = /session|cloudmatch|launch|queue|signal|sign_in|stream|\/v2\//i;
+            try {
+                var XS2 = XMLHttpRequest.prototype.send;
+                XMLHttpRequest.prototype.send = function () {
+                    var x = this; try { x.addEventListener('loadend', function () {
+                        var u = x.__hd ? dec(x.__hd.u) : ''; if (!u || !interesting.test(u) || x.status === 0 && !u) return;
+                        var b = ''; try { b = x.responseType === '' || x.responseType === 'text' ? x.responseText : (x.response ? JSON.stringify(x.response) : ''); } catch (e) {}
+                        send('api', x.status + ' ' + (x.__hd ? x.__hd.m : '') + ' ' + u.slice(0, 80) + (b ? ' | ' + mask(b) : ''));
+                    }); } catch (e) {}
+                    return XS2.apply(this, arguments);
+                };
+            } catch (e) {}
+            try {
+                var WS = window.WebSocket;
+                if (typeof WS === 'function') window.WebSocket = new Proxy(WS, { construct: function (t, a, nt) {
+                    var u = dec(a[0]); var ws = Reflect.construct(t, a, nt === window.WebSocket ? t : nt);
+                    try { send('ws-new', u.slice(0, 90)); ws.addEventListener('open', function () { send('ws-open', u.slice(0, 60)); }); ws.addEventListener('close', function (e) { send('ws-close', e.code + ' ' + (e.reason || '') + ' ' + u.slice(0, 50)); }); ws.addEventListener('error', function () { send('ws-error', u.slice(0, 60)); }); } catch (e) {}
+                    return ws;
+                } });
+            } catch (e) {}
+        }
         window.addEventListener('load', function () { send('loaded', document.title + ' | ' + document.getElementsByTagName('*').length + ' nodes | ' + (document.body ? document.body.innerText.replace(/\s+/g, ' ').slice(0, 60) : 'no body')); });
         window.addEventListener('pagehide', function () { send('leaving', 'navigating away'); });
     } catch (e) {}
@@ -189,7 +224,7 @@ if (TURN.api.length) {
         host: TURN.hosts, injectTo: 'head',
         get html() {
             herbRefreshTurn();
-            return __turnCreds ? '<script>(' + herbTurnInjection.toString() + ')(' + JSON.stringify(__turnCreds) + ');</script>' : '';
+            return __turnCreds ? '<script>(' + herbTurnInjection.toString() + ')(' + JSON.stringify(Object.assign({}, __turnCreds, { mode: __rtcMode })) + ');</script>' : '';
         },
     });
 }

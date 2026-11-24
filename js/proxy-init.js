@@ -4,7 +4,7 @@
 (function () {
   // Bump this whenever uv/ files change: a new script address makes every browser (iOS home-screen apps especially, which keep an old
   // service worker for a long time) install the new proxy straight away instead of waiting for its own update check.
-  var SW_VERSION = '20261123j';
+  var SW_VERSION = '20261123k';
   var connection = null;
 
   async function registerSW() {
