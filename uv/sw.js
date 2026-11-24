@@ -20,9 +20,19 @@ uv.on('request', (event) => {
     for (const k of Object.keys(h)) if (k.toLowerCase().startsWith('sec-ch-ua')) delete h[k];
 });
 
+// Herb: tell the Cloud app's diagnostics panel (BroadcastChannel) why the proxy answered with an error.
+let herbDiag = null; try { herbDiag = new BroadcastChannel('herb-diag'); } catch (e) {}
 async function handleRequest(event) {
     if (uv.route(event)) {
-        return await uv.fetch(event);
+        const res = await uv.fetch(event);
+        if (herbDiag && res.status >= 500) {
+            try {
+                const t = await res.clone().text(), m = /<textarea[^>]*>([\s\S]*?)<\/textarea>/i.exec(t);
+                let u = event.request.url; try { u = String(__uv$config.decodeUrl(u.slice(u.indexOf(__uv$config.prefix) + __uv$config.prefix.length))); } catch (e) {}
+                herbDiag.postMessage({ k: 'proxy-' + res.status, m: event.request.method + ' ' + u.replace(/^https?:\/\//, '').slice(0, 90) + ' -> ' + ((m && m[1]) || t).replace(/\s+/g, ' ').slice(0, 200), u: 'service worker', t: Date.now() });
+            } catch (e) {}
+        }
+        return res;
     }
     
     return await fetch(event.request)
