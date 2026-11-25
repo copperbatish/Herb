@@ -1,0 +1,32 @@
+{
+  "name": "CloudMoon",
+  "short_name": "CloudMoon",
+  "description": "CloudMoon through Herb",
+  "id": "/apps/cloud.html?site=cloudmoon",
+  "start_url": "/apps/cloud.html?site=cloudmoon",
+  "scope": "/apps/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#1b1240",
+  "icons": [
+    {
+      "src": "/images/cloud/cloudmoon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/cloud/cloudmoon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/cloud/cloudmoon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

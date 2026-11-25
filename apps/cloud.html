@@ -3,7 +3,7 @@
 <link rel="icon" href="/images/logo/herb.svg" type="image/svg+xml"><title>Cloud Games</title>
 <script>
 // Installable web app: "Add to Home Screen" gives a full-screen GeForce NOW / Xbox app, like the real ones.
-(function(){var M={geforcenow:['GeForce NOW','gfn'],xbox:['Xbox','xbox']},k=new URLSearchParams(location.search).get('site');if(!M[k])k='geforcenow';var n=M[k][0],ic=M[k][1],h=document.head;
+(function(){var M={geforcenow:['GeForce NOW','gfn'],xbox:['Xbox','xbox'],cloudmoon:['CloudMoon','cloudmoon']},k=new URLSearchParams(location.search).get('site');if(!M[k])k='geforcenow';var n=M[k][0],ic=M[k][1],h=document.head;
  function add(t,a){var e=document.createElement(t);for(var x in a)e.setAttribute(x,a[x]);h.appendChild(e)}
  add('link',{rel:'manifest',href:'/apps/cloud-'+k+'.json'});add('link',{rel:'apple-touch-icon',href:'/images/cloud/'+ic+'-180.png'});
  add('meta',{name:'apple-mobile-web-app-capable',content:'yes'});add('meta',{name:'mobile-web-app-capable',content:'yes'});
@@ -27,7 +27,7 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000
 <body>
 <script>if(/[?&]debug=1/.test(location.search))document.body.className='dbg'</script>
 <div id="bar"><span class="t" id="title">Cloud Games</span>
- <button id="s-geforcenow" data-site="geforcenow">GeForce NOW</button><button id="s-xbox" data-site="xbox">Xbox</button>
+ <button id="s-geforcenow" data-site="geforcenow">GeForce NOW</button><button id="s-xbox" data-site="xbox">Xbox</button><button id="s-cloudmoon" data-site="cloudmoon">CloudMoon</button>
  <span id="pv" style="font-size:11px;opacity:.6">proxy</span>
  <button id="eng" title="Switch the web-proxy engine (Scramjet or Ultraviolet)">Engine</button><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
 <div id="note"></div>
@@ -43,7 +43,8 @@ var $=function(i){return document.getElementById(i)};
 // Cloud gaming sites that can be launched. Add more here.
 var SITES={
   geforcenow:{name:'GeForce NOW',url:'https://play.geforcenow.com/'},
-  xbox:{name:'Xbox Cloud Gaming',url:'https://play.xbox.com/'}
+  xbox:{name:'Xbox Cloud Gaming',url:'https://play.xbox.com/'},
+  cloudmoon:{name:'CloudMoon',url:'https://web.cloudmoonapp.com/'}
 };
 var key=new URLSearchParams(location.search).get('site')||'geforcenow', site=SITES[key]||SITES.geforcenow, frame=null;
 if(!SITES[key])key='geforcenow';
@@ -67,7 +68,7 @@ $('dcopy').onclick=function(){var t=$('dlog').textContent;try{navigator.clipboar
 function netcheck(){
   var web=[['this page ('+location.hostname.slice(0,28)+')',location.origin+'/'],['jsDelivr','https://cdn.jsdelivr.net/'],['raw.githubusercontent','https://raw.githubusercontent.com/'],
     ['trycloudflare.com','https://trycloudflare.com/'],['NVIDIA login','https://login.nvidia.com/'],['GeForce NOW','https://play.geforcenow.com/'],['nvidiagrid.net (game servers)','https://img.nvidiagrid.net/'],
-    ['Xbox Cloud Gaming','https://play.xbox.com/'],['Microsoft login','https://login.live.com/'],['Xbox game servers (xboxlive.com)','https://xboxlive.com/'],['google.com','https://www.google.com/']];
+    ['Xbox Cloud Gaming','https://play.xbox.com/'],['Microsoft login','https://login.live.com/'],['Xbox game servers (xboxlive.com)','https://xboxlive.com/'],['CloudMoon','https://web.cloudmoonapp.com/'],['CloudMoon API','https://api.prod.cloudmoonapp.com/'],['google.com','https://www.google.com/']];
   var stun=[['STUN Cloudflare udp 3478','stun:stun.cloudflare.com:3478'],['STUN Google udp 19302','stun:stun.l.google.com:19302']];
   dline('netcheck','starting ('+web.length+' web addresses, '+stun.length+' UDP checks)','');
   web.forEach(function(w){var t0=Date.now(),c=typeof AbortController==='function'?new AbortController():null,tm=setTimeout(function(){c&&c.abort()},7000);
