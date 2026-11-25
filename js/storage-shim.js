@@ -29,6 +29,20 @@
     Object.defineProperty(s, 'length', { get: function () { return Object.keys(store.d).length; } });
     try { Object.defineProperty(window, 'localStorage', { configurable: true, get: function () { return s; } }); } catch (e) {}
   }
+  // Older loaders (e.g. a copy already pasted into Google Sites) don't define the in-place restart: build it here from the page as the loader
+  // left it (minus the Herb bundle it injected), so mode switches work without re-pasting anything.
+  if (shell && odd && !window.__herbSoftReload) {
+    try {
+      var root = document.documentElement.cloneNode(true);
+      [].forEach.call(root.querySelectorAll('script'), function (x) { if (/^\/\*HERB_BUNDLE/.test(x.textContent || '')) x.remove(); });
+      [].forEach.call(root.querySelectorAll('style'), function (x) { if ((x.textContent || '').length > 20000) x.remove(); });
+      var BOOT = '<!DOCTYPE html>' + root.outerHTML;
+      window.__herbSoftReload = function () {
+        var id = setTimeout(function () {}, 0); for (var i = 0; i <= id; i++) { clearTimeout(i); clearInterval(i); }
+        document.open(); document.write(BOOT); document.close();
+      };
+    } catch (e) {}
+  }
   if (!shell || (!broken && !odd)) return;
 
   // ---- settings bridge to Herb's own address ----
