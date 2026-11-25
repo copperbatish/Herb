@@ -425,3 +425,128 @@ html[data-tblayout=side] body.ui-desktop #start{left:calc(var(--tb) + 46px)}
 html[data-tblayout=dock] body.ui-desktop .tbbtn.store:not(.running),html[data-tblayout=side] body.ui-desktop .tbbtn.store:not(.running){display:none}
 #tbtray .tray,#tbtray .lbl,#clock span{white-space:nowrap}
 html[data-tblayout=dock] body.ui-desktop #tbtray{flex:none}
+
+/* ===================== iPadOS ===================== */
+body.ui-ipad .moon,body.ui-ipad .hill,body.ui-ipad #flies,body.ui-ipad #iphome{display:none!important}
+/* iPadOS-style bloom wallpaper when using a theme wallpaper */
+body.ui-ipad #desktop:not(.has-wall):not(.wall-aurora){background:radial-gradient(60% 70% at 18% 108%,rgba(var(--accent-rgb),.55),transparent 70%),radial-gradient(55% 65% at 92% -6%,rgba(var(--accent-rgb),.35),transparent 70%),radial-gradient(45% 55% at 70% 85%,rgba(120,100,255,.22),transparent 70%),var(--hill-2)!important}
+html.th-light body.ui-ipad #desktop:not(.has-wall):not(.wall-aurora){background:radial-gradient(60% 70% at 18% 108%,rgba(var(--accent-rgb),.35),transparent 70%),radial-gradient(55% 65% at 92% -6%,rgba(var(--accent-rgb),.25),transparent 70%),var(--surface-3)!important}
+/* status bar */
+body.ui-ipad #ipbar{height:30px;padding:0 22px;font-size:13.5px;font-weight:600;letter-spacing:.01em;text-shadow:none;z-index:9400;white-space:pre}
+#ipright{display:flex;align-items:center;gap:10px;pointer-events:auto}
+#ipstat{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+#ipcchit{background:none;border:0;color:inherit;cursor:pointer;padding:4px;display:flex;opacity:.9}
+body.ui-ipad #acctchip{background:none;padding:0;height:auto;font-size:13px;font-weight:600}
+/* widgets (left column in landscape, a row on top in portrait) */
+#ipwidgets{display:none}
+body.ui-ipad #ipwidgets{display:grid;position:absolute;left:44px;top:58px;width:300px;gap:20px;z-index:2;transition:opacity .25s,transform .25s}
+.wdg{border-radius:26px;padding:18px 20px;background:rgba(18,22,20,.42);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px) saturate(1.6);border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 40px rgba(0,0,0,.25);color:var(--text)}
+html.th-light .wdg{background:rgba(255,255,255,.55);border-color:rgba(0,0,0,.05)}
+.wclock .wday{font-size:12px;font-weight:700;letter-spacing:.08em;color:rgb(var(--accent-rgb))}
+.wclock .wtime{font-size:64px;font-weight:300;line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.wclock .wdate{font-size:15px;color:var(--muted);font-weight:500}
+.wdg .wh{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.wdg .wh svg{color:rgb(var(--accent-rgb))}
+.wnet .wbig{display:flex;align-items:center;gap:10px;font-size:28px;font-weight:600;font-variant-numeric:tabular-nums}
+.wnet .wbig .sdot{width:11px;height:11px}
+.wnet .wsub{font-size:12.5px;color:var(--muted);margin-top:4px}
+.wsearch input{width:100%;height:38px;border-radius:12px!important;background:rgba(255,255,255,.08)!important;border:0!important;padding:0 12px;color:var(--text);font-size:14px}
+html.th-light .wsearch input{background:rgba(0,0,0,.05)!important}
+/* home screen grid */
+body.ui-ipad #icons{left:380px!important;right:36px!important;top:54px!important;bottom:150px!important;padding-top:10px!important;grid-template-columns:repeat(auto-fill,104px)!important;justify-content:start!important;gap:30px 26px!important}
+body.ui-ipad .dicon{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);font-size:12.5px!important;font-weight:500!important;gap:7px}
+html.th-light body.ui-ipad .dicon{color:var(--text);text-shadow:none}
+body.ui-ipad .dicon .hicon{width:76px!important;height:76px!important;border-radius:19px!important;transition:transform .15s}
+body.ui-ipad .dicon:active .hicon,#ipdock button:active .hicon{transform:scale(.9)}
+@media (orientation:portrait),(max-width:900px){
+  body.ui-ipad #ipwidgets{left:28px;right:28px;width:auto;top:50px;grid-template-columns:repeat(3,1fr);gap:14px}
+  body.ui-ipad .wclock .wtime{font-size:40px}
+  body.ui-ipad #icons{left:28px!important;right:28px!important;top:236px!important;grid-template-columns:repeat(auto-fill,96px)!important;justify-content:space-evenly!important}
+}
+@media (max-width:640px){ body.ui-ipad .wnet,body.ui-ipad .wsearch{display:none} body.ui-ipad #ipwidgets{grid-template-columns:1fr} body.ui-ipad #icons{top:200px!important} }
+/* dock + search pill */
+body.ui-ipad #ipdock{bottom:14px;gap:14px;padding:11px 13px;border-radius:30px;align-items:center;background:rgba(20,24,22,.38)!important;backdrop-filter:blur(34px) saturate(1.7)!important;-webkit-backdrop-filter:blur(34px) saturate(1.7)!important;border:1px solid rgba(255,255,255,.1)!important}
+html.th-light body.ui-ipad #ipdock{background:rgba(255,255,255,.45)!important}
+#ipdock .hicon{width:62px!important;height:62px!important;border-radius:16px!important}
+#ipdock button:hover{transform:none!important}
+#ipdock .ipsep{width:1px;height:50px;background:rgba(255,255,255,.22);margin:0 2px}
+#ipsearch{display:none}
+body.ui-ipad #ipsearch{display:flex;align-items:center;gap:6px;position:absolute;left:50%;bottom:112px;transform:translateX(-50%);z-index:8900;height:30px;padding:0 13px;border-radius:15px;border:0;cursor:pointer;color:#fff;font:inherit;font-size:13px;font-weight:600;background:rgba(255,255,255,.16);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);transition:opacity .25s}
+html.th-light body.ui-ipad #ipsearch{color:var(--text);background:rgba(0,0,0,.08)}
+body.ui-ipad.app-open #ipwidgets,body.ui-ipad.app-open #ipsearch,body.ip-switch #ipwidgets,body.ip-switch #ipsearch,body.ip-switch #icons,body.ip-switch #ipdock{opacity:0;pointer-events:none}
+body.ui-ipad.app-open #ipwidgets{transform:scale(.94)}
+/* apps: full screen under the status bar, rounded like the display */
+body.ui-ipad #wins{top:30px!important}
+body.ui-ipad .win{inset:0 6px 6px 6px!important;border-radius:22px!important}
+body.ui-ipad .win .body{border-radius:22px!important}
+body.ip-going-home #iphomebar{opacity:0}
+/* home indicator + bottom gesture strip */
+#iphomebar{display:none}
+body.ui-ipad.app-open #iphomebar{display:block;position:absolute;left:50%;bottom:13px;transform:translateX(-50%);width:140px;height:5px;border-radius:3px;background:rgba(255,255,255,.78);box-shadow:0 0 0 1px rgba(0,0,0,.15);z-index:9300;pointer-events:none}
+html.th-light body.ui-ipad.app-open #iphomebar{background:rgba(0,0,0,.6)}
+#iphomebar.pulse{animation:hpulse 1.3s ease-out infinite}
+body.ui-ipad #ipedge{display:none}
+body.ui-ipad.app-open #ipedge{display:block;left:0;right:0;top:auto;bottom:0;width:auto;height:30px;z-index:9310;cursor:grab;touch-action:none}
+body.ip-switch #ipedge,body.ip-switch #iphomebar{display:none!important}
+/* app switcher */
+#ipsw{display:none}
+body.ip-switch #ipsw{display:block;position:absolute;inset:0;z-index:9500;background:rgba(0,0,0,.28);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+body.ip-switch #wins{visibility:hidden}
+.ipsw-lab{position:absolute;z-index:9700;display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.ipsw-lab .hicon{width:22px!important;height:22px!important;border-radius:6px!important;box-shadow:none!important}
+.ipsw-lab .hicon svg{width:60%;height:60%}
+.ipsw-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;opacity:.7}
+/* Control Center */
+#ipcc{display:none}
+body.ui-ipad #ipcc{display:block;position:absolute;top:38px;right:18px;z-index:9800;opacity:0;transform:scale(.92);transform-origin:top right;pointer-events:none;transition:opacity .2s,transform .25s cubic-bezier(.2,.9,.25,1.2)}
+body.ui-ipad #ipcc.on{opacity:1;transform:none;pointer-events:auto}
+.ccgrid{display:grid;grid-template-columns:repeat(4,72px);grid-auto-rows:72px;gap:12px;padding:16px;border-radius:30px;background:rgba(12,16,14,.55);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border:1px solid rgba(255,255,255,.1);box-shadow:0 30px 80px rgba(0,0,0,.45)}
+html.th-light .ccgrid{background:rgba(255,255,255,.6)}
+.cct{position:relative;border:0;border-radius:22px;background:rgba(255,255,255,.12);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;padding:10px 11px;gap:2px;font:inherit;text-align:left;overflow:hidden}
+html.th-light .cct{background:rgba(0,0,0,.06)}
+.cct svg{position:absolute;top:11px;left:11px}
+.cct .n{font-size:10.5px;font-weight:600;line-height:1.15}
+.cct .v{font-size:10px;color:var(--muted)}
+.cct.on{background:rgb(var(--accent-rgb));color:var(--on-accent,#03110a)}.cct.on .v{color:inherit;opacity:.75}
+.cct.wide{grid-column:span 2}.cct.wide .n{font-size:13px}.cct.wide .v{font-size:12px}
+.cct.tall{grid-row:span 2;padding:0;align-items:stretch;justify-content:stretch}
+#cc-bright{-webkit-appearance:slider-vertical;appearance:auto;writing-mode:vertical-lr;direction:rtl;width:100%;height:100%;margin:0;opacity:0;cursor:ns-resize}
+.cct.tall::before{content:'';position:absolute;left:0;right:0;bottom:0;height:var(--bv,100%);background:rgba(255,255,255,.85);pointer-events:none}
+.cct.tall .bic{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);color:#555;pointer-events:none}
+/* Spotlight */
+#ipspot{display:none}
+body.ui-ipad #ipspot.on{display:block;position:fixed;inset:0;z-index:9900;background:rgba(0,0,0,.3);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);animation:fadeIn .18s ease-out}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.spbox{position:absolute;left:50%;top:13%;transform:translateX(-50%);width:min(600px,calc(100vw - 32px))}
+.spin{display:flex;align-items:center;gap:10px;height:52px;padding:0 16px;border-radius:16px;background:rgba(40,44,42,.7);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);color:#fff}
+.spin input{flex:1;background:none!important;border:0!important;box-shadow:none!important;outline:none;color:#fff;font-size:19px;height:auto;padding:0}
+#spres{margin-top:10px;border-radius:16px;overflow:hidden;background:rgba(40,44,42,.62);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px)}
+#spres:empty{display:none}
+.sph{padding:10px 16px 4px;font-size:12px;font-weight:700;color:rgba(255,255,255,.6)}
+.spr{display:flex;align-items:center;gap:12px;width:100%;padding:8px 16px;border:0;background:none;color:#fff;font:inherit;font-size:14.5px;cursor:pointer;text-align:left}
+.spr:hover,.spr:focus{background:rgba(255,255,255,.1)}
+.spr span{flex:1}.spr small{color:rgba(255,255,255,.5);font-size:12px}
+.spr .hicon{width:30px!important;height:30px!important;border-radius:8px!important;box-shadow:none!important}
+.spr .spw{flex:none;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(var(--accent-rgb),.25)}
+body.app-open #tut{left:50%;top:auto;bottom:60px;transform:translateX(-50%)}
+/* the Safari repaint fix (mask + own layer) stops WebKit from drawing the window's transform; drop it while the switcher is open */
+body.ip-switch .win .body{-webkit-mask-image:none!important;mask-image:none!important;transform:none!important}
+body.ip-switch .win iframe{transform:none!important}
+body.ip-switch .win{overflow:hidden!important}
+/* Control Center tiles: roomier, more solid */
+.ccgrid{grid-template-columns:repeat(4,84px);grid-auto-rows:84px;background:rgba(14,18,16,.82)}
+html.th-light .ccgrid{background:rgba(250,252,251,.85)}
+.cct .n{font-size:11.5px;white-space:nowrap}.cct .v{white-space:nowrap}
+.cct.tall .bic{color:#333}
+
+.ipsw-card{position:absolute;z-index:9700;cursor:pointer;touch-action:none;transition:transform .28s cubic-bezier(.2,.9,.25,1),opacity .2s;animation:cardIn .3s cubic-bezier(.2,.9,.25,1)}
+@keyframes cardIn{from{opacity:0;transform:scale(1.25)}to{opacity:1;transform:none}}
+.ipsw-card .ipsw-lab{position:absolute;left:0;top:-32px}
+.ipsw-face{position:absolute;inset:0;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;overflow:hidden;
+  background:radial-gradient(120% 90% at 30% 0%,rgba(var(--accent-rgb),.32),transparent 60%),var(--surface);border:1px solid rgba(255,255,255,.1);box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.ipsw-face b{font-size:15px;font-weight:600;color:var(--text)}
+.ipsw-face .hicon{box-shadow:0 10px 30px rgba(0,0,0,.4)!important}
+.ccgrid{background:rgba(14,18,16,.92)}
+.cct.tall{background:rgba(255,255,255,.14)}
+.cct.tall .bic{z-index:1}
+.ipsw-card .ipsw-lab{color:#fff;font-size:13px;font-weight:600}
