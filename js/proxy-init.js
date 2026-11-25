@@ -4,7 +4,7 @@
 (function () {
   // Bump this whenever uv/ files change: a new script address makes every browser (iOS home-screen apps especially, which keep an old
   // service worker for a long time) install the new proxy straight away instead of waiting for its own update check.
-  var SW_VERSION = '20261124b';
+  var SW_VERSION = '20261124c';
   var connection = null;
 
   async function registerSW() {
@@ -77,7 +77,11 @@
       }, function () { return ''; });
     },
     init: function () {
-      if (!ready) ready = Promise.all([registerSW(), applyTransport()]).then(function (r) { return warm().then(function () { return r; }); });
+      if (!ready) {
+        ready = Promise.all([registerSW(), applyTransport()]).then(function (r) { return warm().then(function () { return r; }); });
+        // Scramjet is the default engine: get its worker, wasm and server connection ready in the background so the first page opens faster
+        if (HerbProxy.engine() === 'sj') setTimeout(function () { loadSj().then(function () { return window.HerbScramjet.warm(); }).catch(function () {}); }, 300);
+      }
       return ready;
     },
     // ---- Engines: Scramjet ('sj', default) or Ultraviolet ('uv'). Settings > Proxy changes it; a failed Scramjet start falls back to Ultraviolet for this session. ----

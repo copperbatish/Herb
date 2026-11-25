@@ -37,13 +37,15 @@
       return '<svg width="' + (size || 20) + '" height="' + (size || 20) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (stroke || 1.8) + '" stroke-linecap="round" stroke-linejoin="round">' + (G[name] || '') + '</svg>';
     },
     // gradient squircle with white glyph
+    // App icon. The look comes from CSS (.hicon in herb.css): minimal dark glass with a glowing accent glyph by default,
+    // or the per-app colour gradient (--c1/--c2) when Settings > Appearance > Icon style is "Colorful".
     tile: function (name, px, c) {
       c = c || COLORS[name] || ['#34d399', '#0d9488']; px = px || 56;
-      return '<span class="hicon" style="width:' + px + 'px;height:' + px + 'px;border-radius:' + Math.round(px * .27) + 'px;background:linear-gradient(145deg,' + c[0] + ',' + c[1] + ');color:#fff;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.35)">' + HerbIcons.glyph(name, Math.round(px * .54), 1.7) + '</span>';
+      return '<span class="hicon" style="width:' + px + 'px;height:' + px + 'px;border-radius:' + Math.round(px * .27) + 'px;--c1:' + c[0] + ';--c2:' + c[1] + '">' + HerbIcons.glyph(name, Math.round(px * .5), 1.6) + '</span>';
     },
     letter: function (ch, px, c) {
       c = c || ['#34d399', '#0d9488']; px = px || 56;
-      return '<span class="hicon" style="width:' + px + 'px;height:' + px + 'px;border-radius:' + Math.round(px * .27) + 'px;background:linear-gradient(145deg,' + c[0] + ',' + c[1] + ');color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:' + Math.round(px * .42) + 'px;box-shadow:0 6px 16px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.3)">' + ch + '</span>';
+      return '<span class="hicon ltr" style="width:' + px + 'px;height:' + px + 'px;border-radius:' + Math.round(px * .27) + 'px;--c1:' + c[0] + ';--c2:' + c[1] + ';font-size:' + Math.round(px * .4) + 'px">' + ch + '</span>';
     },
     colors: COLORS,
   };

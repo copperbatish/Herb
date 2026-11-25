@@ -38,6 +38,22 @@ section{display:none;max-width:620px}section.on{display:block}
 .pill.ok{color:#22c55e;border-color:#22c55e}.pill.bad{color:#ef4444;border-color:#ef4444}
 .add{display:flex;gap:8px;padding:12px 0}
 .about{display:flex;gap:16px;align-items:center;padding:14px 0}
+.faqh{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:18px 0 8px;font-weight:600}
+.faq{padding:2px 16px}.faq details{border-bottom:1px solid var(--border)}.faq details:last-child{border:0}
+.faq summary{cursor:pointer;padding:13px 22px 13px 0;font-weight:550;list-style:none;position:relative}.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:'+';position:absolute;right:0;top:11px;color:var(--muted);font-size:18px;transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg);color:rgb(var(--accent-rgb))}.faq details[open] summary{color:rgb(var(--accent-rgb))}
+.faq p{margin:0 0 14px;color:var(--muted);line-height:1.6;font-size:13.5px}
+/* minimal + glow */
+nav{background:rgba(255,255,255,.015)!important;border-right:1px solid rgba(255,255,255,.06)!important}
+nav button{font-weight:500}nav button.on{background:rgba(var(--accent-rgb),.1)!important;box-shadow:inset 2px 0 0 rgb(var(--accent-rgb))}
+.card{background:rgba(255,255,255,.02)!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:12px!important}
+.row{border-bottom-color:rgba(255,255,255,.06)!important}.row .t{font-weight:550}
+.ui-card{border:1px solid rgba(255,255,255,.08)!important;background:rgba(255,255,255,.02)!important}.ui-card.on{border-color:rgba(var(--accent-rgb),.6)!important;box-shadow:0 0 24px rgba(var(--accent-rgb),.15)}
+.mock{background:radial-gradient(circle at 80% 0%,rgba(var(--accent-rgb),.25),transparent 60%),#070b09!important}
+.seg{background:rgba(255,255,255,.03)!important;border:1px solid rgba(255,255,255,.08)!important}.seg button.on{background:rgba(var(--accent-rgb),.16)!important;color:var(--text)!important;box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.45)}
+.sw{background:rgba(255,255,255,.12)}.sw.on{background:rgb(var(--accent-rgb));box-shadow:0 0 14px rgba(var(--accent-rgb),.5)}
+.wall.on{box-shadow:0 0 20px rgba(var(--accent-rgb),.2)}
 </style></head>
 <body>
 <nav id="nav"></nav>
@@ -49,6 +65,7 @@ section{display:none;max-width:620px}section.on{display:block}
  <section id="s-appearance"><h1>Appearance</h1><p class="sub">Colors and look of Herb.</p>
   <div class="card"><div class="walls" id="walls"></div>
    <div class="row"><div><div class="t">Accent color</div><div class="d">Pick a preset or choose any color.</div></div><div class="ctl auto"><div class="sws" id="accents"></div></div></div>
+   <div class="row"><div><div class="t">Icon style</div><div class="d">Minimal glowing icons, or the original colorful ones.</div></div><div class="ctl"><div class="seg" id="iconstyle"></div></div></div>
    <div class="row"><div><div class="t">Window style</div><div class="d">Corner shape of app windows.</div></div><div class="ctl"><div class="seg" id="radius"></div></div></div>
    <div class="row"><div><div class="t">Glass blur</div><div class="d">Frosted glass on the taskbar, menus and windows.</div></div><button class="sw" data-k="blur"></button></div>
    <div class="row"><div><div class="t">Animations</div></div><button class="sw" data-k="anim"></button></div>
@@ -58,7 +75,8 @@ section{display:none;max-width:620px}section.on{display:block}
   <div class="card">
    <div class="row"><div><div class="t">Wallpaper</div></div><div class="ctl"><div class="seg" id="wallmode"></div></div></div>
    <div class="row" id="r-wallcolor"><div><div class="t">Solid color</div></div><input type="color" id="wallcolor"></div>
-   <div class="row" id="r-wallimg"><div><div class="t">Custom image</div><div class="d">Resized and stored on this device only.</div></div><div class="ctl auto"><input type="file" id="wallfile" accept="image/*" hidden><button class="btn" id="wallpick">Choose…</button></div></div>
+   <div class="row" id="r-wallfit"><div><div class="t">Image fit</div><div class="d">Fill crops to cover the screen; Fit shows the whole image.</div></div><div class="ctl"><div class="seg" id="wallfit"></div></div></div>
+   <div class="row" id="r-wallimg"><div><div class="t">Custom image</div><div class="d" id="wallinfo">Kept at full quality on this device. Works on iPad, phones and computers.</div></div><div class="ctl auto"><input type="file" id="wallfile" accept="image/*" hidden><button class="btn" id="wallpick">Choose…</button></div></div>
    <div class="row"><div><div class="t">Moon &amp; hills scene</div><div class="d">Only with a theme wallpaper.</div></div><button class="sw" data-k="scene"></button></div>
    <div class="row"><div><div class="t">Show desktop icons</div></div><button class="sw" data-k="showIcons"></button></div>
    <div class="row"><div><div class="t">Icon size</div></div><div class="ctl"><div class="seg" id="iconsize"></div></div></div>
@@ -90,6 +108,17 @@ section{display:none;max-width:620px}section.on{display:block}
   <div class="card"><div class="row"><div><div class="t">about:blank cloak</div><div class="d">Opens Herb inside an about:blank tab and sends this tab elsewhere.</div></div><button class="btn" id="cloak">Launch</button></div>
    <div class="row"><div><div class="t">Panic key</div><div class="d">Press it anywhere to jump to the panic URL.</div></div><div class="ctl"><input type="text" id="pk" maxlength="1" style="text-align:center"></div></div>
    <div class="row" style="display:block"><div class="t">Panic URL</div><div style="margin-top:8px"><input type="text" id="pu"></div></div></div></section>
+ <section id="s-faq"><h1>Help &amp; FAQ</h1><p class="sub">Answers to common problems. Tap a question.</p>
+  <input type="search" id="faqq" placeholder="Search the FAQ…" style="width:100%;height:40px;margin-bottom:16px">
+  <div class="faqsec"><h2 class="faqh">Getting started</h2><div class="card faq"><details><summary>What is Herb?</summary><p>A desktop in your browser: a web browser that goes through Herb’s proxy, games, Movies, Copperchat, Herb AI, cloud gaming and more. Nothing to install.</p></details><details><summary>How do I add Herb to my iPad or phone home screen?</summary><p>Open Herb in Safari, tap Share → Add to Home Screen. It then opens full-screen like an app. GeForce NOW and Xbox can be added the same way from their own pages (Games → Cloud).</p></details><details><summary>Which layout should I use?</summary><p>Settings → Interface. Desktop has windows and a taskbar, Standard proxy is one full-window app with a top bar, and iPadOS style is a home screen with a dock. Changing it reloads Herb.</p></details></div></div>
+  <div class="faqsec"><h2 class="faqh">Proxy &amp; websites</h2><div class="card faq"><details><summary>A website won’t load or looks broken.</summary><p>1) Press reload in the Web Browser. 2) Try the other engine: Settings → Proxy → Proxy engine (Scramjet is the default, Ultraviolet is the older one). 3) Settings → Proxy → Reset proxy, then reopen the app.</p></details><details><summary>It says no proxy server is reachable.</summary><p>Your network may be blocking Herb’s servers. Settings → Proxy → Re-check. If one server shows as working, pick it there. Some school or work Wi-Fi blocks everything except certain addresses; try a different network to confirm.</p></details><details><summary>Herb feels slow or the ping is high.</summary><p>Herb checks every server each minute and uses the fastest. The ping number in the corner is the time to reach the proxy server, so it depends mostly on your connection. Close other tabs that stream video, and avoid pinning a slow server in Settings → Proxy.</p></details><details><summary>I see an old version after an update.</summary><p>The proxy worker is cached. Settings → Proxy → Reset proxy. In the iPad home-screen app, also swipe the app closed and reopen it.</p></details><details><summary>I see a blank box or white square where a page should be.</summary><p>Scramjet couldn’t start in this browser. Reload once; if it stays, switch Settings → Proxy → Proxy engine to Ultraviolet. Clearing Herb’s website data (Safari settings → Advanced → Website Data) also fixes a stuck worker.</p></details><details><summary>Why can’t I log in to some sites?</summary><p>Sites with strict bot checks (Google sign-in, some banks) may refuse proxied logins. Try the other proxy engine. Never enter passwords you care about on a network you don’t trust.</p></details></div></div>
+  <div class="faqsec"><h2 class="faqh">Video</h2><div class="card faq"><details><summary>YouTube says “This video is unavailable”.</summary><p>YouTube blocks the cloud server Herb’s proxy runs on, so videos refuse to play. Pages and comments load, but the video itself can’t. Other video sites (TikTok, Vimeo, Twitch and normal MP4/HLS streams) do work.</p></details><details><summary>Movies only shows trailers / trailers won’t play.</summary><p>Movies uses TMDB for the catalogue and YouTube for trailers, so trailers hit the same YouTube block. Full movies are not offered.</p></details><details><summary>Netflix, Hulu or other streaming services won’t play.</summary><p>They load and you can sign in, but many of them block cloud-server addresses and require DRM that may not work through a proxy. Herb can’t get around that.</p></details></div></div>
+  <div class="faqsec"><h2 class="faqh">Cloud gaming</h2><div class="card faq"><details><summary>GeForce NOW or Xbox won’t sign in.</summary><p>Open Herb from the same address the cloud page uses (Safari blocks sign-ins in embedded pages from another address). If it’s still stuck, Settings → Proxy → Reset proxy and try again. A home-screen app keeps its own sign-in, so you sign in once inside it.</p></details><details><summary>“The game quit unexpectedly” or the stream stays black.</summary><p>Game video goes directly between you and the game servers over UDP; the proxy can’t carry it. If your network blocks that traffic (common on school Wi-Fi), the stream can’t start. Try another network or a phone hotspot.</p></details><details><summary>There’s a blurry bar over the clock and battery.</summary><p>Remove the cloud app from your home screen and add it again; the new version uses a solid black status bar.</p></details></div></div>
+  <div class="faqsec"><h2 class="faqh">Games</h2><div class="card faq"><details><summary>A game won’t load or stays black.</summary><p>Reload the window. Big games take a while the first time. If it’s still blank, the game file may be temporarily unavailable; try again later.</p></details><details><summary>Is my game progress saved?</summary><p>Most games save in your browser on this device. Clearing website data, using private browsing or another device starts fresh.</p></details></div></div>
+  <div class="faqsec"><h2 class="faqh">Appearance</h2><div class="card faq"><details><summary>My custom wallpaper doesn’t show.</summary><p>Settings → Desktop → Wallpaper → Image, then choose a picture. It’s stored at full quality on this device only, so each device needs its own. Very large photos (50 MP+) may be too big for iPad memory; use a screenshot-sized image if it fails.</p></details><details><summary>How do I get the colorful icons back?</summary><p>Settings → Appearance → Icon style → Colorful.</p></details><details><summary>Everything is too bright / too dark.</summary><p>Pick a different theme or accent color in Settings → Appearance, or turn off Glass blur and Fireflies for a flatter look.</p></details></div></div>
+  <div class="faqsec"><h2 class="faqh">Privacy &amp; account</h2><div class="card faq"><details><summary>What is the about:blank cloak and panic key?</summary><p>Settings → Privacy. The cloak reopens Herb inside an about:blank tab so the address bar shows nothing. The panic key instantly jumps to your panic URL.</p></details><details><summary>What does Herb store?</summary><p>Settings, wallpaper and game saves stay in your browser on this device. Signing in syncs your account data (for example Copperchat and app store items) through Herb’s database.</p></details><details><summary>How do I reset everything?</summary><p>Settings → About → Reset all settings. To also clear game saves and sign-ins, clear Herb’s website data in your browser settings.</p></details></div></div>
+  <p class="sub" id="faqnone" style="display:none">No answers match. Try other words.</p>
+ </section>
  <section id="s-about"><h1>About</h1><p class="sub">&nbsp;</p>
   <div class="card"><div class="about"><span id="alogo"></span><div><div class="t" style="font-size:18px">Herb</div><div class="d muted">A desktop in your browser · Ultraviolet + BareMux + Epoxy</div></div></div>
    <div class="row"><div><div class="t">Reset all settings</div><div class="d">Restores themes, taskbar and desktop options.</div></div><button class="btn ghost" id="reset">Reset</button></div></div></section>
@@ -98,14 +127,14 @@ section{display:none;max-width:620px}section.on{display:block}
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)}, S=HerbSettings, I=HerbIcons.glyph;
-var SECTIONS=[['interface','Interface','ui'],['appearance','Appearance','appearance'],['desktop','Desktop','apps'],['taskbar','Taskbar','settings'],['proxy','Proxy','proxy'],['browser','Browser','browser'],['privacy','Privacy','shield'],['about','About','info']];
+var SECTIONS=[['interface','Interface','ui'],['appearance','Appearance','appearance'],['desktop','Desktop','apps'],['taskbar','Taskbar','settings'],['proxy','Proxy','proxy'],['browser','Browser','browser'],['privacy','Privacy','shield'],['faq','Help & FAQ','search'],['about','About','info']];
 SECTIONS.forEach(function(s){var b=document.createElement('button');b.dataset.s=s[0];b.innerHTML=I(s[2],18)+s[1];b.onclick=function(){show(s[0])};$('nav').appendChild(b)});
 function show(id){document.querySelectorAll('section').forEach(function(e){e.classList.toggle('on',e.id==='s-'+id)});document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('on',b.dataset.s===id)})}
 function seg(id,key,opts){var box=$(id);function draw(){box.innerHTML='';opts.forEach(function(o){var b=document.createElement('button');b.textContent=o[1];b.className=S.get(key)===o[0]?'on':'';b.onclick=function(){S.set(key,o[0]);draw();if(key==='iconSize'||key==='taskbarSize')try{parent.HerbDesktop.layout()}catch(e){}};box.appendChild(b)})}draw()}
 // interface
 var UIS=[['desktop','Desktop','Windows, taskbar and start menu','<div class="w" style="left:14%;top:14%;width:46%;height:48%"></div><div class="w" style="left:44%;top:30%;width:42%;height:42%"></div><div class="b" style="left:0;right:0;bottom:0;height:10px"></div>'],
  ['standard','Standard proxy','One full-window app with a top nav','<div class="b" style="left:0;right:0;top:0;height:14px"></div><div class="a" style="left:8%;top:3px;width:12px;height:8px;background:#34d399"></div><div class="w" style="left:6%;right:6%;top:22px;bottom:8px"></div>'],
- ['ipad','iPadOS style','Home screen of icons and a dock','<div class="a" style="left:14%;top:12%;width:14%;height:20%;background:#60a5fa"></div><div class="a" style="left:36%;top:12%;width:14%;height:20%;background:#34d399"></div><div class="a" style="left:58%;top:12%;width:14%;height:20%;background:#fb923c"></div><div class="a" style="left:14%;top:42%;width:14%;height:20%;background:#a78bfa"></div><div class="a" style="left:36%;top:42%;width:14%;height:20%;background:#f472b6"></div><div class="b" style="left:22%;right:22%;bottom:6px;height:14px;border-radius:8px"></div>']];
+ ['ipad','iPadOS style','Home screen of icons and a dock','<div class="a" style="left:14%;top:12%;width:14%;height:20%;background:rgba(var(--accent-rgb),.45)"></div><div class="a" style="left:36%;top:12%;width:14%;height:20%;background:rgba(var(--accent-rgb),.45)"></div><div class="a" style="left:58%;top:12%;width:14%;height:20%;background:rgba(var(--accent-rgb),.45)"></div><div class="a" style="left:14%;top:42%;width:14%;height:20%;background:rgba(var(--accent-rgb),.45)"></div><div class="a" style="left:36%;top:42%;width:14%;height:20%;background:rgba(var(--accent-rgb),.45)"></div><div class="b" style="left:22%;right:22%;bottom:6px;height:14px;border-radius:8px"></div>']];
 function uis(){var box=$('uis');box.innerHTML='';UIS.forEach(function(u){var b=document.createElement('button');b.className='ui-card'+((S.get('ui')||'desktop')===u[0]?' on':'');b.innerHTML='<div class="mock">'+u[3]+'</div>'+u[1]+'<small>'+u[2]+'</small>';b.onclick=function(){if((S.get('ui')||'desktop')===u[0])return;S.set('ui',u[0]);uis()};box.appendChild(b)})}
 uis();
 $('tutbtn').onclick=function(){var ok=false;try{ok=parent.HerbDesktop.replayTutorial()}catch(e){}$('tutmsg').textContent=ok?'Started – look at the home screen.':'Switch to the iPadOS style above to see the tutorial.'};
@@ -120,12 +149,21 @@ seg('radius','winRadius',[['square','Square'],['soft','Soft'],['round','Round']]
 document.querySelectorAll('.sw').forEach(function(b){var k=b.dataset.k;b.classList.toggle('on',!!S.get(k));b.onclick=function(){var v=!S.get(k);S.set(k,v);b.classList.toggle('on',v)}});
 // desktop
 seg('wallmode','wallMode',[['theme','Theme'],['color','Color'],['image','Image']]);
-function wallRows(){var m=S.get('wallMode');$('r-wallcolor').style.display=m==='color'?'flex':'none';$('r-wallimg').style.display=m==='image'?'flex':'none'}
+function wallRows(){var m=S.get('wallMode');$('r-wallcolor').style.display=m==='color'?'flex':'none';$('r-wallimg').style.display=m==='image'?'flex':'none';$('r-wallfit').style.display=m==='image'?'flex':'none'}
 $('wallmode').addEventListener('click',function(){setTimeout(wallRows,0)});wallRows();
 $('wallcolor').value=S.get('wallColor');$('wallcolor').oninput=function(){S.set('wallColor',this.value)};
 $('wallpick').onclick=function(){$('wallfile').click()};
-$('wallfile').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){var sc=Math.min(1,1920/im.width),c=document.createElement('canvas');c.width=im.width*sc;c.height=im.height*sc;c.getContext('2d').drawImage(im,0,0,c.width,c.height);
-  try{localStorage.setItem('herb.wallimg',c.toDataURL('image/jpeg',.8));S.set('wallMode','image');seg('wallmode','wallMode',[['theme','Theme'],['color','Color'],['image','Image']]);wallRows();$('wallpick').textContent='Change…'}catch(e){alert('That image is too large to store. Try a smaller one.')}};im.src=r.result};r.readAsDataURL(f)};
+$('wallfile').onchange=function(){var f=this.files[0];if(!f)return;
+  if(!/^image\//.test(f.type)&&!/\.(heic|heif|avif|webp|png|jpe?g|gif|bmp)$/i.test(f.name)){alert('Please choose an image file.');return}
+  $('wallinfo').textContent='Saving…';
+  // keep the original file: no canvas, no resize, no JPEG re-encode
+  HerbSettings.wall.put(f).then(function(){try{localStorage.setItem('herb.wallver',String(Date.now()));localStorage.removeItem('herb.wallimg')}catch(e){}
+    S.set('wallMode','image');seg('wallmode','wallMode',[['theme','Theme'],['color','Color'],['image','Image']]);wallRows();$('wallpick').textContent='Change…';wallInfo()},
+    function(e){$('wallinfo').textContent='Couldn’t save the image ('+(e&&e.message||'storage blocked')+').'})};
+function wallInfo(){HerbSettings.wall.get().then(function(b){if(!b)return;var u=URL.createObjectURL(b),im=new Image();im.onload=function(){$('wallinfo').textContent='Full quality: '+im.naturalWidth+' × '+im.naturalHeight+', '+(b.size/1048576).toFixed(1)+' MB, stored on this device.';URL.revokeObjectURL(u)};im.onerror=function(){$('wallinfo').textContent='Saved ('+(b.size/1048576).toFixed(1)+' MB), but this browser can’t display this image format.';URL.revokeObjectURL(u)};im.src=u})}
+wallInfo();
+seg('wallfit','wallFit',[['cover','Fill'],['contain','Fit'],['center','Center'],['stretch','Stretch']]);
+seg('iconstyle','iconStyle',[['glow','Minimal'],['color','Colorful']]);
 seg('iconsize','iconSize',[['small','Small'],['medium','Medium'],['large','Large']]);
 $('reseticons').onclick=function(){try{localStorage.removeItem('herb.iconpos')}catch(e){}try{parent.HerbDesktop.layout()}catch(e){}};
 // taskbar
@@ -136,7 +174,7 @@ $('engine').value=S.get('search');$('engine').onchange=function(){S.set('search'
 [['pk','panicKey'],['pu','panicUrl']].forEach(function(p){var e=$(p[0]);e.value=S.get(p[1])||'';e.onchange=function(){S.set(p[1],e.value.trim())}});
 $('cloak').onclick=function(){try{parent.HerbDesktop.cloak()}catch(e){}};
 $('alogo').innerHTML=HerbIcons.tile('settings',54,['#34d399','#0d9488']).replace(/<svg[\s\S]*<\/svg>/,I('leaf',30,1.7));
-$('reset').onclick=function(){if(confirm('Reset all Herb settings?')){S.reset();try{localStorage.removeItem('herb.iconpos');localStorage.removeItem('herb.wallimg')}catch(e){}location.reload()}};
+$('reset').onclick=function(){if(confirm('Reset all Herb settings?')){S.reset();try{localStorage.removeItem('herb.iconpos');localStorage.removeItem('herb.wallimg')}catch(e){}HerbSettings.wall.clear();location.reload()}};
 // proxy (read-only status – Herb picks the server itself)
 function servers(){var st=HerbWisp.status(),box=$('servers');box.innerHTML='';
  var pin=HerbWisp.pinned(),L=HerbWisp.list(),autoRow=document.createElement('div');autoRow.className='server';
@@ -178,6 +216,8 @@ try{$('peng-sel').value=localStorage.getItem('herb.proxyEngine')==='uv'?'uv':'sj
 $('peng-sel').onchange=function(){try{localStorage.setItem('herb.proxyEngine',this.value);sessionStorage.removeItem('herb.engine.fallback');$('pengmsg').textContent='Saved – '+(this.value==='uv'?'Ultraviolet':'Scramjet')+' will be used the next time a page opens (reload open windows).'}catch(e){}};
 try{$('engine-sel').value=localStorage.getItem('herb.transport')||'libcurl'}catch(e){}
 $('engine-sel').onchange=function(){try{localStorage.setItem('herb.transport',this.value);$('engmsg').textContent='Saved – reload the Web Browser window to use '+this.value+'.'}catch(e){}};
+// FAQ search
+$('faqq').oninput=function(){var q=this.value.trim().toLowerCase(),any=false;document.querySelectorAll('.faqsec').forEach(function(sec){var vis=0;sec.querySelectorAll('details').forEach(function(d){var m=!q||d.textContent.toLowerCase().indexOf(q)>=0;d.style.display=m?'':'none';if(m){vis++;if(q)d.open=true}});sec.style.display=vis?'':'none';if(vis)any=true});$('faqnone').style.display=any?'none':'block'};
 var sec=new URLSearchParams(location.search).get('section')||'interface';show(sec);
 window.addEventListener('message',function(e){if(e.origin===location.origin&&e.data&&e.data.herb==='nav'&&e.data.section)show(e.data.section)});
 })();

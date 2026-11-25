@@ -202,11 +202,29 @@
   addEventListener('keydown', function (e) { var k = S.get('panicKey'); if (k && e.key === k && !/input|textarea/i.test((e.target.tagName || ''))) location.href = S.get('panicUrl') || 'https://classroom.google.com'; });
 
   // ---------- wallpaper ----------
-  function applyWallpaper() {
-    var s = S.all(); D.style.background = '';
-    if (s.wallMode === 'color') D.style.background = s.wallColor;
-    else if (s.wallMode === 'image') { var img = null; try { img = localStorage.getItem('herb.wallimg'); } catch (e) {} if (img) D.style.background = 'url("' + img + '") center/cover no-repeat'; }
+  // Custom images come from IndexedDB as the original file (full resolution, no recompression) and are shown through an object URL.
+  var wallUrl = null, wallVer = null;
+  var FITS = { cover: 'cover', contain: 'contain', center: 'auto', stretch: '100% 100%' };
+  function paintImage(url, fit) {
+    D.classList.add('has-wall');
+    D.style.backgroundImage = 'url("' + url + '")'; D.style.backgroundPosition = 'center'; D.style.backgroundRepeat = 'no-repeat';
+    D.style.backgroundSize = FITS[fit] || 'cover';
   }
+  function applyWallpaper() {
+    var s = S.all(); D.style.background = ''; D.classList.remove('has-wall');
+    if (s.wallMode === 'color') D.style.background = s.wallColor;
+    else if (s.wallMode === 'image') {
+      var v = null; try { v = localStorage.getItem('herb.wallver'); } catch (e) {}
+      if (wallUrl && v === wallVer) return paintImage(wallUrl, s.wallFit);
+      HerbSettings.wall.get().then(function (blob) {
+        if (S.get('wallMode') !== 'image') return;
+        if (blob) { if (wallUrl) URL.revokeObjectURL(wallUrl); wallUrl = URL.createObjectURL(blob); wallVer = v; paintImage(wallUrl, S.get('wallFit')); return; }
+        var old = null; try { old = localStorage.getItem('herb.wallimg'); } catch (e) {}   // wallpapers saved by older versions
+        if (old) paintImage(old, S.get('wallFit'));
+      });
+    }
+  }
+  addEventListener('storage', function (e) { if (e.key === 'herb.wallver') applyWallpaper(); });
 
   // ---------- proxy status + clock ----------
   function srvNum(url) { try { var l = HerbWisp.list(); for (var i = 0; i < l.length; i++) if (l[i].url === url) return '#' + (i + 1); } catch (e) {} return '#?'; }

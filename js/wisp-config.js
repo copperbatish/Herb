@@ -43,9 +43,14 @@
   }
   // A server you picked in Settings is used whenever it answers; if it is down Herb falls back to the fastest working one until it is back.
   function pinned() { var p = get(K_PIN) || ''; return p && H.list().some(function (x) { return x.url === p; }) ? p : ''; }
-  function pickBest(results) {
+  // Switching servers tears down every open connection (pages, videos, games), which feels far slower than a few ms of extra ping.
+  // So the current server is kept unless another one is clearly faster (25% and 20 ms), using smoothed timings.
+  function pickBest(results, prev) {
     var pin = pinned(); if (pin && results[pin] && results[pin].ok) return pin;
-    var best = null; for (var u in results) if (results[u].ok && (!best || results[u].ms < results[best].ms)) best = u; return best;
+    var best = null; for (var u in results) if (results[u].ok && (!best || results[u].ms < results[best].ms)) best = u;
+    var cur = prev && prev.best;
+    if (best && cur && cur !== best && results[cur] && results[cur].ok && results[cur].ms <= results[best].ms * 1.25 + 20) return cur;
+    return best;
   }
   var running = null;
   var H = {
@@ -64,9 +69,14 @@
     check: function () {
       if (running) return running;
       running = fetchTunnel().then(function () { var list = H.list(); return Promise.all(list.map(function (s) { return probe(s.url).then(function (r) { return [s.url, r]; }); })); }).then(function (pairs) {
-        var results = {}, best = null;
-        pairs.forEach(function (p) { results[p[0]] = p[1]; });
-        best = pickBest(results);
+        var results = {}, best = null, prev = status();
+        // smooth each server's time with the previous checks (one slow handshake shouldn't move you to another server)
+        pairs.forEach(function (p) {
+          var r = p[1], o = prev && prev.results && prev.results[p[0]];
+          if (r.ok && o && o.ok && Date.now() - prev.ts < 10 * 60 * 1000) r = { ok: true, ms: Math.round(o.ms * 0.6 + r.ms * 0.4), raw: r.ms };
+          results[p[0]] = r;
+        });
+        best = pickBest(results, prev);
         var st = { ts: Date.now(), results: results, best: best };
         set(K_STATUS, JSON.stringify(st));
         window.dispatchEvent(new CustomEvent('herb:wisp-status', { detail: st }));

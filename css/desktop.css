@@ -220,3 +220,36 @@ body.ui-standard .tbbtn[data-app=ai]{order:2}
 @media (display-mode: standalone){#desktop{top:env(safe-area-inset-top);bottom:env(safe-area-inset-bottom)}}
 
 
+
+/* ===== Minimal + glow (2026-11 overhaul) ===== */
+html,body{background:#040706}
+.moon{width:520px;height:520px;top:-300px;right:4%;opacity:1;background:radial-gradient(circle,rgba(var(--accent-rgb),.32) 0%,rgba(var(--accent-rgb),.12) 32%,transparent 68%)!important;box-shadow:none!important;filter:blur(8px);pointer-events:none}
+html.th-snow .moon{background:radial-gradient(circle,rgba(255,255,255,.9),transparent 65%)!important}
+.hill{opacity:.85}
+.firefly{width:3px;height:3px;opacity:.7;box-shadow:0 0 8px 2px rgba(var(--accent-rgb),.55)}
+.dicon{font-weight:500;font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,.8);border-radius:12px}
+.dicon:hover{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.06)}
+.dicon:hover .hicon,#ipdock button:hover .hicon,.sm-item:hover .hicon{border-color:rgba(var(--accent-rgb),.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 24px rgba(var(--accent-rgb),.3)}
+.dicon.sel{background:rgba(var(--accent-rgb),.1);border-color:rgba(var(--accent-rgb),.35)}
+#taskbar{background:rgba(6,9,8,.55)!important;backdrop-filter:blur(28px) saturate(1.4);-webkit-backdrop-filter:blur(28px) saturate(1.4);border-top:1px solid rgba(255,255,255,.06)!important}
+.tbbtn:hover,.tray:hover{background:rgba(255,255,255,.06)}
+.tbbtn.active{background:rgba(var(--accent-rgb),.08)}
+.tbbtn.active .run{box-shadow:0 0 10px rgba(var(--accent-rgb),.9)}
+#start,#ctx{background:rgba(8,12,10,.78)!important;backdrop-filter:blur(30px) saturate(1.4);-webkit-backdrop-filter:blur(30px) saturate(1.4);border:1px solid rgba(255,255,255,.08)!important;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 40px rgba(var(--accent-rgb),.06)!important}
+.sm-item:hover,#ctx button:hover{background:rgba(var(--accent-rgb),.1)}
+.win{border:1px solid rgba(255,255,255,.08);box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.win.focus{border-color:rgba(var(--accent-rgb),.32);box-shadow:0 0 0 1px rgba(var(--accent-rgb),.08),0 28px 80px rgba(0,0,0,.65),0 0 50px rgba(var(--accent-rgb),.09)}
+.win .tb{background:rgba(255,255,255,.025);border-bottom:1px solid rgba(255,255,255,.05);height:36px;font-weight:500;color:var(--muted)}
+.win.focus .tb{color:var(--text)}
+.wc button:hover{background:rgba(255,255,255,.07)}
+.sdot.ok{box-shadow:0 0 10px #22c55e,0 0 2px #22c55e}
+#ipdock{background:rgba(8,12,10,.5)!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 40px rgba(var(--accent-rgb),.06)!important}
+#ipdock .hicon{box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 8px 22px rgba(0,0,0,.45)!important}
+#ipdock button:hover{transform:translateY(-3px)}
+body.ui-ipad .dicon{font-weight:500;font-size:13px}
+body.ui-ipad .win{border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 60px rgba(var(--accent-rgb),.07)}
+#tut{border:1px solid rgba(var(--accent-rgb),.25)!important;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 40px rgba(var(--accent-rgb),.1)!important}
+#tut button.primary,#acct .go:not(.alt),#acct .seg button.on{box-shadow:0 0 20px rgba(var(--accent-rgb),.35)}
+#acct .box{background:rgba(9,13,11,.92);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 50px rgba(var(--accent-rgb),.08)}
+/* custom wallpaper (see js/desktop.js): a real <img>-quality background, never recompressed */
+#desktop.has-wall{background-color:#000!important}

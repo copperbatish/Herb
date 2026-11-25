@@ -9,7 +9,7 @@
     ui: 'desktop',
     // desktop + taskbar
     taskbarPos: 'bottom', taskbarSize: 'medium', taskbarAlign: 'left', taskbarAutohide: false, showClock: true, showDate: true, showTray: true,
-    showIcons: true, iconSize: 'medium', iconLabels: true, scene: true, wallMode: 'theme', wallColor: '#0b1c15', winRadius: 'square',
+    showIcons: true, iconSize: 'medium', iconLabels: true, scene: true, wallMode: 'theme', wallColor: '#0b1c15', wallFit: 'cover', winRadius: 'round', iconStyle: 'glow',
   };
   var THEMES = [
     ['emerald', 'Emerald Night'], ['dusk', 'Dusk'], ['ocean', 'Deep Ocean'],
@@ -37,6 +37,7 @@
     r.setAttribute('data-iconsize', s.iconSize); r.setAttribute('data-radius', s.winRadius);
     r.classList.toggle('tb-autohide', !!s.taskbarAutohide && s.ui === 'desktop'); r.classList.toggle('no-icons', !s.showIcons); r.classList.toggle('no-labels', !s.iconLabels);
     r.classList.toggle('no-date', !s.showDate); r.classList.toggle('no-clock', !s.showClock); r.classList.toggle('no-tray', !s.showTray);
+    r.classList.toggle('icons-color', s.iconStyle === 'color');
     r.classList.toggle('no-scene', !s.scene || s.wallMode !== 'theme');
   }
   var H = {
@@ -49,6 +50,25 @@
     },
     reset: function () { try { localStorage.removeItem(KEY); } catch (e) {} apply(); try { if (parent !== window && parent.HerbDesktop) parent.HerbDesktop.apply(); } catch (e) {} },
     apply: apply,
+    // Custom wallpaper: the original file, kept in IndexedDB at full quality (never resized or recompressed).
+    wall: {
+      db: function () {
+        return new Promise(function (ok, no) {
+          var r = indexedDB.open('herb-wall', 1);
+          r.onupgradeneeded = function () { r.result.createObjectStore('img'); };
+          r.onsuccess = function () { ok(r.result); }; r.onerror = function () { no(r.error); };
+        });
+      },
+      // stored as raw bytes + type: Safari can refuse to put File/Blob objects in IndexedDB, but always accepts an ArrayBuffer
+      put: function (blob) {
+        return blob.arrayBuffer().then(function (buf) { return H.wall.db().then(function (db) { return new Promise(function (ok, no) {
+          var t = db.transaction('img', 'readwrite'); t.objectStore('img').put({ type: blob.type || 'image/jpeg', name: blob.name || '', buf: buf }, 'current');
+          t.oncomplete = function () { ok(); }; t.onerror = function () { no(t.error || new Error('storage blocked')); }; t.onabort = function () { no(t.error || new Error('storage full or blocked')); };
+        }); }); });
+      },
+      get: function () { return H.wall.db().then(function (db) { return new Promise(function (ok) { var q = db.transaction('img').objectStore('img').get('current'); q.onsuccess = function () { var v = q.result; ok(!v ? null : v.buf ? new Blob([v.buf], { type: v.type }) : v); }; q.onerror = function () { ok(null); }; }); }).catch(function () { return null; }); },
+      clear: function () { return H.wall.db().then(function (db) { return new Promise(function (ok) { var t = db.transaction('img', 'readwrite'); t.objectStore('img').delete('current'); t.oncomplete = ok; t.onerror = ok; }); }).catch(function () {}); },
+    },
   };
   window.HerbSettings = H; apply();
   window.addEventListener('storage', function (e) { if (e.key === KEY) apply(); });
