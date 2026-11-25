@@ -98,6 +98,16 @@ function launch(){
     return HerbProxy.open(frame,site.url,{engine:'sj'}).then(function(){dline('engine','Scramjet','')});
   }).catch(function(e){$('stage').innerHTML='<div id="msg"><div>Couldn’t start Scramjet: '+String(e.message).replace(/</g,'&lt;')+'<br><br><button onclick="location.reload()" style="padding:8px 16px;border-radius:8px">Try again</button></div></div>'});
 }
+// The site's own console lines about its connection ([Socket], [RTC], WebRTC, ICE…) go into the diagnostics log, for every frame it opens.
+var CON_RE=/\[(Socket|RTC|WebRTC|Signal|ICE|Peer|Stream|Join)|webrtc|ice ?candidate|offer|answer|signal|socket|join|connection failed|unable to|timeout/i;
+function hookConsole(w,depth){
+  if(!w||depth>4)return;try{
+    if(!w.__herbCon&&w.console){w.__herbCon=1;['log','info','warn','error'].forEach(function(k){var o=w.console[k];w.console[k]=function(){try{var t=[].map.call(arguments,function(a){try{return typeof a==='string'?a:JSON.stringify(a)}catch(e){return String(a)}}).join(' ');if(CON_RE.test(t))dline('site-'+k,t.slice(0,300),'')}catch(e){}return o.apply(this,arguments)}});
+      w.addEventListener('error',function(e){if(e.message&&e.message!=='Script error.')dline('site-error',String(e.message).slice(0,200),'')});}
+    for(var i=0;i<w.frames.length;i++)hookConsole(w.frames[i],depth+1);
+  }catch(e){}
+}
+setInterval(function(){if(frame)try{hookConsole(frame.contentWindow,0)}catch(e){}},1000);
 $('reload').onclick=function(){if(frame)HerbProxy.open(frame,site.url,{engine:'sj'})};
 $('full').onclick=function(){if(frame&&frame.requestFullscreen)frame.requestFullscreen()};
 launch();
