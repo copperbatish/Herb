@@ -3,7 +3,7 @@
 <link rel="icon" href="/images/logo/herb.svg" type="image/svg+xml"><title>Cloud Games</title>
 <script>
 // Installable web app: "Add to Home Screen" gives a full-screen GeForce NOW / Xbox app, like the real ones.
-(function(){var M={geforcenow:['GeForce NOW','gfn'],xbox:['Xbox','xbox'],cloudmoon:['CloudMoon','cloudmoon']},k=new URLSearchParams(location.search).get('site');if(!M[k])k='geforcenow';var n=M[k][0],ic=M[k][1],h=document.head;
+(function(){var M={geforcenow:['GeForce NOW','gfn'],xbox:['Xbox','xbox']},k=new URLSearchParams(location.search).get('site');if(!M[k])k='geforcenow';var n=M[k][0],ic=M[k][1],h=document.head;
  function add(t,a){var e=document.createElement(t);for(var x in a)e.setAttribute(x,a[x]);h.appendChild(e)}
  add('link',{rel:'manifest',href:'/apps/cloud-'+k+'.json'});add('link',{rel:'apple-touch-icon',href:'/images/cloud/'+ic+'-180.png'});
  add('meta',{name:'apple-mobile-web-app-capable',content:'yes'});add('meta',{name:'mobile-web-app-capable',content:'yes'});
@@ -27,7 +27,7 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000
 <body>
 <script>if(/[?&]debug=1/.test(location.search))document.body.className='dbg'</script>
 <div id="bar"><span class="t" id="title">Cloud Games</span>
- <button id="s-geforcenow" data-site="geforcenow">GeForce NOW</button><button id="s-xbox" data-site="xbox">Xbox</button><button id="s-cloudmoon" data-site="cloudmoon">CloudMoon</button>
+ <button id="s-geforcenow" data-site="geforcenow">GeForce NOW</button><button id="s-xbox" data-site="xbox">Xbox</button>
  <span id="pv" style="font-size:11px;opacity:.6">proxy</span>
  <button id="eng" title="Switch the web-proxy engine (Scramjet or Ultraviolet)">Engine</button><button id="reload">Reload</button><button id="full">Fullscreen</button></div>
 <div id="note"></div>
@@ -43,8 +43,7 @@ var $=function(i){return document.getElementById(i)};
 // Cloud gaming sites that can be launched. Add more here.
 var SITES={
   geforcenow:{name:'GeForce NOW',url:'https://play.geforcenow.com/'},
-  xbox:{name:'Xbox Cloud Gaming',url:'https://play.xbox.com/'},
-  cloudmoon:{name:'CloudMoon',url:'https://web.cloudmoonapp.com/'}
+  xbox:{name:'Xbox Cloud Gaming',url:'https://play.xbox.com/'}
 };
 var key=new URLSearchParams(location.search).get('site')||'geforcenow', site=SITES[key]||SITES.geforcenow, frame=null;
 if(!SITES[key])key='geforcenow';
@@ -68,7 +67,7 @@ $('dcopy').onclick=function(){var t=$('dlog').textContent;try{navigator.clipboar
 function netcheck(){
   var web=[['this page ('+location.hostname.slice(0,28)+')',location.origin+'/'],['jsDelivr','https://cdn.jsdelivr.net/'],['raw.githubusercontent','https://raw.githubusercontent.com/'],
     ['trycloudflare.com','https://trycloudflare.com/'],['NVIDIA login','https://login.nvidia.com/'],['GeForce NOW','https://play.geforcenow.com/'],['nvidiagrid.net (game servers)','https://img.nvidiagrid.net/'],
-    ['Xbox Cloud Gaming','https://play.xbox.com/'],['Microsoft login','https://login.live.com/'],['Xbox game servers (xboxlive.com)','https://xboxlive.com/'],['CloudMoon','https://web.cloudmoonapp.com/'],['CloudMoon API','https://api.prod.cloudmoonapp.com/'],['google.com','https://www.google.com/']];
+    ['Xbox Cloud Gaming','https://play.xbox.com/'],['Microsoft login','https://login.live.com/'],['Xbox game servers (xboxlive.com)','https://xboxlive.com/'],['google.com','https://www.google.com/']];
   var stun=[['STUN Cloudflare udp 3478','stun:stun.cloudflare.com:3478'],['STUN Google udp 19302','stun:stun.l.google.com:19302']];
   dline('netcheck','starting ('+web.length+' web addresses, '+stun.length+' UDP checks)','');
   web.forEach(function(w){var t0=Date.now(),c=typeof AbortController==='function'?new AbortController():null,tm=setTimeout(function(){c&&c.abort()},7000);
@@ -89,28 +88,15 @@ function launch(){
   try{void parent.location.href}catch(e){
     if(window.top!==window){$('note').style.display='block';$('note').innerHTML='<b>Sign-in may not work here.</b> Herb was opened from a different address than this app, and Safari blocks sign-ins in that case. Open Herb from <a href="'+location.origin+'/" target="_blank" style="color:#fde68a">'+location.origin+'</a> instead.'}
   }
-  var eng=/[?&]engine=uv/.test(location.search)?'uv':'sj';
+  var eng='sj';
   Promise.race([HerbProxy.init(),new Promise(function(_,no){setTimeout(function(){no(new Error('proxy start timed out'))},20000)})]).catch(function(e){dline('proxy','init: '+e.message,'')}).then(function(){
     frame=document.createElement('iframe');
     frame.setAttribute('allow','fullscreen; gamepad; autoplay; clipboard-read; clipboard-write; pointer-lock; microphone; camera'); frame.allowFullscreen=true;
     $('stage').innerHTML='';$('stage').appendChild(frame);
     var f0=frame;
-    return (eng==='uv'?HerbProxy.open(frame,site.url,{engine:'uv'}):HerbProxy.open(frame,site.url,{engine:'sj'})).then(function(){dline('engine',eng==='uv'?'Ultraviolet':'Scramjet','')});
+    return HerbProxy.open(frame,site.url,{engine:'sj'}).then(function(){dline('engine','Scramjet','')});
   }).catch(function(e){$('stage').innerHTML='<div id="msg"><div>Couldn’t start Scramjet: '+String(e.message).replace(/</g,'&lt;')+'<br><br><button onclick="location.reload()" style="padding:8px 16px;border-radius:8px">Try again</button></div></div>'});
 }
-// The site's own console lines about its connection ([Socket], [RTC], WebRTC, ICE…) go into the diagnostics log, for every frame it opens.
-var CON_RE=/\[(Socket|RTC|WebRTC|Signal|ICE|Peer|Stream|Join)|webrtc|ice ?candidate|offer|answer|signal|socket|join|connection failed|unable to|timeout/i;
-function hookConsole(w,depth){
-  if(!w||depth>4)return;try{
-    if(!w.__herbCon&&w.console){w.__herbCon=1;['log','info','warn','error'].forEach(function(k){var o=w.console[k];w.console[k]=function(){try{var t=[].map.call(arguments,function(a){try{return typeof a==='string'?a:JSON.stringify(a)}catch(e){return String(a)}}).join(' ');if(/html-load\.cc/.test(t))return o.apply(w.console,arguments);if(CON_RE.test(t))dline('site-'+k,t.slice(0,/^\[trace/.test(t)?4000:400),'')}catch(e){}return o.apply(w.console,arguments)}});
-      w.addEventListener('error',function(e){if(e.message&&e.message!=='Script error.'&&!/html-load\.cc/.test(String(e.error&&e.error.stack)))dline('site-error',String(e.message).slice(0,160)+(e.error&&e.error.stack?'  @ '+String(e.error.stack).split('\n').slice(1,4).map(function(x){return x.trim().replace(/https?:\/\/[^ )]*\/(sj|uv)\/[^ )]*?\/([^/ )]+)(?=[:)])/,'$2')}).join(' < ').slice(0,260):''),'')});
-      w.addEventListener('unhandledrejection',function(e){var r=e.reason;dline('site-reject',String(r&&r.message||r).slice(0,160)+(r&&r.stack?'  @ '+String(r.stack).split('\n').slice(0,3).join(' < ').slice(0,240):''),'')});}
-    if(depth<1)for(var i=0;i<Math.min(w.frames.length,6);i++){try{if(w.frames[i].location.origin===location.origin)hookConsole(w.frames[i],depth+1)}catch(e){}}
-  }catch(e){}
-}
-// only in debug mode (…&debug=1), and light: the app's own window (re-hooked right after each navigation) plus same-origin child frames, max 6
-var lastDoc=null;
-if(document.body.className==='dbg')setInterval(function(){if(!frame)return;try{var w=frame.contentWindow,d=w&&w.document;if(d&&d!==lastDoc){lastDoc=d;w.__herbCon=0}hookConsole(w,0)}catch(e){}},250);
 $('reload').onclick=function(){if(frame)HerbProxy.open(frame,site.url,{engine:'sj'})};
 $('full').onclick=function(){if(frame&&frame.requestFullscreen)frame.requestFullscreen()};
 launch();

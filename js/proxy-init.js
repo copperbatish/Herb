@@ -94,7 +94,7 @@
     open: function (iframe, url, opts) {
       var force = opts && opts.engine === 'sj';   // force Scramjet: no fallback to Ultraviolet
       var uv = function () { return HerbProxy.init().then(function () { iframe.src = __uv$config.prefix + __uv$config.encodeUrl(url); return 'uv'; }); };
-      if ((opts && opts.engine === 'uv') || (!force && HerbProxy.engine() !== 'sj')) return uv();
+      if (!force && HerbProxy.engine() !== 'sj') return uv();
       return loadSj().then(function () { return window.HerbScramjet.start(iframe, url); }).then(function () { return 'sj'; }, function (e) {
         if (force) throw e;
         try { sessionStorage.setItem('herb.engine.fallback', 'uv'); } catch (x) {}

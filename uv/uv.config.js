@@ -248,7 +248,7 @@ if (TURN.api.length) {
     });
 }
 
-__herbInject.push({ host: '(^|\\.)(geforcenow\\.com|nvidiagrid\\.net|nvidia\\.com|xbox\\.com|xboxlive\\.com|microsoft\\.com|cloudmoonapp\\.com)$', injectTo: 'head', html: '<script>(' + herbRtcDiag.toString() + ')();</script>' });
+__herbInject.push({ host: '(^|\\.)(geforcenow\\.com|nvidiagrid\\.net|nvidia\\.com|xbox\\.com|xboxlive\\.com|microsoft\\.com)$', injectTo: 'head', html: '<script>(' + herbRtcDiag.toString() + ')();</script>' });
 
 self.__uv$config = {
     prefix: '/uv/service/',
