@@ -1,0 +1,16 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>frame escape test</title></head><body>
+<p>Herb self-test: pages inside Herb's frame should not be able to replace the whole tab.</p>
+<form id="f" method="GET" action="https://example.org/" target="_top"><button id="b" type="submit">form</button></form>
+<a id="a" href="https://example.org/" target="_top">link</a>
+<script>
+var how = (location.hash || '').slice(1);
+setTimeout(function () {
+  if (how === 'submit') document.getElementById('f').submit();
+  if (how === 'button') document.getElementById('b').click();
+  if (how === 'link') document.getElementById('a').click();
+  if (how === 'open') window.open('https://example.org/', '_top');
+  if (how === 'top') top.location.href = 'https://example.org/';
+  if (how === 'topreplace') window.top.location.replace('https://example.org/');
+  if (how === 'parent') parent.location = 'https://example.org/';
+}, 400);
+</script></body></html>
