@@ -15,6 +15,23 @@
     if (w.state !== 'activated') await tmo(new Promise(function (ok) { var t = setInterval(function () { if (reg.active && reg.active.state === 'activated' && !reg.installing && !reg.waiting) { clearInterval(t); ok(); } }, 100); }), 15000, 'sw activate');
     return reg.active || w;
   }
+  // Keep pages inside Herb's frame: links, forms and window.open aimed at "_top" (Microsoft sign-in does this after the password)
+  // would otherwise replace the whole Herb tab. Runs in every page of the frame, right before the page's own scripts.
+  function contain(f, iframe) {
+    try {
+      var S = window.$scramjet; if (!S || !S.Tap || !f.hooks || !f.hooks.init) return;
+      S.Tap.tap(f.hooks.init.post, function (ctx) {
+        var w = ctx.window, name = ctx.isTopLevel ? '_self' : '_parent';   // Scramjet blanks window names, so aim at the frame itself (or its proxied parent)
+        function bad(t) { t = String(t || '').toLowerCase(); return t === '_top' || (t === '_parent' && ctx.isTopLevel); }
+        function fix(el) { try { if (el && bad(el.getAttribute('target'))) el.setAttribute('target', name); } catch (e) {} }
+        w.addEventListener('submit', function (e) { fix(e.target); }, true);
+        w.addEventListener('click', function (e) { var a = e.target && e.target.closest && e.target.closest('a[target],area[target]'); if (a) fix(a); }, true);
+        var P = w.HTMLFormElement && w.HTMLFormElement.prototype;
+        if (P) ['submit', 'requestSubmit'].forEach(function (k) { var o = P[k]; if (o) P[k] = function () { fix(this); return o.apply(this, arguments); }; });
+        var op = w.open; if (op) w.open = function (u, t) { var a = [].slice.call(arguments); if (bad(t)) a[1] = name; return op.apply(this, a); };
+      }, new S.Plugin('herb-contain'));
+    } catch (e) { console.warn('Herb: could not add frame containment', e); }
+  }
   function init() { if (!initP) initP = init1().catch(function (e) { initP = null; throw e; }); return initP; }
   async function init1() {
     if (ctl) return ctl;
@@ -53,6 +70,6 @@
   }
   window.HerbScramjet = {
     warm: function () { return init(); },
-    start: async function (iframe, url) { var c = await init(); var f = frames.get(iframe); if (!f) { f = c.createFrame(iframe); frames.set(iframe, f); } f.go(url); return f; },
+    start: async function (iframe, url) { var c = await init(); var f = frames.get(iframe); if (!f) { f = c.createFrame(iframe); frames.set(iframe, f); contain(f, iframe); } f.go(url); return f; },
   };
 })();
