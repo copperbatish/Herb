@@ -89,21 +89,22 @@ function launch(){
   try{void parent.location.href}catch(e){
     if(window.top!==window){$('note').style.display='block';$('note').innerHTML='<b>Sign-in may not work here.</b> Herb was opened from a different address than this app, and Safari blocks sign-ins in that case. Open Herb from <a href="'+location.origin+'/" target="_blank" style="color:#fde68a">'+location.origin+'</a> instead.'}
   }
-  var eng='sj';
+  var eng=/[?&]engine=uv/.test(location.search)?'uv':'sj';
   Promise.race([HerbProxy.init(),new Promise(function(_,no){setTimeout(function(){no(new Error('proxy start timed out'))},20000)})]).catch(function(e){dline('proxy','init: '+e.message,'')}).then(function(){
     frame=document.createElement('iframe');
     frame.setAttribute('allow','fullscreen; gamepad; autoplay; clipboard-read; clipboard-write; pointer-lock; microphone; camera'); frame.allowFullscreen=true;
     $('stage').innerHTML='';$('stage').appendChild(frame);
     var f0=frame;
-    return HerbProxy.open(frame,site.url,{engine:'sj'}).then(function(){dline('engine','Scramjet','')});
+    return (eng==='uv'?HerbProxy.open(frame,site.url,{engine:'uv'}):HerbProxy.open(frame,site.url,{engine:'sj'})).then(function(){dline('engine',eng==='uv'?'Ultraviolet':'Scramjet','')});
   }).catch(function(e){$('stage').innerHTML='<div id="msg"><div>Couldn’t start Scramjet: '+String(e.message).replace(/</g,'&lt;')+'<br><br><button onclick="location.reload()" style="padding:8px 16px;border-radius:8px">Try again</button></div></div>'});
 }
 // The site's own console lines about its connection ([Socket], [RTC], WebRTC, ICE…) go into the diagnostics log, for every frame it opens.
 var CON_RE=/\[(Socket|RTC|WebRTC|Signal|ICE|Peer|Stream|Join)|webrtc|ice ?candidate|offer|answer|signal|socket|join|connection failed|unable to|timeout/i;
 function hookConsole(w,depth){
   if(!w||depth>4)return;try{
-    if(!w.__herbCon&&w.console){w.__herbCon=1;['log','info','warn','error'].forEach(function(k){var o=w.console[k];w.console[k]=function(){try{var t=[].map.call(arguments,function(a){try{return typeof a==='string'?a:JSON.stringify(a)}catch(e){return String(a)}}).join(' ');if(CON_RE.test(t))dline('site-'+k,t.slice(0,300),'')}catch(e){}return o.apply(this,arguments)}});
-      w.addEventListener('error',function(e){if(e.message&&e.message!=='Script error.')dline('site-error',String(e.message).slice(0,200),'')});}
+    if(!w.__herbCon&&w.console){w.__herbCon=1;['log','info','warn','error'].forEach(function(k){var o=w.console[k];w.console[k]=function(){try{var t=[].map.call(arguments,function(a){try{return typeof a==='string'?a:JSON.stringify(a)}catch(e){return String(a)}}).join(' ');if(CON_RE.test(t))dline('site-'+k,t.slice(0,300),'')}catch(e){}return o.apply(w.console,arguments)}});
+      w.addEventListener('error',function(e){if(e.message&&e.message!=='Script error.')dline('site-error',String(e.message).slice(0,160)+(e.error&&e.error.stack?'  @ '+String(e.error.stack).split('\n').slice(1,4).map(function(x){return x.trim().replace(/https?:\/\/[^ )]*\/(sj|uv)\/[^ )]*?\/([^/ )]+)(?=[:)])/,'$2')}).join(' < ').slice(0,260):''),'')});
+      w.addEventListener('unhandledrejection',function(e){var r=e.reason;dline('site-reject',String(r&&r.message||r).slice(0,160)+(r&&r.stack?'  @ '+String(r.stack).split('\n').slice(0,3).join(' < ').slice(0,240):''),'')});}
     for(var i=0;i<w.frames.length;i++)hookConsole(w.frames[i],depth+1);
   }catch(e){}
 }
