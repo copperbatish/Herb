@@ -94,7 +94,9 @@ function launch(){
     frame.setAttribute('allow','fullscreen; gamepad; autoplay; clipboard-read; clipboard-write; pointer-lock; microphone; camera'); frame.allowFullscreen=true;
     $('stage').innerHTML='';$('stage').appendChild(frame);
     var f0=frame;
-    return HerbProxy.open(frame,site.url,{engine:'sj'}).then(function(){dline('engine','Scramjet','')});
+    return HerbProxy.open(frame,site.url,{engine:'sj'}).then(function(){dline('engine','Scramjet','')},function(e){
+      // Scramjet couldn't start: use Ultraviolet this time instead of leaving an error on screen
+      dline('engine','Scramjet failed ('+e.message+') – using Ultraviolet','');return HerbProxy.open(frame,site.url,{engine:'uv'})});
   }).catch(function(e){$('stage').innerHTML='<div id="msg"><div>Couldn’t start Scramjet: '+String(e.message).replace(/</g,'&lt;')+'<br><br><button onclick="location.reload()" style="padding:8px 16px;border-radius:8px">Try again</button></div></div>'});
 }
 $('reload').onclick=function(){if(frame)HerbProxy.open(frame,site.url,{engine:'sj'})};
