@@ -340,7 +340,7 @@
   var SPROUT = '<svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 56V31" stroke="currentColor" stroke-opacity=".55" stroke-width="4.5" stroke-linecap="round"/><path d="M32 33C19 33 10 24 10 11c13 0 22 9 22 22z" fill="currentColor"/><path d="M32 42c11 0 20-8 20-20-11 0-20 8-20 20z" fill="currentColor" fill-opacity=".7"/></svg>';
   function drawSide() {
     if (UI !== 'standard') return; var nav = $('sd-apps'); nav.innerHTML = '';
-    var items = [{ id: 'home', title: 'Home', icon: 'home' }].concat(APPS.filter(function (a) { return a.id !== 'browser' && a.id.indexOf('game:') !== 0; }));
+    var items = [{ id: 'home', title: 'Home', icon: 'home' }].concat(APPS.filter(function (a) { return a.id !== 'browser' && a.id.indexOf('game:') !== 0 && !a.store; }));   // App Store installs open from the Store (or herb://), not the sidebar
     items.forEach(function (a) {
       var b = document.createElement('button'); b.className = 'sd-item' + (sideActive === a.id ? ' on' : ''); b.dataset.app = a.id; b.title = a.title;
       b.innerHTML = '<span class="sd-ic">' + I(a.icon || 'apps', 18, 1.8) + '</span><span class="sd-l"></span>'; b.querySelector('.sd-l').textContent = a.title;
