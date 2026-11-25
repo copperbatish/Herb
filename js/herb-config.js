@@ -85,16 +85,7 @@
   }
   // Apps that need the proxy's service worker are framed from the server. Some browsers (Safari, strict privacy settings) block that
   // for pages embedded on another site, so every such window gets an "open in a new tab" shortcut: in its own tab it always works.
-  function openChip(frame, url) {
-    try {
-      var body = frame.parentNode; if (!body || body.querySelector('.hopen')) return;
-      if (getComputedStyle(body).position === 'static') body.style.position = 'relative';
-      var a = document.createElement('a'); a.className = 'hopen'; a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Not loading? Open in a new tab \u2197';
-      a.style.cssText = 'position:absolute;right:10px;bottom:10px;z-index:6;padding:6px 11px;border-radius:999px;background:rgba(10,20,15,.82);color:#e8f3ee;font:12px system-ui,sans-serif;text-decoration:none;border:1px solid rgba(255,255,255,.22);opacity:.6;transition:opacity .15s';
-      a.onmouseenter = function () { a.style.opacity = 1; }; a.onmouseleave = function () { a.style.opacity = .6; };
-      body.appendChild(a);
-    } catch (e) {}
-  }
+  function openChip() {}   // the "Not loading? Open in a new tab" shortcut was removed
   // Which of Herb's addresses answer from this network? Remembered in localStorage so apiBase() can stay synchronous.
   function probeApi() {
     var c = [], seen = {}; function add(u) { u = clean(u); if (u && !seen[u]) { seen[u] = 1; c.push(u); } }

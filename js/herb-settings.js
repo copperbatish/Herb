@@ -6,7 +6,7 @@
     search: 'duckduckgo', panicKey: '`', panicUrl: 'https://classroom.google.com',
     copperchatUrl: '',   // empty = Herb's own servers (/copperchat/); a full address overrides it
     vmUrl: '',
-    ui: 'desktop', disguise: 'none', disguiseTitle: '', disguiseIcon: '',
+    ui: 'desktop', disguise: 'none', autoBlank: false, disguiseTitle: '', disguiseIcon: '',
     // desktop + taskbar
     taskbarPos: 'bottom', taskbarSize: 'medium', taskbarAlign: 'center', taskbarAutohide: false, showClock: true, showDate: true, showTray: true,
     showIcons: true, iconSize: 'medium', iconLabels: true, scene: true, wallMode: 'theme', wallColor: '#0b1c15', wallFit: 'cover', winRadius: 'round', iconStyle: 'glow',

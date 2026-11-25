@@ -24,6 +24,7 @@
   TILES.forEach(function (t) {
     var b = document.createElement('button'); b.className = 'tile'; b.innerHTML = HerbIcons.letter(t[3], 58, t[2]) + t[0];
     b.onclick = function () { go(t[1]); }; $('tiles').appendChild(b);
+    var hi = b.querySelector('.hicon'); setTimeout(function () { favInto(hi, t[1], 30); }, 600);
   });
   $('q').addEventListener('keydown', function (e) { if (e.key === 'Enter') go($('q').value); });
 
@@ -47,9 +48,9 @@
   }
   function newTab() {
     var t = { loaded: false }; t.el = document.createElement('div'); t.el.className = 'tab';
-    t.el.innerHTML = I('leaf', 14, 2) + '<span></span><button class="x" title="Close">' + I('close', 12, 2.4) + '</button>';
-    t.label = t.el.querySelector('span'); tabsEl.insertBefore(t.el, $('newtab'));
-    t.frame = document.createElement('iframe'); t.frame.setAttribute('allow', 'fullscreen; gamepad; clipboard-read; clipboard-write; autoplay'); t.frame.addEventListener('load', render); views.appendChild(t.frame);
+    t.el.innerHTML = '<span class="ti">' + I('leaf', 14, 2) + '</span><span class="tl"></span><button class="x" title="Close">' + I('close', 12, 2.4) + '</button>';
+    t.label = t.el.querySelector('.tl'); t.ic = t.el.querySelector('.ti'); tabsEl.insertBefore(t.el, $('newtab'));
+    t.frame = document.createElement('iframe'); t.frame.setAttribute('allow', 'fullscreen; gamepad; clipboard-read; clipboard-write; autoplay'); t.frame.addEventListener('load', function () { render(); siteIcon(t); }); views.appendChild(t.frame);
     t.el.onclick = function () { active = t; render(); };
     t.el.querySelector('.x').onclick = function (e) { e.stopPropagation(); close(t); };
     tabs.push(t); active = t; render(); $('q').focus(); return t;
@@ -69,6 +70,51 @@
       } catch (e) {}
     });
   }
+  // ---------- real icons: a site's own favicon on its tab; Herb apps show their app icon ----------
+  function realOf(href) {   // a proxied address back to the real one
+    try { var u = new URL(href, location.href);
+      if (u.origin === location.origin && u.pathname.indexOf('/sj/~/') === 0) return decodeURIComponent(u.pathname.split('/').slice(5).join('/'));
+      if (u.origin === location.origin && u.pathname.indexOf(__uv$config.prefix) === 0) return HerbProxy.decode(u.pathname + u.search);
+      return u.href; } catch (e) { return null; }
+  }
+  var iconMem = {};
+  function siteIcon(t) {
+    if (t.app || !t.loaded) return;
+    var real = currentUrl(t), want = null;
+    try {
+      var d = t.frame.contentDocument, l = d && d.querySelector('link[rel~="icon"],link[rel="shortcut icon"],link[rel="apple-touch-icon"]');
+      if (l && l.getAttribute('href')) want = /^data:/.test(l.href) ? l.href : realOf(l.href);
+    } catch (e) {}
+    if (!want && real && /^https?:/.test(real)) want = new URL(real).origin + '/favicon.ico';
+    if (!want || want === t.favWant) return; t.favWant = want;
+    // fetched through the proxy transport (this page isn't controlled by the proxy's service worker, so an <img> to a proxied address would miss it)
+    var p = /^data:/.test(want) ? Promise.resolve(want) : iconMem[want] || (iconMem[want] = HerbProxy.init().then(function () { return new BareMux.BareClient().fetch(want); })
+      .then(function (r) { if (!r.ok) throw 0; return r.blob(); }).then(function (bl) { if (!/^image\//.test(bl.type) && bl.size > 200000) throw 0; return URL.createObjectURL(bl); }));
+    p.then(function (src) {
+      var im = new Image(); im.className = 'fav'; im.width = im.height = 16; im.alt = '';
+      im.onload = function () { if (t.favWant === want && im.naturalWidth > 1) { t.ic.innerHTML = ''; t.ic.appendChild(im); } };
+      im.src = src;
+    }, function () { delete iconMem[want]; });
+  }
+  // favicons for new-tab tiles and bookmarks: fetched once through the proxy (so they work on networks that block the sites), cached here
+  var FAVK = 'herb.favicons', favCache = {}; try { favCache = JSON.parse(localStorage.getItem(FAVK) || '{}'); } catch (e) {}
+  var favWait = {};
+  function favicon(host) {
+    if (favCache[host]) return Promise.resolve(favCache[host]);
+    if (favWait[host]) return favWait[host];
+    return favWait[host] = HerbProxy.init().then(function () {
+      return new BareMux.BareClient().fetch('https://www.google.com/s2/favicons?domain=' + encodeURIComponent(host) + '&sz=64');
+    }).then(function (r) { if (!r.ok) throw 0; return r.blob(); }).then(function (b) {
+      return new Promise(function (ok) { var fr = new FileReader(); fr.onload = function () { ok(fr.result); }; fr.readAsDataURL(b); });
+    }).then(function (u) { favCache[host] = u; try { localStorage.setItem(FAVK, JSON.stringify(favCache)); } catch (e) {} return u; })
+      .catch(function () { delete favWait[host]; return null; });
+  }
+  function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
+  function favInto(el, url, px) {   // swap a letter tile for the site's real icon when it arrives
+    var h = hostOf(url); if (!h) return;
+    favicon(h).then(function (src) { if (!src) return; el.innerHTML = '<img src="' + src + '" alt="" style="width:' + px + 'px;height:' + px + 'px;border-radius:' + Math.round(px * .22) + 'px">'; });
+  }
+
   // ---------- Herb apps as tabs: herb://games, herb://settings, herb://game/<name> ----------
   function openApp(app, opts) {
     opts = opts || {}; if (!app) return;
@@ -76,7 +122,7 @@
     if (t) { active = t; render(); sendState(); if (opts.section || opts.url) try { t.frame.contentWindow.postMessage({ herb: 'nav', section: opts.section, url: opts.url }, location.origin); } catch (e) {} return t; }
     t = active && !active.loaded && !active.app ? active : newTab();   // reuse an empty new tab
     t.app = app; t.loaded = true;
-    var ic = t.el.querySelector('svg'); if (ic) ic.outerHTML = I(app.icon || 'apps', 14, 2);
+    t.ic.innerHTML = HerbIcons.tile(app.icon || 'apps', 16, (HerbIcons.colors || {})[app.icon]);
     var src = app.src; if (opts.section) src += (src.indexOf('?') < 0 ? '?' : '&') + 'section=' + opts.section; if (opts.url) src += (src.indexOf('?') < 0 ? '?' : '&') + 'url=' + encodeURIComponent(opts.url);
     if (window.HerbConfig && HerbConfig.setFrame) HerbConfig.setFrame(t.frame, src); else t.frame.src = src;
     render(); sendState(); return t;
@@ -113,6 +159,8 @@
       var host = ''; try { host = b.u.indexOf('herb://') === 0 ? b.u : new URL(b.u).hostname.replace(/^www\./, ''); } catch (e) { host = b.u; }
       d.innerHTML = '<span class="bmi"></span><span class="bmt"></span><button class="bmx" title="Remove">' + I('close', 11, 2.4) + '</button>';
       d.querySelector('.bmi').textContent = (b.t || host).charAt(0).toUpperCase(); d.querySelector('.bmt').textContent = b.t || host; d.title = b.u;
+      if (b.u.indexOf('herb://') === 0) { var ap = appList().filter(function (a) { return 'herb://' + a.id === b.u; })[0]; if (ap) d.querySelector('.bmi').innerHTML = HerbIcons.tile(ap.icon, 22, (HerbIcons.colors || {})[ap.icon]); }
+      else favInto(d.querySelector('.bmi'), b.u, 16);
       d.onclick = function (e) { if (e.target.closest('.bmx')) { var l2 = bms(); l2.splice(i, 1); saveBms(l2); return; } go(b.u); };
       bmWrap.querySelector('.bml').appendChild(d); });
   }

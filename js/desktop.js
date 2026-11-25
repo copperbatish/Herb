@@ -152,13 +152,20 @@
   // Standard mode is browser-first: every app opens as a tab (herb://games, herb://settings…) inside the Web Browser.
   var bReady = false, bq = [];
   function toBrowser(msg) {
-    var bw = wins.browser || open('browser'); focus('browser');
+    var bw = wins.browser || open('browser'); focus('browser'); markSide(lastB);
     if (bReady) { try { bw.frame.contentWindow.postMessage(msg, '*'); } catch (e) {} } else bq.push(msg);
     return bw;
   }
+  // App tabs need the browser on Herb's own address (it shares storage and the HerbDesktop API with them). When Herb runs from the
+  // loader file the browser is framed from a server address instead, so apps open as their own panels next to it.
+  function tabsOK() {
+    var w = wins.browser; if (w && bReady) { try { return !!w.frame.contentWindow.document; } catch (e) { return false; } }
+    if (!(window.HerbConfig && HerbConfig.single)) return true;
+    var h = ''; try { h = localStorage.getItem('herb.hostUrl') || ''; } catch (e) {} return h === location.origin;
+  }
   function open(id, opts) {
     opts = opts || {}; var a = byId[id]; if (!a) return null;
-    if (UI === 'standard' && id !== 'browser') return toBrowser({ herb: 'app', app: { id: a.id, title: a.title, icon: a.icon, src: a.src }, opts: opts });
+    if (UI === 'standard' && id !== 'browser' && tabsOK()) return toBrowser({ herb: 'app', app: { id: a.id, title: a.title, icon: a.icon, src: a.src }, opts: opts });
     var w = wins[id];
     if (w) { w.el.classList.remove('min'); focus(id); if (opts.section || opts.url) message(w, opts); return w; }
     var vw = WINS.clientWidth, vh = WINS.clientHeight, width = Math.min(a.w, vw - 24), height = Math.min(a.h, vh - 24);
@@ -177,7 +184,7 @@
     focus(id); return w;
   }
   function message(w, opts) { try { w.frame.contentWindow.postMessage({ herb: 'nav', section: opts.section, url: opts.url }, location.origin); } catch (e) {} }
-  function focus(id) { var w = wins[id]; if (!w) return; focused = id; w.el.style.zIndex = ++z; tutEvent('open'); if (UI !== 'desktop') Object.keys(wins).forEach(function (k) { wins[k].el.classList.toggle('bg', k !== id); }); Object.keys(wins).forEach(function (k) { wins[k].el.classList.toggle('focus', k === id); }); refreshTaskbar(); }
+  function focus(id) { var w = wins[id]; if (!w) return; focused = id; if (UI === 'standard' && id !== 'browser') markSide(id); w.el.style.zIndex = ++z; tutEvent('open'); if (UI !== 'desktop') Object.keys(wins).forEach(function (k) { wins[k].el.classList.toggle('bg', k !== id); }); Object.keys(wins).forEach(function (k) { wins[k].el.classList.toggle('focus', k === id); }); refreshTaskbar(); }
   function close(id) { var w = wins[id]; if (!w) return; if (id === 'browser') bReady = false; w.el.remove(); delete wins[id]; if (focused === id) { focused = null; var t = topWin(); if (t) focus(t); } refreshTaskbar(); }
   function minimize(id) { var w = wins[id]; if (!w) return; w.el.classList.add('min'); if (focused === id) { focused = null; var t = topWin(); if (t) focus(t); } refreshTaskbar(); }
   function maximize(id) { var w = wins[id]; if (!w) return; w.el.classList.toggle('max'); focus(id); }
@@ -213,7 +220,8 @@
   function cloak() {
     var win; try { win = window.open('about:blank', '_blank'); } catch (e) {}
     if (!win) { alert('Popup blocked – allow popups for this site to use the cloak.'); return; }
-    var d = win.document; d.title = 'Google Classroom'; var fr = d.createElement('iframe');
+    var d = win.document; d.title = document.title || 'Google Classroom'; var ic = document.querySelector('link[rel~="icon"]'); if (ic) { var l = d.createElement('link'); l.rel = 'icon'; l.href = ic.href; d.head.appendChild(l); }
+    var fr = d.createElement('iframe'); fr.setAttribute('allow', 'fullscreen; gamepad; clipboard-read; clipboard-write; autoplay; pointer-lock');
     fr.src = location.href; fr.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0'; d.body.style.margin = 0; d.body.appendChild(fr);
     location.replace(S.get('panicUrl') || 'https://classroom.google.com');
   }
@@ -334,7 +342,7 @@
     items.forEach(function (a) {
       var b = document.createElement('button'); b.className = 'sd-item' + (sideActive === a.id ? ' on' : ''); b.dataset.app = a.id; b.title = a.title;
       b.innerHTML = '<span class="sd-ic">' + I(a.icon || 'apps', 18, 1.8) + '</span><span class="sd-l"></span>'; b.querySelector('.sd-l').textContent = a.title;
-      b.onclick = function () { if (a.id === 'home') toBrowser({ herb: 'home' }); else open(a.id); }; nav.appendChild(b);
+      b.onclick = function () { if (a.id === 'home') { toBrowser({ herb: 'home' }); markSide('home'); } else open(a.id); }; nav.appendChild(b);
     });
   }
   if (UI === 'standard') {
@@ -356,7 +364,9 @@
   // ---------- keep what was open when the interface mode changes (the page reloads) ----------
   var SESS = 'herb.session', browserUrl = '';
   window.addEventListener('message', function (e) { var d = e.data; if (d && d.herb === 'bstate' && typeof d.url === 'string') { browserUrl = d.url.slice(0, 2000);
-    if (UI === 'standard') { sideActive = d.app === undefined ? '' : d.app; document.querySelectorAll('#sd-apps .sd-item').forEach(function (b) { b.classList.toggle('on', b.dataset.app === sideActive); }); } } });
+    if (UI === 'standard') { lastB = d.app === undefined ? '' : d.app; if (focused === 'browser') markSide(lastB); } } });
+  var lastB = 'home';
+  function markSide(id) { sideActive = id; document.querySelectorAll('#sd-apps .sd-item').forEach(function (b) { b.classList.toggle('on', b.dataset.app === id); }); }
   function saveSession() {
     try { localStorage.setItem(SESS, JSON.stringify({ t: Date.now(), open: Object.keys(wins).filter(function (k) { return byId[k] && k.indexOf('game:') !== 0; }), focus: focused, url: wins.browser ? browserUrl : '' })); } catch (e) {}
   }
@@ -397,5 +407,12 @@
   paintProxy(); HerbWisp.check(); setInterval(function () { HerbWisp.check(); }, 60000);
   paintIp(); paintStd();
   if (UI === 'ipad') { var seen = false; try { seen = !!localStorage.getItem(TUT_KEY); } catch (e) {} if (!seen) setTimeout(startTutorial, 800); }
+  // Settings > Privacy > Launch in about:blank: browsers only allow the new tab after a click, so the first click anywhere opens it.
+  if (S.get('autoBlank') && window.top === window) {
+    var ab = document.createElement('div'); ab.id = 'abgate';
+    ab.innerHTML = '<div><div class="t">Click anywhere to open Herb</div><div class="d">Herb opens in an about:blank tab (Settings → Privacy).</div><button>Open here instead</button></div>';
+    document.body.appendChild(ab);
+    ab.addEventListener('click', function (e) { if (e.target.tagName === 'BUTTON') { ab.remove(); return; } ab.remove(); cloak(); });
+  }
   var qs = new URLSearchParams(location.search); if (qs.get('app') && byId[qs.get('app')]) open(qs.get('app')); else if (restoreSession()) {} else if (UI === 'standard') open('browser');
 })();

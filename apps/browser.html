@@ -43,6 +43,10 @@ body{overflow:hidden;display:flex;flex-direction:column;height:100vh}
 /* layered look */
 #tabs{background:var(--surface-3,var(--surface-2))}#nav{border-bottom:1px solid var(--border)}
 .tab.active{box-shadow:inset 0 1px 0 rgba(var(--accent-rgb),.35)}
+.tab .ti{display:flex;align-items:center;justify-content:center;width:16px;height:16px;flex:none}.tab .ti img{border-radius:3px}
+.tab .ti .hicon{width:16px!important;height:16px!important;border-radius:4px!important;box-shadow:none!important}.tab .ti .hicon svg{width:11px;height:11px;filter:none}
+.tab .tl{flex:1;overflow:hidden;text-overflow:ellipsis}
+.tile .hicon img{display:block}
 </style></head>
 <body>
 <div id="tabs"><button id="newtab" title="New tab"></button></div>
