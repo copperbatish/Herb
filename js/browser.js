@@ -4,6 +4,9 @@
   var I = HerbIcons.glyph;
   var tabsEl = $('tabs'), views = $('views'), urlEl = $('url'), ntp = $('ntp'), banner = $('banner');
   var tabs = [], active = null;
+  // Herb apps opened as tabs (herb://games, herb://settings…) live one frame deeper; give them the shell's APIs under the same names.
+  try { if (parent !== window) ['HerbDesktop', 'HerbStore', 'HerbConfig'].forEach(function (k) { if (!window[k] && parent[k]) window[k] = parent[k]; }); } catch (e) {}
+  function appList() { try { return (window.HerbDesktop && HerbDesktop.apps) || []; } catch (e) { return []; } }
   $('newtab').innerHTML = I('close', 16).replace('M6 6l12 12M18 6L6 18', 'M12 5v14M5 12h14');
   $('back').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
   $('fwd').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
@@ -28,11 +31,13 @@
   $('bgo').onclick = function () { $('bgo').textContent = 'Checking…'; HerbWisp.check().then(function (st) { $('bgo').textContent = 'Re-check servers'; if (st.best) banner.classList.remove('on'); else warn('Still no reachable proxy server.', true); }); };
 
   function tabTitle(t) {
+    if (t.app) return t.app.title;
     if (!t.loaded) return 'New Tab';
     try { var d = t.frame.contentDocument; if (d && d.title) return d.title; } catch (e) {}
     return t.last || 'Loading…';
   }
   function currentUrl(t) {
+    if (t.app) return 'herb://' + t.app.id.replace(/^game:/, 'game/').replace(/\.html$/, '');
     return HerbProxy.currentUrl(t.frame);
   }
   function render() {
@@ -44,7 +49,7 @@
     var t = { loaded: false }; t.el = document.createElement('div'); t.el.className = 'tab';
     t.el.innerHTML = I('leaf', 14, 2) + '<span></span><button class="x" title="Close">' + I('close', 12, 2.4) + '</button>';
     t.label = t.el.querySelector('span'); tabsEl.insertBefore(t.el, $('newtab'));
-    t.frame = document.createElement('iframe'); t.frame.addEventListener('load', render); views.appendChild(t.frame);
+    t.frame = document.createElement('iframe'); t.frame.setAttribute('allow', 'fullscreen; gamepad; clipboard-read; clipboard-write; autoplay'); t.frame.addEventListener('load', render); views.appendChild(t.frame);
     t.el.onclick = function () { active = t; render(); };
     t.el.querySelector('.x').onclick = function (e) { e.stopPropagation(); close(t); };
     tabs.push(t); active = t; render(); $('q').focus(); return t;
@@ -64,8 +69,59 @@
       } catch (e) {}
     });
   }
+  // ---------- Herb apps as tabs: herb://games, herb://settings, herb://game/<name> ----------
+  function openApp(app, opts) {
+    opts = opts || {}; if (!app) return;
+    var t = tabs.filter(function (x) { return x.app && x.app.id === app.id; })[0];
+    if (t) { active = t; render(); sendState(); if (opts.section || opts.url) try { t.frame.contentWindow.postMessage({ herb: 'nav', section: opts.section, url: opts.url }, location.origin); } catch (e) {} return t; }
+    t = active && !active.loaded && !active.app ? active : newTab();   // reuse an empty new tab
+    t.app = app; t.loaded = true;
+    var ic = t.el.querySelector('svg'); if (ic) ic.outerHTML = I(app.icon || 'apps', 14, 2);
+    var src = app.src; if (opts.section) src += (src.indexOf('?') < 0 ? '?' : '&') + 'section=' + opts.section; if (opts.url) src += (src.indexOf('?') < 0 ? '?' : '&') + 'url=' + encodeURIComponent(opts.url);
+    if (window.HerbConfig && HerbConfig.setFrame) HerbConfig.setFrame(t.frame, src); else t.frame.src = src;
+    render(); sendState(); return t;
+  }
+  function goHerb(input) {
+    var name = input.replace(/^herb:\/\//i, '').replace(/\/+$/, '').toLowerCase();
+    if (!name || name === 'home' || name === 'newtab') { if (!active || active.loaded) newTab(); render(); return; }
+    var id = /^game\//.test(name) ? 'game:' + name.slice(5) + '.html' : name;
+    var app = appList().filter(function (a) { return a.id.toLowerCase() === id || a.title.toLowerCase() === name; })[0];
+    if (app) return openApp(app);
+    warn('No Herb page called “' + name + '”. Try ' + appList().map(function (a) { return 'herb://' + a.id; }).filter(function (x) { return x.indexOf('game:') < 0; }).join(', ') + '.', false);
+  }
+  window.addEventListener('message', function (e) {
+    if (!e.data || (e.source !== parent && e.origin !== location.origin)) return;
+    if (e.data.herb === 'app' && e.data.app) openApp(e.data.app, e.data.opts);
+    if (e.data.herb === 'home') { var h = tabs.filter(function (x) { return !x.loaded; })[0]; if (h) { active = h; render(); } else newTab(); sendState(); }
+  });
+
+  // ---------- bookmarks: star in the address bar, list on the new-tab page ----------
+  var BK = 'herb.bookmarks';
+  function bms() { try { return JSON.parse(localStorage.getItem(BK) || '[]'); } catch (e) { return []; } }
+  function saveBms(l) { try { localStorage.setItem(BK, JSON.stringify(l.slice(0, 60))); } catch (e) {} drawBms(); paintStar(); }
+  var star = document.createElement('button'); star.id = 'star'; star.className = 'nb'; star.title = 'Bookmark this page'; $('addr').appendChild(star);
+  function curInfo() { if (!active || !active.loaded) return null; var u = currentUrl(active) || active.last; return u ? { u: u, t: tabTitle(active) } : null; }
+  function paintStar() { var c = curInfo(), on = !!(c && bms().some(function (b) { return b.u === c.u; }));
+    star.style.visibility = c ? 'visible' : 'hidden'; star.classList.toggle('on', on); star.title = on ? 'Remove bookmark' : 'Bookmark this page';
+    star.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="' + (on ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>'; }
+  star.onclick = function () { var c = curInfo(); if (!c) return; var l = bms(), i = -1; l.forEach(function (b, j) { if (b.u === c.u) i = j; });
+    if (i >= 0) l.splice(i, 1); else l.unshift({ u: c.u, t: (c.t || c.u).slice(0, 60) }); saveBms(l); };
+  var bmWrap = document.createElement('div'); bmWrap.id = 'bms'; $('tiles').parentNode.insertBefore(bmWrap, $('tiles'));
+  function drawBms() {
+    var l = bms(); bmWrap.innerHTML = l.length ? '<div class="bmh">Bookmarks</div><div class="bml"></div>' : ''; if (!l.length) return;
+    l.forEach(function (b, i) { var d = document.createElement('div'); d.className = 'bm';
+      var host = ''; try { host = b.u.indexOf('herb://') === 0 ? b.u : new URL(b.u).hostname.replace(/^www\./, ''); } catch (e) { host = b.u; }
+      d.innerHTML = '<span class="bmi"></span><span class="bmt"></span><button class="bmx" title="Remove">' + I('close', 11, 2.4) + '</button>';
+      d.querySelector('.bmi').textContent = (b.t || host).charAt(0).toUpperCase(); d.querySelector('.bmt').textContent = b.t || host; d.title = b.u;
+      d.onclick = function (e) { if (e.target.closest('.bmx')) { var l2 = bms(); l2.splice(i, 1); saveBms(l2); return; } go(b.u); };
+      bmWrap.querySelector('.bml').appendChild(d); });
+  }
+  drawBms(); addEventListener('storage', function (e) { if (e.key === BK) { drawBms(); paintStar(); } });
+
   async function go(input) {
-    input = (input || '').trim(); if (!input) return; if (!active) newTab(); banner.classList.remove('on');
+    input = (input || '').trim(); if (!input) return;
+    if (/^herb:\/\//i.test(input)) { $('q').value = ''; return goHerb(input); }
+    if (!active || active.app) newTab(); banner.classList.remove('on');
     var dest = HerbProxy.toUrl(input);
     try { await HerbProxy.init(); } catch (e) { warn('Proxy failed to start: ' + e.message, true); return; }
     var st = HerbWisp.status(); if (st && !st.best) { warn('No proxy server is reachable right now.', true); return; }
@@ -80,7 +136,8 @@
   $('reload').onclick = function () { try { active.frame.contentWindow.location.reload(); } catch (e) {} };
   $('back').onclick = function () { try { active.frame.contentWindow.history.back(); } catch (e) {} };
   $('fwd').onclick = function () { try { active.frame.contentWindow.history.forward(); } catch (e) {} };
-  setInterval(function () { render(); try { var u = active && active.loaded ? (currentUrl(active) || active.last || '') : ''; if (u !== lastSent) { lastSent = u; parent.postMessage({ herb: 'bstate', url: u }, '*'); } } catch (e) {} }, 1000); var lastSent = null;
+  function sendState() { try { var u = active && active.loaded ? (currentUrl(active) || active.last || '') : '', k = u + '|' + (active && active.app ? active.app.id : ''); if (k !== lastSent) { lastSent = k; parent.postMessage({ herb: 'bstate', url: u, app: active && active.app ? active.app.id : (active && active.loaded ? '' : 'home') }, '*'); } } catch (e) {} paintStar(); }
+  setInterval(function () { render(); sendState(); }, 1000); var lastSent = null;
   window.addEventListener('message', function (e) { if (e.origin === location.origin && e.data && e.data.herb === 'nav' && e.data.url) go(e.data.url); });
   // ---------- developer tools (Inspect): eruda, injected into the proxied page ----------
   // The page is same-origin (served through /uv/service/), so we can reach into its document. The <script> is created in

@@ -58,16 +58,24 @@
 
   // ---------- start menu ----------
   var sm = $('start');
-  sm.innerHTML = '<div class="sm-head">' + I('leaf', 20, 2) + '<span>Herb</span></div><div class="sm-sec">Apps</div><div class="sm-apps" id="sm-apps"></div>' +
+  sm.innerHTML = '<div class="sm-search">' + I('search', 16) + '<input id="sm-q" type="text" placeholder="Search apps, or type a website" autocomplete="off" spellcheck="false"></div><div class="sm-sec">Apps</div><div class="sm-apps" id="sm-apps"></div>' +
     '<div class="sm-foot"><button id="sm-settings">' + I('settings', 16) + 'Settings</button><button id="sm-cloak">' + I('shield', 16) + 'Cloak</button><button id="sm-full">' + I('max', 16) + 'Fullscreen</button></div>';
   var smItems = {};
   function addSm(a) {
-    var b = document.createElement('button'); b.className = 'sm-item'; b.innerHTML = HerbIcons.tile(a.icon, 30) + '<span>' + a.title + '</span>';
+    var b = document.createElement('button'); b.className = 'sm-item'; b.dataset.t = a.title.toLowerCase(); b.innerHTML = HerbIcons.tile(a.icon, 40) + '<span>' + a.title + '</span>';
     b.onclick = function () { closeStart(); open(a.id); }; $('sm-apps').appendChild(b); smItems[a.id] = b;
   }
   APPS.forEach(addSm);
   function closeStart() { sm.classList.remove('on'); $('start-btn').classList.remove('on'); }
-  $('start-btn').onclick = function (e) { e.stopPropagation(); var on = sm.classList.toggle('on'); $('start-btn').classList.toggle('on', on); hideCtx(); };
+  $('start-btn').onclick = function (e) { e.stopPropagation(); var on = sm.classList.toggle('on'); $('start-btn').classList.toggle('on', on); hideCtx();
+    if (on) { $('sm-q').value = ''; filterSm(''); setTimeout(function () { try { $('sm-q').focus(); } catch (er) {} }, 30); } };
+  function filterSm(q) { q = q.trim().toLowerCase(); Object.keys(smItems).forEach(function (k) { smItems[k].style.display = !q || smItems[k].dataset.t.indexOf(q) >= 0 ? '' : 'none'; }); }
+  $('sm-q').addEventListener('input', function () { filterSm(this.value); });
+  $('sm-q').addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') return closeStart(); if (e.key !== 'Enter') return; var q = this.value.trim(); if (!q) return;
+    var hit = Object.keys(smItems).filter(function (k) { return smItems[k].style.display !== 'none'; })[0];
+    closeStart(); if (hit) open(hit); else open('browser', { url: q });   // nothing matched: search the web / open the site
+  });
   $('sm-settings').onclick = function () { closeStart(); open('settings'); };
   $('sm-cloak').onclick = function () { closeStart(); cloak(); };
   $('sm-full').onclick = function () { closeStart(); document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); };
@@ -141,8 +149,17 @@
   IC.addEventListener('pointerdown', function (e) { if (e.target === IC) Object.keys(icons).forEach(function (k) { icons[k].classList.remove('sel'); }); });
 
   // ---------- windows ----------
+  // Standard mode is browser-first: every app opens as a tab (herb://games, herb://settings…) inside the Web Browser.
+  var bReady = false, bq = [];
+  function toBrowser(msg) {
+    var bw = wins.browser || open('browser'); focus('browser');
+    if (bReady) { try { bw.frame.contentWindow.postMessage(msg, '*'); } catch (e) {} } else bq.push(msg);
+    return bw;
+  }
   function open(id, opts) {
-    opts = opts || {}; var a = byId[id]; if (!a) return null; var w = wins[id];
+    opts = opts || {}; var a = byId[id]; if (!a) return null;
+    if (UI === 'standard' && id !== 'browser') return toBrowser({ herb: 'app', app: { id: a.id, title: a.title, icon: a.icon, src: a.src }, opts: opts });
+    var w = wins[id];
     if (w) { w.el.classList.remove('min'); focus(id); if (opts.section || opts.url) message(w, opts); return w; }
     var vw = WINS.clientWidth, vh = WINS.clientHeight, width = Math.min(a.w, vw - 24), height = Math.min(a.h, vh - 24);
     var x = Math.max(6, (vw - width) / 2 + (offset % 5) * 28 - 56), y = Math.max(6, (vh - height) / 2 + (offset % 5) * 24 - 30); offset++;
@@ -150,7 +167,8 @@
     var src = a.src; if (opts.section) src += (src.indexOf('?') < 0 ? '?' : '&') + 'section=' + opts.section; if (opts.url) src += (src.indexOf('?') < 0 ? '?' : '&') + 'url=' + encodeURIComponent(opts.url);
     el.innerHTML = '<div class="tb"><span class="wi">' + I(a.icon, 15) + '</span><span class="ttl">' + a.title + '</span><div class="wc"><button class="m" title="Minimize">' + I('min', 14, 1.6) + '</button><button class="x" title="Maximize">' + I('max', 12, 1.6) + '</button><button class="c" title="Close">' + I('close', 14, 1.6) + '</button></div></div><div class="body"><iframe title="' + a.title + '" allow="fullscreen; gamepad; clipboard-read; clipboard-write; autoplay"></iframe></div>';
     ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].forEach(function (d) { var h = document.createElement('div'); h.className = 'rz ' + d; h.dataset.dir = d; el.appendChild(h); });
-    WINS.appendChild(el); w = wins[id] = { id: id, app: a, el: el, frame: el.querySelector('iframe') }; (window.HerbConfig ? HerbConfig.setFrame(w.frame, src) : (w.frame.src = src)); w.frame.addEventListener('load', hookLock); mouseLockNotice(String(a.title) + ' ' + String(src));
+    WINS.appendChild(el); w = wins[id] = { id: id, app: a, el: el, frame: el.querySelector('iframe') };
+    if (id === 'browser') { bReady = false; w.frame.addEventListener('load', function () { bReady = true; var q = bq; bq = []; q.forEach(function (m) { try { w.frame.contentWindow.postMessage(m, '*'); } catch (e) {} }); }); } (window.HerbConfig ? HerbConfig.setFrame(w.frame, src) : (w.frame.src = src)); w.frame.addEventListener('load', hookLock); mouseLockNotice(String(a.title) + ' ' + String(src));
     el.querySelector('.c').onclick = function () { close(id); }; el.querySelector('.m').onclick = function () { minimize(id); }; el.querySelector('.x').onclick = function () { maximize(id); };
     el.addEventListener('pointerdown', function () { focus(id); }, true);
     var tb = el.querySelector('.tb'); tb.addEventListener('pointerdown', function (e) { if (!e.target.closest('.wc')) startDrag(e, w); });
@@ -160,7 +178,7 @@
   }
   function message(w, opts) { try { w.frame.contentWindow.postMessage({ herb: 'nav', section: opts.section, url: opts.url }, location.origin); } catch (e) {} }
   function focus(id) { var w = wins[id]; if (!w) return; focused = id; w.el.style.zIndex = ++z; tutEvent('open'); if (UI !== 'desktop') Object.keys(wins).forEach(function (k) { wins[k].el.classList.toggle('bg', k !== id); }); Object.keys(wins).forEach(function (k) { wins[k].el.classList.toggle('focus', k === id); }); refreshTaskbar(); }
-  function close(id) { var w = wins[id]; if (!w) return; w.el.remove(); delete wins[id]; if (focused === id) { focused = null; var t = topWin(); if (t) focus(t); } refreshTaskbar(); }
+  function close(id) { var w = wins[id]; if (!w) return; if (id === 'browser') bReady = false; w.el.remove(); delete wins[id]; if (focused === id) { focused = null; var t = topWin(); if (t) focus(t); } refreshTaskbar(); }
   function minimize(id) { var w = wins[id]; if (!w) return; w.el.classList.add('min'); if (focused === id) { focused = null; var t = topWin(); if (t) focus(t); } refreshTaskbar(); }
   function maximize(id) { var w = wins[id]; if (!w) return; w.el.classList.toggle('max'); focus(id); }
   function toggle(id) { var w = wins[id]; if (!w) return open(id); if (UI !== 'desktop') { w.el.classList.remove('min'); return focus(id); } if (w.el.classList.contains('min')) { w.el.classList.remove('min'); focus(id); } else if (focused === id) minimize(id); else focus(id); }
@@ -308,19 +326,37 @@
     else if (ev === 'home' && tut.step === 1) { tut.step = 2; renderTut(); }
   }
 
-  // ---------- standard interface: info block on the left of the bottom bar ----------
+  // ---------- standard interface: sidebar (Home + apps), collapsible to an icon rail ----------
+  var sideActive = 'home', RAIL = 'herb.side.rail';
+  function drawSide() {
+    if (UI !== 'standard') return; var nav = $('sd-apps'); nav.innerHTML = '';
+    var items = [{ id: 'home', title: 'Home', icon: 'home' }].concat(APPS.filter(function (a) { return a.id !== 'browser' && a.id.indexOf('game:') !== 0; }));
+    items.forEach(function (a) {
+      var b = document.createElement('button'); b.className = 'sd-item' + (sideActive === a.id ? ' on' : ''); b.dataset.app = a.id; b.title = a.title;
+      b.innerHTML = '<span class="sd-ic">' + I(a.icon || 'apps', 18, 1.8) + '</span><span class="sd-l"></span>'; b.querySelector('.sd-l').textContent = a.title;
+      b.onclick = function () { if (a.id === 'home') toBrowser({ herb: 'home' }); else open(a.id); }; nav.appendChild(b);
+    });
+  }
   if (UI === 'standard') {
-    var inf = document.createElement('div'); inf.id = 'stdinfo'; inf.innerHTML = '<div>© herb</div><div id="stdping">ping: …</div><div id="stdsrv"></div>'; $('taskbar').insertBefore(inf, $('tbapps'));
+    var side = document.createElement('aside'); side.id = 'side';
+    side.innerHTML = '<div class="sd-top"><span class="sd-logo">' + I('leaf', 18, 2) + '<b>herb</b></span><button id="sd-rail" title="Collapse sidebar">' + I('rail', 17, 1.8) + '</button></div>' +
+      '<nav id="sd-apps"></nav><div class="sd-bot"><div id="sideacct"></div><button class="sd-item" id="sd-ping" title="Proxy servers"><span class="sd-ic"><span class="sdot" id="sd-dot"></span></span><span class="sd-l" id="sd-pt">checking…</span></button></div>';
+    D.appendChild(side);
+    try { document.body.classList.toggle('side-rail', localStorage.getItem(RAIL) === '1'); } catch (e) {}
+    $('sd-rail').onclick = function () { var on = document.body.classList.toggle('side-rail'); try { localStorage.setItem(RAIL, on ? '1' : '0'); } catch (e) {} };
+    $('sd-ping').onclick = function () { open('settings', { section: 'proxy' }); };
+    drawSide();
   }
   function paintStd() {
     if (UI !== 'standard') return; var st = null; try { st = JSON.parse(localStorage.getItem('herb.wisp.status') || 'null'); } catch (e) {}
-    $('stdping').textContent = !st ? 'ping: checking…' : (st.best ? 'ping: ' + st.results[st.best].ms + ' ms' : 'ping: offline');
-    $('stdsrv').textContent = st && st.best ? 'server: ' + srvNum(st.best) : '';
+    $('sd-dot').className = 'sdot' + (!st ? '' : st.best ? ' ok' : ' bad');
+    $('sd-pt').textContent = !st ? 'checking…' : (st.best ? st.results[st.best].ms + ' ms · server ' + srvNum(st.best) : 'offline');
   }
 
   // ---------- keep what was open when the interface mode changes (the page reloads) ----------
   var SESS = 'herb.session', browserUrl = '';
-  window.addEventListener('message', function (e) { var d = e.data; if (d && d.herb === 'bstate' && typeof d.url === 'string') browserUrl = d.url.slice(0, 2000); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.herb === 'bstate' && typeof d.url === 'string') { browserUrl = d.url.slice(0, 2000);
+    if (UI === 'standard') { sideActive = d.app === undefined ? '' : d.app; document.querySelectorAll('#sd-apps .sd-item').forEach(function (b) { b.classList.toggle('on', b.dataset.app === sideActive); }); } } });
   function saveSession() {
     try { localStorage.setItem(SESS, JSON.stringify({ t: Date.now(), open: Object.keys(wins).filter(function (k) { return byId[k] && k.indexOf('game:') !== 0; }), focus: focused, url: wins.browser ? browserUrl : '' })); } catch (e) {}
   }
@@ -335,15 +371,15 @@
   window.HerbDesktop = {
     open: open, close: close, apps: APPS, cloak: cloak,
     // apps that only some people may see (e.g. Admin) are added/removed at runtime
-    addApp: function (a) { if (byId[a.id]) return; APPS.push(a); byId[a.id] = a; addTb(a); addSm(a); addIc(a); layoutIcons(); },
+    addApp: function (a) { if (byId[a.id]) return; APPS.push(a); byId[a.id] = a; addTb(a); addSm(a); addIc(a); layoutIcons(); drawSide(); },
     removeApp: function (id) {
       var a = byId[id]; if (!a) return; if (wins[id]) close(id);
       APPS.splice(APPS.indexOf(a), 1); delete byId[id];
       [tbBtns, smItems, icons].forEach(function (m) { if (m[id]) { m[id].remove(); delete m[id]; } });
-      layoutIcons(); refreshTaskbar();
+      layoutIcons(); refreshTaskbar(); drawSide();
     },
     recheck: function () { return HerbWisp.check(); },
-    apply: function () { if (((S.get('ui') || 'desktop')) !== UI) { saveSession(); location.reload(); return; } HerbSettings.apply(); applyWallpaper(); layoutIcons(); tick(); },
+    apply: function () { if (((S.get('ui') || 'desktop')) !== UI) { saveSession(); location.reload(); return; } HerbSettings.apply(); HerbSettings.disguise(); applyWallpaper(); layoutIcons(); tick(); },
     layout: layoutIcons,
     replayTutorial: function () { try { localStorage.removeItem(TUT_KEY); } catch (e) {} return startTutorial(); },
     ui: UI,
@@ -357,7 +393,7 @@
   addEventListener('resize', function () { syncMobile(); layoutIcons(); }); syncMobile();
   window.addEventListener('herb:wisp-status', function () { paintIp(); paintStd(); }); setInterval(function () { paintIp(); paintStd(); }, 5000);
   window.addEventListener('herb:wisp-status', paintProxy); window.addEventListener('storage', function (e) { if (e.key === 'herb.wisp.status') paintProxy(); });
-  applyWallpaper(); layoutIcons(); tick(); setInterval(tick, 20000);
+  applyWallpaper(); layoutIcons(); tick(); setInterval(tick, 20000); try { HerbSettings.disguise(); } catch (e) {}
   paintProxy(); HerbWisp.check(); setInterval(function () { HerbWisp.check(); }, 60000);
   paintIp(); paintStd();
   if (UI === 'ipad') { var seen = false; try { seen = !!localStorage.getItem(TUT_KEY); } catch (e) {} if (!seen) setTimeout(startTutorial, 800); }

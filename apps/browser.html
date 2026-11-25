@@ -31,6 +31,18 @@ body{overflow:hidden;display:flex;flex-direction:column;height:100vh}
 .tile .hicon{transition:transform .15s}.tile:hover .hicon{transform:translateY(-4px)}.tile:hover{color:var(--text)}
 #banner{display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:5;background:#2a1618;border:1px solid #7f1d1d;color:#fecaca;padding:10px 14px;border-radius:12px;font-size:13px;max-width:92%;gap:10px;align-items:center}
 #banner.on{display:flex}#banner button{background:#7f1d1d;color:#fff;border:0;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;white-space:nowrap}
+#addr #star{width:28px;height:28px;margin-right:-8px;color:var(--muted)}#addr #star.on{color:rgb(var(--accent-rgb));filter:drop-shadow(0 0 6px rgba(var(--accent-rgb),.6))}
+.tab{animation:tabIn .18s ease-out}@keyframes tabIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+#views iframe.on{animation:viewIn .18s ease-out}@keyframes viewIn{from{opacity:.4}to{opacity:1}}
+#bms{width:min(640px,94%);margin-top:26px}.bmh{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px 2px}
+.bml{display:flex;flex-wrap:wrap;gap:8px}
+.bm{display:flex;align-items:center;gap:8px;max-width:210px;padding:7px 8px 7px 7px;border-radius:10px;background:rgba(255,255,255,.035);border:1px solid var(--border);cursor:pointer;font-size:12.5px;color:var(--text)}
+.bm:hover{border-color:rgba(var(--accent-rgb),.5);box-shadow:0 0 16px rgba(var(--accent-rgb),.15)}
+.bmi{width:22px;height:22px;flex:none;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:rgb(var(--accent-rgb));background:rgba(var(--accent-rgb),.12)}
+.bmt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bmx{background:none;border:0;color:var(--muted);cursor:pointer;padding:2px;display:flex;opacity:0}.bm:hover .bmx{opacity:1}
+/* layered look */
+#tabs{background:var(--surface-3,var(--surface-2))}#nav{border-bottom:1px solid var(--border)}
+.tab.active{box-shadow:inset 0 1px 0 rgba(var(--accent-rgb),.35)}
 </style></head>
 <body>
 <div id="tabs"><button id="newtab" title="New tab"></button></div>

@@ -8,7 +8,7 @@
   var chip = document.createElement('button'); chip.id = 'acctchip'; chip.className = 'tray';
   function place() {
     if (HerbDesktop.ui === 'ipad') { var bar = $('ipbar'); if (bar && bar.lastChild) bar.lastChild.insertBefore(chip, bar.lastChild.firstChild); else document.body.appendChild(chip); }
-    else if (HerbDesktop.ui === 'standard') $('taskbar').appendChild(chip);
+    else if (HerbDesktop.ui === 'standard') ($('sideacct') || $('taskbar')).appendChild(chip);
     else $('tbtray').insertBefore(chip, $('trayinfo'));
   }
   place();
