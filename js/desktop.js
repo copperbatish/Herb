@@ -409,6 +409,7 @@
       clearTimeout(g.timer); var gg = g; g.timer = setTimeout(function () { if (g === gg && g.dy < -60 && !swOn) { g.held = true; var w2 = focused && wins[focused]; if (w2) { w2.el.style.transform = ''; } switcher(true); } }, 380); });
     edge.addEventListener('pointerup', function () { if (!g) return; clearTimeout(g.timer); var w = focused && wins[focused]; if (w) { w.el.style.transform = ''; w.el.style.borderRadius = ''; }
       var tap = Math.abs(g.dy || 0) < 6 && Date.now() - g.t < 400; if (!g.held && (tap || (g.dy || 0) < -50)) goHome(); g = null; });
+    edge.addEventListener('touchstart', function (e) { e.preventDefault(); }, { passive: false });
     edge.addEventListener('dblclick', function () { switcher(true); });
     // app switcher layer
     var sw = document.createElement('div'); sw.id = 'ipsw'; D.appendChild(sw);
@@ -471,7 +472,7 @@
   var tut = null, tutEl = null;
   var TUT_STEPS = [
     ['Welcome to Herb', 'This works like iPadOS. Tap any app to open it. Try opening one now.', 'Skip'],
-    ['Now go back home', 'Swipe up from the <b>bar at the bottom</b> of the screen, or just tap it. Swipe up and hold to see all your open apps.', 'Skip'],
+    ['Now go back home', 'Tap the <b>bar near the bottom</b>, or start your swipe up <b>on that bar</b> (not the very edge of the screen, which iPadOS uses to leave Safari). Swipe up and hold to see all your open apps.', 'Skip'],
     ['You’ve got it', 'Swipe down on the home screen to search, and swipe down from the top-right corner (or tap ⚙ in the status bar) for Control Center.', 'Done']
   ];
   function renderTut() {

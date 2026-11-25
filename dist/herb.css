@@ -609,3 +609,8 @@ html.th-light .ccgrid{background:rgba(250,252,251,.85)}
 .cct.tall{background:rgba(255,255,255,.14)}
 .cct.tall .bic{z-index:1}
 .ipsw-card .ipsw-lab{color:#fff;font-size:13px;font-weight:600}
+/* iPad: the bottom ~20px belongs to iPadOS (swiping from the very edge leaves Herb). Herb's home bar sits above it, with a big touch area. */
+body.ui-ipad.app-open #iphomebar{bottom:30px;width:150px;height:6px;background:rgba(255,255,255,.85);box-shadow:0 0 0 1px rgba(0,0,0,.2),0 2px 10px rgba(0,0,0,.35)}
+body.ui-ipad.app-open #ipedge{bottom:20px;height:48px;left:50%;right:auto;width:min(420px,70vw);transform:translateX(-50%);border-radius:24px}
+body.ui-ipad.app-open #ipedge:hover{background:rgba(255,255,255,.05)}
+@media (display-mode: standalone){body.ui-ipad.app-open #iphomebar{bottom:34px}body.ui-ipad.app-open #ipedge{bottom:22px}}
