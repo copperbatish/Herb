@@ -105,10 +105,12 @@ function hookConsole(w,depth){
     if(!w.__herbCon&&w.console){w.__herbCon=1;['log','info','warn','error'].forEach(function(k){var o=w.console[k];w.console[k]=function(){try{var t=[].map.call(arguments,function(a){try{return typeof a==='string'?a:JSON.stringify(a)}catch(e){return String(a)}}).join(' ');if(/html-load\.cc/.test(t))return o.apply(w.console,arguments);if(CON_RE.test(t))dline('site-'+k,t.slice(0,/^\[trace/.test(t)?4000:400),'')}catch(e){}return o.apply(w.console,arguments)}});
       w.addEventListener('error',function(e){if(e.message&&e.message!=='Script error.'&&!/html-load\.cc/.test(String(e.error&&e.error.stack)))dline('site-error',String(e.message).slice(0,160)+(e.error&&e.error.stack?'  @ '+String(e.error.stack).split('\n').slice(1,4).map(function(x){return x.trim().replace(/https?:\/\/[^ )]*\/(sj|uv)\/[^ )]*?\/([^/ )]+)(?=[:)])/,'$2')}).join(' < ').slice(0,260):''),'')});
       w.addEventListener('unhandledrejection',function(e){var r=e.reason;dline('site-reject',String(r&&r.message||r).slice(0,160)+(r&&r.stack?'  @ '+String(r.stack).split('\n').slice(0,3).join(' < ').slice(0,240):''),'')});}
-    for(var i=0;i<w.frames.length;i++)hookConsole(w.frames[i],depth+1);
+    if(depth<1)for(var i=0;i<Math.min(w.frames.length,6);i++){try{if(w.frames[i].location.origin===location.origin)hookConsole(w.frames[i],depth+1)}catch(e){}}
   }catch(e){}
 }
-setInterval(function(){if(frame)try{hookConsole(frame.contentWindow,0)}catch(e){}},40);   // fast, so the hook is in place before the page's own scripts grab console.log
+// only in debug mode (…&debug=1), and light: the app's own window (re-hooked right after each navigation) plus same-origin child frames, max 6
+var lastDoc=null;
+if(document.body.className==='dbg')setInterval(function(){if(!frame)return;try{var w=frame.contentWindow,d=w&&w.document;if(d&&d!==lastDoc){lastDoc=d;w.__herbCon=0}hookConsole(w,0)}catch(e){}},250);
 $('reload').onclick=function(){if(frame)HerbProxy.open(frame,site.url,{engine:'sj'})};
 $('full').onclick=function(){if(frame&&frame.requestFullscreen)frame.requestFullscreen()};
 launch();
