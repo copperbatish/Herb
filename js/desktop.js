@@ -399,8 +399,8 @@
     var dock = document.createElement('div'); dock.id = 'ipdock'; D.appendChild(dock); drawDock();
     var pill = document.createElement('button'); pill.id = 'ipsearch'; pill.innerHTML = I('search', 13, 2.2) + 'Search'; pill.onclick = function () { spot(true); }; D.appendChild(pill);
     // home indicator + gesture strip along the bottom edge
-    var hb = document.createElement('div'); hb.id = 'iphomebar'; D.appendChild(hb);
     var edge = document.createElement('div'); edge.id = 'ipedge'; D.appendChild(edge);
+    var hb = document.createElement('div'); hb.id = 'iphomebar'; D.appendChild(hb);
     var g = null;
     edge.addEventListener('pointerdown', function (e) { g = { y: e.clientY, t: Date.now(), held: false }; try { edge.setPointerCapture(e.pointerId); } catch (er) {}
       g.timer = setTimeout(function () { if (g && g.dy < -60) { g.held = true; switcher(true); } }, 420); });
@@ -410,6 +410,8 @@
     edge.addEventListener('pointerup', function () { if (!g) return; clearTimeout(g.timer); var w = focused && wins[focused]; if (w) { w.el.style.transform = ''; w.el.style.borderRadius = ''; }
       var tap = Math.abs(g.dy || 0) < 6 && Date.now() - g.t < 400; if (!g.held && (tap || (g.dy || 0) < -50)) goHome(); g = null; });
     edge.addEventListener('touchstart', function (e) { e.preventDefault(); }, { passive: false });
+    var awakeT = null; function awake() { document.body.classList.add('hb-awake'); clearTimeout(awakeT); awakeT = setTimeout(function () { document.body.classList.remove('hb-awake'); }, 2500); }
+    edge.addEventListener('pointerdown', awake);
     edge.addEventListener('dblclick', function () { switcher(true); });
     // app switcher layer
     var sw = document.createElement('div'); sw.id = 'ipsw'; D.appendChild(sw);

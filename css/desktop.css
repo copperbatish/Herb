@@ -555,3 +555,9 @@ body.ui-ipad.app-open #iphomebar{bottom:30px;width:150px;height:6px;background:r
 body.ui-ipad.app-open #ipedge{bottom:20px;height:48px;left:50%;right:auto;width:min(420px,70vw);transform:translateX(-50%);border-radius:24px}
 body.ui-ipad.app-open #ipedge:hover{background:rgba(255,255,255,.05)}
 @media (display-mode: standalone){body.ui-ipad.app-open #iphomebar{bottom:34px}body.ui-ipad.app-open #ipedge{bottom:22px}}
+/* keep the home bar out of the way of websites: a small touch area just around the pill, and the pill dims while you use the app */
+body.ui-ipad.app-open #ipedge{width:170px;height:26px;bottom:22px;border-radius:13px}
+body.ui-ipad.app-open #ipedge:hover{background:none}
+body.ui-ipad.app-open #iphomebar{width:120px;height:5px;bottom:32px;opacity:.38;transition:opacity .3s,width .2s;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+body.ui-ipad.app-open #ipedge:hover~#iphomebar,body.ui-ipad.app-open.hb-awake #iphomebar,body.ui-ipad.app-open #iphomebar.pulse{opacity:1;width:140px}
+@media (display-mode: standalone){body.ui-ipad.app-open #iphomebar{bottom:36px}body.ui-ipad.app-open #ipedge{bottom:26px}}
