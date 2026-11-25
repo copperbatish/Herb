@@ -102,13 +102,13 @@ function launch(){
 var CON_RE=/\[(Socket|RTC|WebRTC|Signal|ICE|Peer|Stream|Join)|webrtc|ice ?candidate|offer|answer|signal|socket|join|connection failed|unable to|timeout/i;
 function hookConsole(w,depth){
   if(!w||depth>4)return;try{
-    if(!w.__herbCon&&w.console){w.__herbCon=1;['log','info','warn','error'].forEach(function(k){var o=w.console[k];w.console[k]=function(){try{var t=[].map.call(arguments,function(a){try{return typeof a==='string'?a:JSON.stringify(a)}catch(e){return String(a)}}).join(' ');if(CON_RE.test(t))dline('site-'+k,t.slice(0,300),'')}catch(e){}return o.apply(w.console,arguments)}});
-      w.addEventListener('error',function(e){if(e.message&&e.message!=='Script error.')dline('site-error',String(e.message).slice(0,160)+(e.error&&e.error.stack?'  @ '+String(e.error.stack).split('\n').slice(1,4).map(function(x){return x.trim().replace(/https?:\/\/[^ )]*\/(sj|uv)\/[^ )]*?\/([^/ )]+)(?=[:)])/,'$2')}).join(' < ').slice(0,260):''),'')});
+    if(!w.__herbCon&&w.console){w.__herbCon=1;['log','info','warn','error'].forEach(function(k){var o=w.console[k];w.console[k]=function(){try{var t=[].map.call(arguments,function(a){try{return typeof a==='string'?a:JSON.stringify(a)}catch(e){return String(a)}}).join(' ');if(/html-load\.cc/.test(t))return o.apply(w.console,arguments);if(CON_RE.test(t))dline('site-'+k,t.slice(0,/^\[trace/.test(t)?4000:400),'')}catch(e){}return o.apply(w.console,arguments)}});
+      w.addEventListener('error',function(e){if(e.message&&e.message!=='Script error.'&&!/html-load\.cc/.test(String(e.error&&e.error.stack)))dline('site-error',String(e.message).slice(0,160)+(e.error&&e.error.stack?'  @ '+String(e.error.stack).split('\n').slice(1,4).map(function(x){return x.trim().replace(/https?:\/\/[^ )]*\/(sj|uv)\/[^ )]*?\/([^/ )]+)(?=[:)])/,'$2')}).join(' < ').slice(0,260):''),'')});
       w.addEventListener('unhandledrejection',function(e){var r=e.reason;dline('site-reject',String(r&&r.message||r).slice(0,160)+(r&&r.stack?'  @ '+String(r.stack).split('\n').slice(0,3).join(' < ').slice(0,240):''),'')});}
     for(var i=0;i<w.frames.length;i++)hookConsole(w.frames[i],depth+1);
   }catch(e){}
 }
-setInterval(function(){if(frame)try{hookConsole(frame.contentWindow,0)}catch(e){}},1000);
+setInterval(function(){if(frame)try{hookConsole(frame.contentWindow,0)}catch(e){}},40);   // fast, so the hook is in place before the page's own scripts grab console.log
 $('reload').onclick=function(){if(frame)HerbProxy.open(frame,site.url,{engine:'sj'})};
 $('full').onclick=function(){if(frame&&frame.requestFullscreen)frame.requestFullscreen()};
 launch();
