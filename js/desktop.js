@@ -336,6 +336,8 @@
 
   // ---------- standard interface: sidebar (Home + apps), collapsible to an icon rail ----------
   var sideActive = 'home', RAIL = 'herb.side.rail';
+  // Herb's own mark (the sprout from images/logo/herb.svg), drawn in the theme's accent
+  var SPROUT = '<svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 56V31" stroke="currentColor" stroke-opacity=".55" stroke-width="4.5" stroke-linecap="round"/><path d="M32 33C19 33 10 24 10 11c13 0 22 9 22 22z" fill="currentColor"/><path d="M32 42c11 0 20-8 20-20-11 0-20 8-20 20z" fill="currentColor" fill-opacity=".7"/></svg>';
   function drawSide() {
     if (UI !== 'standard') return; var nav = $('sd-apps'); nav.innerHTML = '';
     var items = [{ id: 'home', title: 'Home', icon: 'home' }].concat(APPS.filter(function (a) { return a.id !== 'browser' && a.id.indexOf('game:') !== 0; }));
@@ -347,7 +349,7 @@
   }
   if (UI === 'standard') {
     var side = document.createElement('aside'); side.id = 'side';
-    side.innerHTML = '<div class="sd-top"><span class="sd-logo">' + I('leaf', 18, 2) + '<b>herb</b></span><button id="sd-rail" title="Collapse sidebar">' + I('rail', 17, 1.8) + '</button></div>' +
+    side.innerHTML = '<div class="sd-top"><span class="sd-logo">' + SPROUT + '<b>herb</b></span><button id="sd-rail" title="Collapse sidebar">' + I('rail', 17, 1.8) + '</button></div>' +
       '<nav id="sd-apps"></nav><div class="sd-bot"><div id="sideacct"></div><button class="sd-item" id="sd-ping" title="Proxy servers"><span class="sd-ic"><span class="sdot" id="sd-dot"></span></span><span class="sd-l" id="sd-pt">checking…</span></button></div>';
     D.appendChild(side);
     try { document.body.classList.toggle('side-rail', localStorage.getItem(RAIL) === '1'); } catch (e) {}

@@ -398,3 +398,8 @@ body.ui-desktop #start{background:rgba(var(--accent-rgb),.02),var(--surface)!imp
 #abgate{position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;color:var(--text);text-align:center}
 #abgate .t{font-size:20px;font-weight:600;margin-bottom:6px}#abgate .d{color:var(--muted);font-size:13.5px;margin-bottom:18px}
 #abgate button{background:none;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 14px;cursor:pointer;font:inherit;font-size:13px}
+/* sidebar logo: Herb's sprout + the script wordmark from the new-tab page */
+#side .sd-logo{gap:6px;filter:none}
+#side .sd-logo svg{color:rgb(var(--accent-rgb));filter:drop-shadow(0 0 6px rgba(var(--accent-rgb),.45))}
+#side .sd-logo b{font-family:'Snell Roundhand','Brush Script MT','Segoe Script',cursive;font-style:italic;font-weight:700;font-size:27px;line-height:1;letter-spacing:0;background:linear-gradient(180deg,#fff,rgb(var(--accent-rgb)) 75%);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:4px}
+html.th-light #side .sd-logo b{background:linear-gradient(180deg,var(--text),rgb(var(--accent-rgb)) 80%);-webkit-background-clip:text;background-clip:text}
