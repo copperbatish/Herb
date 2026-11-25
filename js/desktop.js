@@ -26,10 +26,12 @@
   var tbBtns = {};
   function addTb(a) {
     if (a.store && UI === 'standard') return;   // standard mode: apps from the App Store open from inside the Store, not from the bottom bar
-    var k = document.createElement('button'); k.className = 'tbbtn'; k.title = a.title; k.dataset.app = a.id;
-    k.innerHTML = HerbIcons.tile(a.icon, 24) + '<span class="lbl">' + a.title + '</span><i class="run"></i>'; k.onclick = function () { toggle(a.id); };
+    var k = document.createElement('button'); k.className = 'tbbtn' + (a.store ? ' store' : ''); k.title = a.title; k.dataset.app = a.id;
+    k.innerHTML = appIcon(a, 24) + '<span class="lbl">' + a.title + '</span><i class="run"></i>'; k.onclick = function () { toggle(a.id); };
     $('tbapps').appendChild(k); tbBtns[a.id] = k;
   }
+  // installed apps that have no icon of their own get their first letter, so several of them don't look identical
+  function appIcon(a, px) { return a.store && (!a.icon || a.icon === 'apps') ? HerbIcons.letter((a.title || '?').charAt(0).toUpperCase(), px) : HerbIcons.tile(a.icon, px, a.colors); }
   APPS.forEach(addTb);
   var dyn = {};
   function refreshTaskbar() {
@@ -72,7 +74,7 @@
     '<div class="sm-foot"><button id="sm-settings">' + I('settings', 16) + 'Settings</button><button id="sm-cloak">' + I('shield', 16) + 'Cloak</button><button id="sm-full">' + I('max', 16) + 'Fullscreen</button></div>';
   var smItems = {};
   function addSm(a) {
-    var b = document.createElement('button'); b.className = 'sm-item'; b.dataset.t = a.title.toLowerCase(); b.innerHTML = HerbIcons.tile(a.icon, 40) + '<span>' + a.title + '</span>';
+    var b = document.createElement('button'); b.className = 'sm-item'; b.dataset.t = a.title.toLowerCase(); b.innerHTML = appIcon(a, 40) + '<span>' + a.title + '</span>';
     b.onclick = function () { closeStart(); open(a.id); }; $('sm-apps').appendChild(b); smItems[a.id] = b;
   }
   APPS.forEach(addSm);
@@ -126,7 +128,7 @@
   var IC = $('icons');
   function addIc(a) {
     var d = document.createElement('button'); d.className = 'dicon'; d.dataset.app = a.id;
-    d.innerHTML = HerbIcons.tile(a.icon, 58) + '<span class="lbl">' + a.title + '</span>'; IC.appendChild(d); icons[a.id] = d; wireIcon(d, a.id);
+    d.innerHTML = appIcon(a, 58) + '<span class="lbl">' + a.title + '</span>'; IC.appendChild(d); icons[a.id] = d; wireIcon(d, a.id);
   }
   APPS.forEach(addIc);
   function cell() { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dcell')) || 104; }
@@ -178,7 +180,7 @@
     if (UI === 'standard' && id !== 'browser' && tabsOK()) return toBrowser({ herb: 'app', app: { id: a.id, title: a.title, icon: a.icon, src: a.src }, opts: opts });
     var w = wins[id];
     if (w) { w.el.classList.remove('min'); focus(id); if (opts.section || opts.url) message(w, opts); return w; }
-    var vw = WINS.clientWidth, vh = WINS.clientHeight, width = Math.min(a.w, vw - 24), height = Math.min(a.h, vh - 24);
+    var vw = WINS.clientWidth, vh = WINS.clientHeight, width = Math.min(a.w || 900, vw - 24), height = Math.min(a.h || 640, vh - 24);
     var x = Math.max(6, (vw - width) / 2 + (offset % 5) * 28 - 56), y = Math.max(6, (vh - height) / 2 + (offset % 5) * 24 - 30); offset++;
     var el = document.createElement('div'); el.className = 'win'; el.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + width + 'px;height:' + height + 'px';
     var src = a.src; if (opts.section) src += (src.indexOf('?') < 0 ? '?' : '&') + 'section=' + opts.section; if (opts.url) src += (src.indexOf('?') < 0 ? '?' : '&') + 'url=' + encodeURIComponent(opts.url);
@@ -386,7 +388,12 @@
   function restoreSession() {
     var v = null; try { v = JSON.parse(localStorage.getItem(SESS) || 'null'); localStorage.removeItem(SESS); } catch (e) {}
     if (!v || Date.now() - v.t > 60000 || !Array.isArray(v.open)) return false;
-    v.open.forEach(function (id) { if (byId[id]) open(id, id === 'browser' && v.url ? { url: v.url } : undefined); });
+    v.open.forEach(function (id) {
+      if (!byId[id]) return;
+      var hm = id === 'browser' && /^herb:\/\/([\w-]+)$/.exec(v.url || '');
+      if (hm && UI !== 'standard') { if (byId[hm[1]]) open(hm[1]); else open('browser'); return; }   // an app tab from Standard mode comes back as its own window
+      open(id, id === 'browser' && v.url ? { url: v.url } : undefined);
+    });
     if (v.focus && wins[v.focus]) focus(v.focus); return v.open.length > 0;
   }
 
@@ -419,6 +426,7 @@
   applyWallpaper(); layoutIcons(); tick(); setInterval(tick, 20000); try { HerbSettings.disguise(); } catch (e) {}
   paintProxy(); HerbWisp.check(); setInterval(function () { HerbWisp.check(); }, 60000);
   paintIp(); paintStd();
+  setTimeout(function () { var hb = document.getElementById('hboot'); if (hb) hb.style.display = 'none'; }, 3500);   // the loader's version label
   if (UI === 'ipad') { var seen = false; try { seen = !!localStorage.getItem(TUT_KEY); } catch (e) {} if (!seen) setTimeout(startTutorial, 800); }
   // Settings > Privacy > Launch in about:blank: browsers only allow the new tab after a click, so the first click anywhere opens it.
   if (S.get('autoBlank') && window.top === window) {

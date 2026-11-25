@@ -132,7 +132,7 @@
     if (!name || name === 'home' || name === 'newtab') { if (!active || active.loaded) newTab(); render(); return; }
     var id = /^game\//.test(name) ? 'game:' + name.slice(5) + '.html' : name;
     var app = appList().filter(function (a) { return a.id.toLowerCase() === id || a.title.toLowerCase() === name; })[0];
-    if (app) return openApp(app);
+    if (app) { try { if (window.HerbDesktop && HerbDesktop.ui && HerbDesktop.ui !== 'standard') { HerbDesktop.open(app.id); return; } } catch (e) {} return openApp(app); }   // app tabs are a Standard-mode thing; elsewhere apps open as windows
     warn('No Herb page called “' + name + '”. Try ' + appList().map(function (a) { return 'herb://' + a.id; }).filter(function (x) { return x.indexOf('game:') < 0; }).join(', ') + '.', false);
   }
   window.addEventListener('message', function (e) {

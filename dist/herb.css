@@ -480,3 +480,7 @@ html[data-tblayout=side] body.ui-desktop .tbbtn .hicon svg{width:56%;height:56%}
 html[data-tblayout=side] body.ui-desktop #wins,html[data-tblayout=side] body.ui-desktop #icons{left:calc(var(--tb) + 46px)!important}
 html[data-tblayout=side] body.ui-desktop #start{left:calc(var(--tb) + 46px)}
 .aurora i{opacity:.95;filter:blur(55px) saturate(1.4)}
+/* dock/side dock: installed apps only appear while open; tray text never wraps */
+html[data-tblayout=dock] body.ui-desktop .tbbtn.store:not(.running),html[data-tblayout=side] body.ui-desktop .tbbtn.store:not(.running){display:none}
+#tbtray .tray,#tbtray .lbl,#clock span{white-space:nowrap}
+html[data-tblayout=dock] body.ui-desktop #tbtray{flex:none}
