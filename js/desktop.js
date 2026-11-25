@@ -56,6 +56,16 @@
     else if (!e.target.closest || !e.target.closest('#taskbar')) $('taskbar').classList.remove('peek');
   });
 
+  // ---------- layouts: Taskbar, Dock (floating, centred) or Side dock (left, with a top bar holding the date and tray) ----------
+  function applyLayout() {
+    var lay = UI === 'desktop' ? (S.get('tbLayout') || 'dock') : 'bar', tray = $('tbtray');
+    if (lay === 'side') { if (tray.parentNode !== $('tb-right')) $('tb-right').appendChild(tray); }
+    else if (tray.parentNode !== $('taskbar')) $('taskbar').appendChild(tray);
+    $('start-btn').innerHTML = lay === 'side' ? HerbIcons.glyph('apps', 20, 1.9) : HerbIcons.glyph('leaf', 20, 2);
+    $('start-btn').title = lay === 'side' ? 'All apps' : 'Start';
+  }
+  applyLayout();
+
   // ---------- start menu ----------
   var sm = $('start');
   sm.innerHTML = '<div class="sm-search">' + I('search', 16) + '<input id="sm-q" type="text" placeholder="Search apps, or type a website" autocomplete="off" spellcheck="false"></div><div class="sm-sec">Apps</div><div class="sm-apps" id="sm-apps"></div>' +
@@ -237,7 +247,7 @@
     D.style.backgroundSize = FITS[fit] || 'cover';
   }
   function applyWallpaper() {
-    var s = S.all(); D.style.background = ''; D.classList.remove('has-wall');
+    var s = S.all(); D.style.background = ''; D.classList.remove('has-wall'); D.classList.toggle('wall-aurora', s.wallMode === 'aurora');
     if (s.wallMode === 'color') D.style.background = s.wallColor;
     else if (s.wallMode === 'image') {
       var v = null; try { v = localStorage.getItem('herb.wallver'); } catch (e) {}
@@ -264,7 +274,8 @@
   $('trayinfo').onclick = function () { open('settings', { section: 'proxy' }); };
   function tick() { var d = new Date(), h = d.getHours(), m = ('0' + d.getMinutes()).slice(-2), t;
     if (S.get('clock24')) t = ('0' + h).slice(-2) + ':' + m; else t = ((h + 11) % 12 + 1) + ':' + m + ' ' + (h < 12 ? 'AM' : 'PM');
-    $('clock').querySelector('.t').textContent = t; $('clock').querySelector('.d').textContent = d.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric', year: 'numeric' }); }
+    $('clock').querySelector('.t').textContent = t; $('clock').querySelector('.d').textContent = d.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric', year: 'numeric' });
+    $('tb-date').textContent = d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) + '   ' + t; }
 
   // ---------- mouse lock: Cmd+Shift+, always lets go ----------
   // Games (e.g. Minecraft) lock the mouse themselves. The shortcut below is listened for in the shell and in every same-origin frame
@@ -391,7 +402,7 @@
       layoutIcons(); refreshTaskbar(); drawSide();
     },
     recheck: function () { return HerbWisp.check(); },
-    apply: function () { if (((S.get('ui') || 'desktop')) !== UI) { saveSession(); location.reload(); return; } HerbSettings.apply(); HerbSettings.disguise(); applyWallpaper(); layoutIcons(); tick(); },
+    apply: function () { if (((S.get('ui') || 'desktop')) !== UI) { saveSession(); location.reload(); return; } HerbSettings.apply(); HerbSettings.disguise(); applyLayout(); applyWallpaper(); layoutIcons(); tick(); },
     layout: layoutIcons,
     replayTutorial: function () { try { localStorage.removeItem(TUT_KEY); } catch (e) {} return startTutorial(); },
     ui: UI,

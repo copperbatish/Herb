@@ -85,7 +85,8 @@ nav button{font-weight:500}nav button.on{background:rgba(var(--accent-rgb),.1)!i
   </div></section>
  <section id="s-taskbar"><h1>Taskbar</h1><p class="sub">The bar with your apps, proxy status and clock.</p>
   <div class="card">
-   <div class="row"><div><div class="t">Position</div></div><div class="ctl"><div class="seg" id="tbpos"></div></div></div>
+   <div class="row"><div><div class="t">Style</div><div class="d">Taskbar across the bottom, a floating dock, or a dock on the left with a top bar.</div></div><div class="ctl"><div class="seg" id="tblayout"></div></div></div>
+   <div class="row"><div><div class="t">Position</div><div class="d">Taskbar and Dock only.</div></div><div class="ctl"><div class="seg" id="tbpos"></div></div></div>
    <div class="row"><div><div class="t">Size</div></div><div class="ctl"><div class="seg" id="tbsize"></div></div></div>
    <div class="row"><div><div class="t">App alignment</div></div><div class="ctl"><div class="seg" id="tbalign"></div></div></div>
    <div class="row"><div><div class="t">Auto-hide</div><div class="d">Hides until you move to the screen edge.</div></div><button class="sw" data-k="taskbarAutohide"></button></div>
@@ -151,7 +152,7 @@ accents();
 seg('radius','winRadius',[['square','Square'],['soft','Soft'],['round','Round']]);
 document.querySelectorAll('.sw').forEach(function(b){var k=b.dataset.k;b.classList.toggle('on',!!S.get(k));b.onclick=function(){var v=!S.get(k);S.set(k,v);b.classList.toggle('on',v)}});
 // desktop
-seg('wallmode','wallMode',[['theme','Theme'],['color','Color'],['image','Image']]);
+seg('wallmode','wallMode',[['theme','Theme'],['aurora','Aurora'],['color','Color'],['image','Image']]);
 function wallRows(){var m=S.get('wallMode');$('r-wallcolor').style.display=m==='color'?'flex':'none';$('r-wallimg').style.display=m==='image'?'flex':'none';$('r-wallfit').style.display=m==='image'?'flex':'none'}
 $('wallmode').addEventListener('click',function(){setTimeout(wallRows,0)});wallRows();
 $('wallcolor').value=S.get('wallColor');$('wallcolor').oninput=function(){S.set('wallColor',this.value)};
@@ -161,7 +162,7 @@ $('wallfile').onchange=function(){var f=this.files[0];if(!f)return;
   $('wallinfo').textContent='Saving…';
   // keep the original file: no canvas, no resize, no JPEG re-encode
   HerbSettings.wall.put(f).then(function(){try{localStorage.setItem('herb.wallver',String(Date.now()));localStorage.removeItem('herb.wallimg')}catch(e){}
-    S.set('wallMode','image');seg('wallmode','wallMode',[['theme','Theme'],['color','Color'],['image','Image']]);wallRows();$('wallpick').textContent='Change…';wallInfo()},
+    S.set('wallMode','image');seg('wallmode','wallMode',[['theme','Theme'],['aurora','Aurora'],['color','Color'],['image','Image']]);wallRows();$('wallpick').textContent='Change…';wallInfo()},
     function(e){$('wallinfo').textContent='Couldn’t save the image ('+(e&&e.message||'storage blocked')+').'})};
 function wallInfo(){HerbSettings.wall.get().then(function(b){if(!b)return;var u=URL.createObjectURL(b),im=new Image();im.onload=function(){$('wallinfo').textContent='Full quality: '+im.naturalWidth+' × '+im.naturalHeight+', '+(b.size/1048576).toFixed(1)+' MB, stored on this device.';URL.revokeObjectURL(u)};im.onerror=function(){$('wallinfo').textContent='Saved ('+(b.size/1048576).toFixed(1)+' MB), but this browser can’t display this image format.';URL.revokeObjectURL(u)};im.src=u})}
 wallInfo();
@@ -170,7 +171,7 @@ seg('iconstyle','iconStyle',[['glow','Minimal'],['color','Colorful']]);
 seg('iconsize','iconSize',[['small','Small'],['medium','Medium'],['large','Large']]);
 $('reseticons').onclick=function(){try{localStorage.removeItem('herb.iconpos')}catch(e){}try{parent.HerbDesktop.layout()}catch(e){}};
 // taskbar
-seg('tbpos','taskbarPos',[['bottom','Bottom'],['top','Top']]);seg('tbsize','taskbarSize',[['small','Small'],['medium','Medium'],['large','Large']]);seg('tbalign','taskbarAlign',[['left','Left'],['center','Center']]);
+seg('tblayout','tbLayout',[['bar','Taskbar'],['dock','Dock'],['side','Side dock']]);seg('tbpos','taskbarPos',[['bottom','Bottom'],['top','Top']]);seg('tbsize','taskbarSize',[['small','Small'],['medium','Medium'],['large','Large']]);seg('tbalign','taskbarAlign',[['left','Left'],['center','Center']]);
 // browser / privacy / about
 Object.keys(S.ENGINES).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=S.ENGINES[k][0];$('engine').appendChild(o)});
 $('engine').value=S.get('search');$('engine').onchange=function(){S.set('search',this.value)};

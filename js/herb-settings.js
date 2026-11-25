@@ -8,7 +8,7 @@
     vmUrl: '',
     ui: 'desktop', disguise: 'none', autoBlank: false, disguiseTitle: '', disguiseIcon: '',
     // desktop + taskbar
-    taskbarPos: 'bottom', taskbarSize: 'medium', taskbarAlign: 'center', taskbarAutohide: false, showClock: true, showDate: true, showTray: true,
+    taskbarPos: 'bottom', taskbarSize: 'medium', taskbarAlign: 'center', tbLayout: 'dock', taskbarAutohide: false, showClock: true, showDate: true, showTray: true,
     showIcons: true, iconSize: 'medium', iconLabels: true, scene: true, wallMode: 'theme', wallColor: '#0b1c15', wallFit: 'cover', winRadius: 'round', iconStyle: 'glow',
   };
   // Each theme is a full palette: base + three layered surfaces, text, muted text and a default accent (borders are tinted with the accent).
@@ -59,7 +59,7 @@
     for (var k in V) r.style.setProperty(k, V[k]);
     r.style.setProperty('--accent', ac); r.style.setProperty('--accent-rgb', arg);
     r.classList.toggle('no-blur', !s.blur); r.classList.toggle('no-anim', !s.anim); r.classList.toggle('no-particles', !s.particles);
-    r.setAttribute('data-tbpos', s.taskbarPos); r.setAttribute('data-tbsize', s.taskbarSize); r.setAttribute('data-tbalign', s.taskbarAlign);
+    r.setAttribute('data-tbpos', s.taskbarPos); r.setAttribute('data-tbsize', s.taskbarSize); r.setAttribute('data-tbalign', s.taskbarAlign); r.setAttribute('data-tblayout', s.tbLayout || 'dock');
     r.setAttribute('data-iconsize', s.iconSize); r.setAttribute('data-radius', s.winRadius);
     r.classList.toggle('tb-autohide', !!s.taskbarAutohide && s.ui === 'desktop'); r.classList.toggle('no-icons', !s.showIcons); r.classList.toggle('no-labels', !s.iconLabels);
     r.classList.toggle('no-date', !s.showDate); r.classList.toggle('no-clock', !s.showClock); r.classList.toggle('no-tray', !s.showTray);
