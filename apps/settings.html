@@ -199,7 +199,7 @@ $('resetproxy').onclick=function(){var b=this;b.disabled=true;b.textContent='Res
   try{var rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(function(r){return r.scope.indexOf('/uv/service/')>=0}).map(function(r){return r.unregister()}))}catch(e){}
   try{var ks=await caches.keys();await Promise.all(ks.map(function(k){return caches.delete(k)}))}catch(e){}
   try{localStorage.removeItem('herb.wisp.status')}catch(e){}
-  try{parent.location.reload()}catch(e){location.reload()}
+  try{(parent.herbReload||function(){parent.location.reload()})()}catch(e){location.reload()}
  })()};
 $('check').onclick=function(){var b=this;b.textContent='Checking…';HerbWisp.check().then(function(){b.textContent='Check now';servers()})};
 $('eye').onclick=function(){var f=$('custom');f.type=f.type==='password'?'text':'password'};

@@ -162,7 +162,7 @@
       if (!single) { frame.src = src; return; }
       var path = src.split('?')[0], qs = src.indexOf('?') >= 0 ? src.slice(src.indexOf('?')) : '', apps = window.HERB_APPS || {};
       if (apps[path]) {
-        var pre = (window.HERB_SHIM ? '<script>' + window.HERB_SHIM + '<\/script>' : '') + '<script>window.HERB_QS=' + JSON.stringify(qs) + ';window.HERB_SINGLE_FILE=true;window.HERB_CONFIG={serverUrl:' + JSON.stringify(server()) + '}<\/script>';
+        var pre = '<script>window.__herbIsApp=true<\/script>' + (window.HERB_SHIM ? '<script>' + window.HERB_SHIM + '<\/script>' : '') + '<script>window.HERB_QS=' + JSON.stringify(qs) + ';window.HERB_SINGLE_FILE=true;window.HERB_CONFIG={serverUrl:' + JSON.stringify(server()) + '}<\/script>';
         frame.srcdoc = rootFix(apps[path]).replace(/<head[^>]*>/i, function (m) { return m + '<base href="' + server() + '/">' + pre; });
       } else if (SW_APPS.indexOf(path) >= 0) {   // proxy apps need a real origin for their service worker; a CDN can't give them one
         frame.srcdoc = '<body style="margin:0;background:#0b1c15;color:#cde7dc;font:14px system-ui;display:flex;align-items:center;justify-content:center;height:100vh">Finding a server\u2026</body>';
@@ -186,7 +186,7 @@
       var v = prompt('Preferred server for the browser, movies, VM and Firefox apps. It is tried first; the others are used if it is down.\nLeave empty to let Herb choose.', ls(HKEY) || '');
       if (v === null) return;
       if (v.trim() && !clean(v)) { alert('That doesn\u2019t look like a web address. Use something like https://example.com'); return; }
-      ls(HKEY, clean(v) || null); location.reload();
+      ls(HKEY, clean(v) || null); (window.herbReload || function () { location.reload(); })();
     };
     tray.insertBefore(b, tray.firstChild);
   });

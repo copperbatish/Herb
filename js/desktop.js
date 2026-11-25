@@ -554,7 +554,7 @@
       layoutIcons(); refreshTaskbar(); drawSide(); drawDock();
     },
     recheck: function () { return HerbWisp.check(); },
-    apply: function () { if (((S.get('ui') || 'desktop')) !== UI) { saveSession(); location.reload(); return; } HerbSettings.apply(); HerbSettings.disguise(); applyLayout(); applyWallpaper(); layoutIcons(); tick(); },
+    apply: function () { if (((S.get('ui') || 'desktop')) !== UI) { saveSession(); (window.herbReload || function () { location.reload(); })(); return; } HerbSettings.apply(); HerbSettings.disguise(); applyLayout(); applyWallpaper(); layoutIcons(); tick(); },
     layout: layoutIcons,
     replayTutorial: function () { try { localStorage.removeItem(TUT_KEY); } catch (e) {} return startTutorial(); },
     ui: UI,
